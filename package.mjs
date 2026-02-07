@@ -50,7 +50,7 @@ async function listFiles(root, rel = "") {
   return out;
 }
 
-const relFiles = await listFiles(buildDir);
+const relFiles = (await listFiles(buildDir)).sort().reverse();
 const chunks = [];
 let payloadBytes = 0;
 for (const rel of relFiles) {
@@ -71,6 +71,9 @@ await fs.writeFile(tarPath, tar);
 const br = brotliCompressSync(tar, {
   params: {
     [zc.BROTLI_PARAM_QUALITY]: 11,
+    [zc.BROTLI_PARAM_MODE]: zc.BROTLI_MODE_FONT,
+    [zc.BROTLI_PARAM_LGWIN]: 16,
+    [zc.BROTLI_PARAM_LGBLOCK]: 16,
     [zc.BROTLI_PARAM_SIZE_HINT]: tar.length,
   },
 });
