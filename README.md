@@ -62,4 +62,14 @@ Generated artifacts:
 - `build/game.tar`
 - `build/game.tar.br`
 
+Final artifact to submit:
+
+- Local path: `E:\cmu-e\tartanhacks\what\hamish\build\game.tar.br`
+- GitHub file link: [`build/game.tar.br`](https://github.com/FloareDor/what-the-dog-doing/blob/main/build/game.tar.br)
+
+Submission checklist:
+
+- Hosted game link (GitHub Pages): `https://floaredor.github.io/what-the-dog-doing/`
+- Offline validation artifact upload: `build/game.tar.br`
+
 `npm run pack` reports whether `build/game.tar.br` is within the 15360-byte submission limit.
