@@ -6,26 +6,24 @@
 
 https://floaredor.github.io/what-the-dog-doing/
 
-## Lore
+## lore
 
-No one knows when it began, only that by morning one rule was true: if you leave a building, you die.
+ppl are stuck in campus buildings, and if they step outside they die. the goops have spread across cmu paths, entrances, and key routes, so every rescue run is dangerous.
 
-Students, professors, and staff are trapped across CMU. Safe zones are isolated. Supply routes are broken. Panic spreads from hall to hall.
+scotty is the only one fast enough to move between buildings. in home base, scotty starts with `zoomies` as the base ability and quickly unlocks early territory so the first safe routes can open.
 
-Scotty is the only one fast enough to survive outside. At Home Base, he starts with one ability: `Zoomies`. With it, he unlocks nearby territory and opens early rescue routes. But speed alone cannot save campus.
+scotty tries to win with speed alone, but it is too hard because the goops keep growing, swarming lanes, and blocking evac routes. so the plan shifts: go college by college and team up with professors, staff, and students.
 
-So Scotty goes college by college, working with professors, staff, and students through quick puzzle-style missions (with light combat support) to unlock new powers:
+each college has an easy, fun mission (mostly puzzle-based, with light goop-clearing combat that fits the lore because scotty is protecting routes, not fighting people). finishing each mission unlocks a new ability:
 
-- Hamerschlag (Engineering): `coil turret`
-- Gates Hillman (SCS): `target patch`
-- Newell-Simon (RI): `bot buddy`
-- Wean (Physics + CS): `repel field`
-- Mellon Institute (Chemistry): `catalyst mix`
-- Baker (Psychology): `focus bark`
+- hamerschlag (engineering): `coil turret`
+- gates hillman (scs): `target patch`
+- newell-simon (ri): `bot buddy`
+- wean (physics + cs): `repel field`
+- mellon institute (chemistry): `catalyst mix`
+- baker (psychology): `focus bark`
 
-Each unlock expands what Scotty can do. Collaboration becomes the real power-up.
-
-In the final encounter against the `Dean of Goop`, Scotty combines campus-wide abilities to reconnect routes, stabilize safe zones, and save CMU.
+with each unlock, scotty gets better at controlling goops, reopening paths, and guiding survivors. in the final push against the `dean of goop`, all college abilities combine so scotty can reconnect campus and save cmu.
 
 ## Controls
 
