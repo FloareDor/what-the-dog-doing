@@ -21,6 +21,15 @@ canvas{display:block;width:100%;height:100%}
 
   const MAP_W=2600,MAP_H=1800;
   const MID_X=MAP_W*.5,MID_Y=MAP_H*.5;
+  const HOME={x:260,y:MAP_H*.5,r:170};
+  const CORE={x:MID_X+420,y:MID_Y-140,r:150};
+  const COLLEGES=[
+    {n:'engineering',k:'eng',x:420,y:330,c:'#7fb1ff'},
+    {n:'computer science',k:'cs',x:980,y:280,c:'#79d7ff'},
+    {n:'physics',k:'phy',x:1860,y:360,c:'#b8a7ff'},
+    {n:'chemistry',k:'chem',x:2100,y:1260,c:'#ffd58f'},
+    {n:'psychology',k:'psy',x:760,y:1390,c:'#ff9fba'}
+  ];
   const JOY_CENTER_SNAP=10;
   const JOY_INPUT_DEAD=.12;
   const MAX_Z=180,MAX_FOOD=260,MAX_FX=420,MAX_PUDD=18,MAX_B=260;
@@ -31,6 +40,23 @@ canvas{display:block;width:100%;height:100%}
 
   let audio=0;
   function beep(f,d,t,v){if(!audio)return;const o=audio.createOscillator(),g=audio.createGain();o.type=t||'triangle';o.frequency.value=f;g.gain.value=v||.02;g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+d);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+d)}
+  let meme=0,memePath='sound/whatthedogdoin.mp3',memeT=0;
+  function playMeme(){
+    if(!g.start)return;
+    const now=performance.now();
+    if(now-memeT<1200)return;
+    memeT=now;
+    try{
+      if(!meme){
+        meme=new Audio(memePath);
+        meme.volume=.56;
+        meme.preload='auto';
+        meme.onerror=()=>{if(memePath.indexOf('../src/')<0){memePath='../src/sound/whatthedogdoin.mp3';meme=0;}}
+      }
+      meme.currentTime=0;
+      meme.play().catch(()=>{});
+    }catch{}
+  }
 
   const g={
     start:0,dead:0,lvup:0,t:0,time:0,kills:0,
@@ -73,16 +99,16 @@ canvas{display:block;width:100%;height:100%}
   function getChoiceLayout(){
     const mobile=W<560;
     const bw=mobile?W-14:Math.min(W-20,620);
-    const bh=mobile?clamp(H*.52,320,430):clamp(H*.46,300,390);
+    const bh=mobile?clamp(H*.48,296,390):clamp(H*.4,268,340);
     const bx=(W-bw)*.5,by=H-bh-12;
     const rects=[];
     if(mobile){
-      const gap=8,cw=bw-22,ch=Math.max(80,Math.min(112,(bh-96-gap*2)/3));
-      const sy=by+56;
+      const gap=8,cw=bw-22,ch=Math.max(74,Math.min(100,(bh-84-gap*2)/3));
+      const sy=by+50;
       for(let i=0;i<3;i++)rects.push({x:bx+14,y:sy+i*(ch+gap),w:cw,h:ch});
     }else{
-      const gap=10,cw=(bw-32-gap*2)/3,ch=Math.max(120,Math.min(156,bh-96));
-      const sy=by+58;
+      const gap=10,cw=(bw-32-gap*2)/3,ch=Math.max(102,Math.min(130,bh-82));
+      const sy=by+52;
       for(let i=0;i<3;i++)rects.push({x:bx+16+i*(cw+gap),y:sy,w:cw,h:ch});
     }
     return {mobile,bx,by,bw,bh,rects};
@@ -620,20 +646,39 @@ canvas{display:block;width:100%;height:100%}
 
     // HUD
     const ab=44,abGap=8,abX=W-18-ab,zY=14,tY=14+ab+abGap;
-    x.fillStyle='rgba(7,10,16,.76)';x.fillRect(10,10,W-20,104);
+    const hudCompact=W<420;
+    const hudH=hudCompact?118:104;
+    let hpY=62,xpY=74;
+    const barsW=Math.max(96,W-190);
+    const hudBottom=10+hudH;
+    x.fillStyle='rgba(7,10,16,.76)';x.fillRect(10,10,W-20,hudH);
     x.fillStyle='#eef4ff';x.font='700 17px Trebuchet MS,sans-serif';x.fillText('SCOTTY SURVIVAL',20,32);
-    x.font='600 14px Trebuchet MS,sans-serif';
-    x.fillStyle='#9ec8ff';x.fillText('Time '+g.time.toFixed(1)+'s',20,54);
-    x.fillStyle='#ffd56d';x.fillText('Kills '+g.kills,120,54);
-    x.fillStyle='#69f0c9';x.fillText('Level '+g.level,200,54);
-    x.fillStyle='#dce8ff';x.fillText('Best '+g.best,W-172,54);
+    if(hudCompact){
+      const statsY=52,colW=(W-44)/3;
+      x.font='600 13px Trebuchet MS,sans-serif';
+      x.fillStyle='#9ec8ff';x.fillText('Time '+g.time.toFixed(1)+'s',20,statsY);
+      x.fillStyle='#ffd56d';x.fillText('Kills '+g.kills,20+colW,statsY);
+      x.fillStyle='#69f0c9';x.fillText('Level '+g.level,20+colW*2,statsY);
+      x.textAlign='right';
+      x.fillStyle='#dce8ff';x.fillText('Best '+g.best,W-24,68);
+      x.textAlign='left';
+      hpY=76;xpY=88;
+    }else{
+      x.font='600 14px Trebuchet MS,sans-serif';
+      x.fillStyle='#9ec8ff';x.fillText('Time '+g.time.toFixed(1)+'s',20,54);
+      x.fillStyle='#ffd56d';x.fillText('Kills '+g.kills,120,54);
+      x.fillStyle='#69f0c9';x.fillText('Level '+g.level,200,54);
+      x.textAlign='right';
+      x.fillStyle='#dce8ff';x.fillText('Best '+g.best,W-24,54);
+      x.textAlign='left';
+    }
 
     // hp
-    x.fillStyle='#2a3346';x.fillRect(20,62,W-190,10);
-    x.fillStyle='#ef4f6c';x.fillRect(20,62,(W-190)*(p.hp/p.maxHp),10);
+    x.fillStyle='#2a3346';x.fillRect(20,hpY,barsW,10);
+    x.fillStyle='#ef4f6c';x.fillRect(20,hpY,barsW*(p.hp/p.maxHp),10);
     // xp
-    x.fillStyle='#24374d';x.fillRect(20,74,W-190,8);
-    x.fillStyle='#69f0c9';x.fillRect(20,74,(W-190)*(g.xp/g.nextXp),8);
+    x.fillStyle='#24374d';x.fillRect(20,xpY,barsW,8);
+    x.fillStyle='#69f0c9';x.fillRect(20,xpY,barsW*(g.xp/g.nextXp),8);
 
     if(g.start&&!g.dead){
       const drawAb=(by,col,prog,active,sec,kind)=>{
@@ -675,8 +720,8 @@ canvas{display:block;width:100%;height:100%}
     }
 
     if(g.msgT>0){
-      x.fillStyle='rgba(8,12,19,.74)';x.fillRect(14,108,W-28,28);
-      x.fillStyle='#d7ffe8';x.font='600 13px Trebuchet MS,sans-serif';x.fillText(g.msg,22,127);
+      x.fillStyle='rgba(8,12,19,.74)';x.fillRect(14,hudBottom+4,W-28,28);
+      x.fillStyle='#d7ffe8';x.font='600 13px Trebuchet MS,sans-serif';x.fillText(g.msg,22,hudBottom+23);
     }
     if(g.start&&!g.dead&&!g.lvup){
       const kx=joy.x+joy.tx,ky=joy.y+joy.ty;
@@ -691,59 +736,56 @@ canvas{display:block;width:100%;height:100%}
     }
 
     if(!g.start){
-      x.fillStyle='rgba(6,9,14,.86)';x.fillRect(20,H*.19,W-40,H*.62);
-      x.fillStyle='#fff';x.font='700 34px Trebuchet MS,sans-serif';x.fillText('SCOTTY VS ZOMBIES',W*.5-162,H*.34);
-      x.fillStyle='#d8e6ff';x.font='600 18px Trebuchet MS,sans-serif';
-      x.fillText('Auto-shoot survival with level-ups',W*.5-145,H*.43);
-      x.fillText('Eat mints to gain XP and level up',W*.5-136,H*.49);
-      x.fillText('Touch: use left thumb joystick',W*.5-124,H*.56);
-      x.fillText('Zoomies: center/release stick to charge',W*.5-164,H*.59);
-      x.fillText('Then push any direction to dash',W*.5-118,H*.62);
-      x.fillText('Territory: auto-mark creates slowing puddles',W*.5-158,H*.65);
-      x.fillText('Keyboard: WASD move, E hold, 1/2/3 read page',W*.5-172,H*.69);
-      x.fillStyle='#69f0c9';x.font='700 24px Trebuchet MS,sans-serif';x.fillText('Tap or press Space to start',W*.5-136,H*.77);
+      const ix=20,iy=H*.16,iw=W-40,ih=H*.68,tx=ix+16;
+      x.fillStyle='rgba(6,9,14,.86)';x.fillRect(ix,iy,iw,ih);
+      x.fillStyle='#fff';x.font='700 30px Trebuchet MS,sans-serif';x.fillText('what the dog doing',tx,iy+44);
+
+      x.fillStyle='#9ec8ff';x.font='700 15px Trebuchet MS,sans-serif';x.fillText('lore',tx,iy+72);
+      x.fillStyle='#d8e6ff';x.font='600 16px Trebuchet MS,sans-serif';
+      drawWrap('night at cmu, a weird static swarm leaked across campus.',tx,iy+94,iw-32,20,2);
+      drawWrap('students and professors are hiding inside the schools, and scotty is the only one fast enough to move between them.',tx,iy+134,iw-32,20,3);
+
+      x.fillStyle='#9ec8ff';x.font='700 15px Trebuchet MS,sans-serif';x.fillText('tutorial',tx,iy+182);
+      x.fillStyle='#d8e6ff';x.font='600 16px Trebuchet MS,sans-serif';
+      x.fillText('eat mints to get xp and level up',tx,iy+206);
+      x.fillText('visit engineering, cs, physics, chemistry, psychology',tx,iy+230);
+      x.fillText('each school unlocks support before the final fight',tx,iy+254);
+      x.fillText('touch: left thumb joystick | keyboard: wasd, e, 1/2/3',tx,iy+278);
+      x.fillStyle='#69f0c9';x.font='700 23px Trebuchet MS,sans-serif';x.fillText('tap or press space to start',tx,iy+338);
     }
 
     if(g.lvup&&!g.dead){
-      x.fillStyle='rgba(6,10,15,.2)';x.fillRect(0,0,W,H);
+      x.fillStyle='rgba(6,10,15,.16)';x.fillRect(0,0,W,H);
       const ly=getChoiceLayout(),bx=ly.bx,by=ly.by,bw=ly.bw,bh=ly.bh,rects=ly.rects,mobile=ly.mobile;
-      x.fillStyle='rgba(13,20,31,.94)';rr(bx,by,bw,bh,18);x.fill();
-      x.strokeStyle='#425e82';x.lineWidth=1.5;rr(bx+.5,by+.5,bw-1,bh-1,18);x.stroke();
-      x.fillStyle='#ecf3ff';x.font=(mobile?'700 20px':'700 22px')+' Trebuchet MS,sans-serif';x.fillText("SCOTTY'S SKILL BOOK",bx+14,by+29);
-      x.fillStyle='#9ec8ff';x.font='600 12px Trebuchet MS,sans-serif';x.fillText('Choose one page',bx+14,by+45);
-      const dog=imgs.e,dw=mobile?42:52,dh=mobile?30:36;
-      if(dog&&dog.complete)x.drawImage(dog,bx+bw-dw-12,by+10,dw,dh);
-      x.fillStyle='rgba(10,15,23,.84)';
-      rr(bx+12,by+53,bw-24,bh-74,12);x.fill();
+      x.fillStyle='rgba(17,29,45,.95)';rr(bx,by,bw,bh,16);x.fill();
+      x.strokeStyle='rgba(90,125,163,.8)';x.lineWidth=1.2;rr(bx+.5,by+.5,bw-1,bh-1,16);x.stroke();
+      x.fillStyle='#ecf3ff';x.font=(mobile?'700 18px':'700 20px')+' Trebuchet MS,sans-serif';x.fillText("SCOTTY'S SKILL BOOK",bx+14,by+24);
+      x.fillStyle='#9ec8ff';x.font='600 12px Trebuchet MS,sans-serif';x.fillText('Choose one upgrade',bx+14,by+39);
 
       for(let i=0;i<3;i++){
         const u=g.choices[i],r=rects[i];
         const a=clamp((g.cardT-i*.07)/.28,0,1),sc=.9+.1*eob(a);
-        const ox=r.x+r.w*.5,oy=r.y+r.h*.5,icon=upIcon(u?u.n:'');
+        const ox=r.x+r.w*.5,oy=r.y+r.h*.5;
         x.save();
         x.translate(ox,oy);x.scale(sc,sc);x.translate(-ox,-oy);
-        x.fillStyle='#eef4ff';rr(r.x,r.y,r.w,r.h,10);x.fill();
-        x.strokeStyle='#b8c8de';x.lineWidth=1.2;rr(r.x+.5,r.y+.5,r.w-1,r.h-1,10);x.stroke();
-        x.fillStyle='rgba(50,73,101,.12)';x.fillRect(r.x+44,r.y+9,1,r.h-18);
-        x.fillStyle='#dbe6f7';x.beginPath();x.arc(r.x+24,r.y+r.h*.5,14,0,Math.PI*2);x.fill();
-        x.fillStyle='#2f4663';x.font='700 16px Segoe UI Emoji,Apple Color Emoji,Trebuchet MS,sans-serif';x.fillText(icon,r.x+16,r.y+r.h*.5+6);
-        x.fillStyle='#4f6381';x.font='700 10px Trebuchet MS,sans-serif';x.fillText('PAGE '+(i+1),r.x+54,r.y+17);
+        x.fillStyle='rgba(27,44,66,.96)';rr(r.x,r.y,r.w,r.h,10);x.fill();
+        x.strokeStyle='rgba(116,150,186,.85)';x.lineWidth=1.2;rr(r.x+.5,r.y+.5,r.w-1,r.h-1,10);x.stroke();
         if(u){
+          const icon=upIcon(u.n);
+          const head=icon+' '+u.n;
           let fs=mobile?16:17;
           for(;fs>12;fs--){
             x.font='700 '+fs+'px Trebuchet MS,sans-serif';
-            if(x.measureText(u.n).width<=r.w-126)break;
+            if(x.measureText(head).width<=r.w-22)break;
           }
-          x.fillStyle='#1e2f45';x.fillText(u.n,r.x+54,r.y+39);
-          x.fillStyle='#425771';x.font='600 12px Trebuchet MS,sans-serif';
-          drawWrap(u.d,r.x+52,r.y+58,r.w-122,14,mobile?2:3);
-          x.fillStyle='#2d4563';rr(r.x+r.w-64,r.y+10,52,21,7);x.fill();
-          x.fillStyle='#e7f4ff';x.font='700 11px Trebuchet MS,sans-serif';x.fillText('READ '+(i+1),r.x+r.w-58,r.y+24);
+          x.fillStyle='#eef5ff';x.fillText(head,r.x+12,r.y+30);
+          x.fillStyle='#a9c3e2';x.font='600 12px Trebuchet MS,sans-serif';
+          drawWrap(u.d,r.x+12,r.y+48,r.w-24,14,2);
         }
         x.restore();
       }
       x.fillStyle='#95bce8';x.font='600 12px Trebuchet MS,sans-serif';
-      x.fillText('Tap a page or press 1/2/3',bx+14,by+bh-12);
+      x.fillText('Tap a choice or press 1/2/3',bx+14,by+bh-12);
     }
 
     if(g.dead){
