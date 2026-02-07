@@ -38,6 +38,7 @@
 - unlock power: `catalyst mix`
 - catalyst mix effect: territory puddles can be "primed" into sticky gel or corrosive solvent modes
 - unique mechanic: mode swap changes control style (trap-heavy vs damage-heavy) on demand
+
 - helper support: chem staff periodically drop reagent packs that instantly re-prime one puddle
 
 ### baker hall - psychology

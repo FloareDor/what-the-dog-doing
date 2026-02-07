@@ -42,7 +42,7 @@ async function listFiles(root, rel = "") {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const out = [];
   for (const e of entries) {
-    if (e.name === "game.tar" || e.name === "game.tar.br") continue;
+    if (e.name === "game.tar" || e.name.startsWith("game.tar.")) continue;
     const childRel = rel ? path.join(rel, e.name) : e.name;
     if (e.isDirectory()) out.push(...await listFiles(root, childRel));
     else if (e.isFile()) out.push(childRel);
