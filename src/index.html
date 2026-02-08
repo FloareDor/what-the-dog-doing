@@ -24,8 +24,8 @@ canvas{display:block;width:100%;height:100%}
   const HOME={x:260,y:MAP_H*.5,r:170};
   const SAFE_BUILDINGS=[
     {id:'home',n:'Cohon Centre',x:HOME.x,y:HOME.y,r:HOME.r,c:'#8ec0ff'},
-    {id:'nsh',n:'nsh',x:980,y:460,r:170,c:'#79d7ff'},
-    {id:'mel',n:'mellon',x:1880,y:1260,r:185,c:'#ffd58f'}
+    {id:'nsh',n:'NSH',x:980,y:460,r:170,c:'#79d7ff'},
+    {id:'mel',n:'Mellon Inst',x:1880,y:1260,r:185,c:'#ffd58f'}
   ];
   const WHO=['i need to go out','these things are scary','may lord help us','can we ever go out?'];
   const WHI=['a dog?','scotty??','what the dog doing?'];
@@ -226,16 +226,16 @@ canvas{display:block;width:100%;height:100%}
     beep(p.catM?520:460,.04,'triangle',.02);
   }
   function objectiveText(){
-    if(!p.mkOn)return 'm '+g.homeGot+'/'+g.homeNeed;
-    if(g.bd)return 'boss down';
-    if(g.bs)return 'boss';
-    if(g.pz&&g.pz.id==='nsh')return 'nsh puzzle';
-    if(g.pz&&g.pz.id==='mel')return 'mel puzzle';
-    if(g.sch.nsh===0)return 'nsh';
-    if(g.sch.nsh===1)return 'nsh puzzle';
-    if(g.sch.mel===0)return 'mellon';
-    if(g.sch.mel===1)return 'mel puzzle';
-    return 'phase2';
+    if(!p.mkOn)return 'collect mints '+g.homeGot+'/'+g.homeNeed;
+    if(g.bd)return 'boss defeated';
+    if(g.bs)return 'defeat boss';
+    if(g.pz&&g.pz.id==='nsh')return 'solve nsh puzzle';
+    if(g.pz&&g.pz.id==='mel')return 'solve mellon puzzle';
+    if(g.sch.nsh===0)return 'go to nsh';
+    if(g.sch.nsh===1)return 'solve nsh puzzle';
+    if(g.sch.mel===0)return 'go to mellon institute';
+    if(g.sch.mel===1)return 'solve mellon puzzle';
+    return 'survive phase 2';
   }
   function queueUnlock(id){
     if(g.uq.indexOf(id)<0)g.uq.push(id);
@@ -244,8 +244,8 @@ canvas{display:block;width:100%;height:100%}
     if(g.lvup||g.dead||g.pz||!g.uq.length)return;
     const id=g.uq.shift();
     let u=0;
-    if(id==='nsh'&&!p.bot)u={n:'Bot Buddy',d:'orbit bot ally',f:()=>{p.bot=1;p.bx=p.x+20;p.by=p.y+4;p.bcd=.2;p.bRate=.5;p.bDmg=.55;p.bRange=430;}};
-    else if(id==='mel'&&!p.cat)u={n:'Chemical Mode',d:'sticky/corrosive puddles',f:()=>{p.cat=1;p.catM=0;}};
+    if(id==='nsh'&&!p.bot)u={n:'Bot Buddy',d:'unlock orbit bot',f:()=>{p.bot=1;p.bx=p.x+20;p.by=p.y+4;p.bcd=.2;p.bRate=.5;p.bDmg=.55;p.bRange=430;}};
+    else if(id==='mel'&&!p.cat)u={n:'Chemical Mode',d:'unlock chem puddles',f:()=>{p.cat=1;p.catM=0;}};
     if(!u)return;
     g.choices=[u,u,u];
     g.lvup=1;
@@ -436,28 +436,28 @@ canvas{display:block;width:100%;height:100%}
   }
 
   const UPS=[
-    {n:'Rapid Fire',d:'rf',f:()=>p.fireRate=Math.max(.15,p.fireRate*.8),req:()=>1},
-    {n:'Big Bites',d:'+dmg',f:()=>p.dmg+=8,req:()=>1},
-    {n:'Speed Paws',d:'+spd',f:()=>p.speed+=30,req:()=>1},
-    {n:'Extra Shot',d:'+shot',f:()=>p.shots=Math.min(5,p.shots+1),req:()=>1},
-    {n:'Long Reach',d:'+rng',f:()=>p.range+=150,req:()=>1},
-    {n:'Snack Magnet',d:'+mag',f:()=>p.magnet+=40,req:()=>1},
-    {n:'Tough Fur',d:'+hp',f:()=>{p.maxHp+=32;p.hp=Math.min(p.maxHp,p.hp+32)},req:()=>1},
-    {n:'Quick Heal',d:'heal',f:()=>p.hp=Math.min(p.maxHp,p.hp+45),req:()=>1},
-    {n:'Zoomies Time',d:'+z time',f:()=>p.zDur=Math.min(2.6,p.zDur+.32),req:()=>1},
-    {n:'Zoomies CD',d:'-z cd',f:()=>p.zCool=Math.max(1.4,p.zCool-.85),req:()=>1},
-    {n:'Zoomies Speed',d:'+z spd',f:()=>p.zSpd=Math.min(4,p.zSpd+.45),req:()=>1},
-    {n:'Zoomies Charge',d:'-z load',f:()=>p.zLoad=Math.max(.55,p.zLoad-.24),req:()=>1},
-    {n:'Territory CD',d:'-t cd',f:()=>p.mkI=Math.max(3.2,p.mkI-.68),req:()=>p.mkOn},
-    {n:'Territory Radius',d:'+t rad',f:()=>p.mkR=Math.min(110,p.mkR+16),req:()=>p.mkOn},
-    {n:'Territory Duration',d:'+t dur',f:()=>p.mkD=Math.min(40,p.mkD+5),req:()=>p.mkOn},
-    {n:'Territory Slow',d:'+t slow',f:()=>p.mkSl=Math.min(.88,p.mkSl+.12),req:()=>p.mkOn},
-    {n:'Chemical Puddle',d:'+chem',f:()=>{p.chDo=Math.min(58,p.chDo+10);p.chBurst=Math.min(42,p.chBurst+8)},req:()=>p.cat},
-    {n:'Chemical Radius',d:'+c rad',f:()=>p.mkR=Math.min(120,p.mkR+13),req:()=>p.cat},
-    {n:'Chemical Tempo',d:'-c cd',f:()=>p.mkI=Math.max(2.6,p.mkI-.58),req:()=>p.cat},
-    {n:'Bot Rate',d:'+b rate',f:()=>p.bRate=Math.max(.18,p.bRate*.76),req:()=>p.bot},
-    {n:'Bot Damage',d:'+b dmg',f:()=>p.bDmg=Math.min(1.7,p.bDmg+.26),req:()=>p.bot},
-    {n:'Bot Radar',d:'+b rng',f:()=>p.bRange=Math.min(820,p.bRange+95),req:()=>p.bot}
+    {n:'Rapid Fire',d:'shoot faster',f:()=>p.fireRate=Math.max(.15,p.fireRate*.8),req:()=>1},
+    {n:'Big Bites',d:'more damage',f:()=>p.dmg+=8,req:()=>1},
+    {n:'Speed Paws',d:'move faster',f:()=>p.speed+=30,req:()=>1},
+    {n:'Extra Shot',d:'+1 projectile',f:()=>p.shots=Math.min(5,p.shots+1),req:()=>1},
+    {n:'Long Reach',d:'longer range',f:()=>p.range+=150,req:()=>1},
+    {n:'Snack Magnet',d:'pickup range up',f:()=>p.magnet+=40,req:()=>1},
+    {n:'Tough Fur',d:'+max hp +heal',f:()=>{p.maxHp+=32;p.hp=Math.min(p.maxHp,p.hp+32)},req:()=>1},
+    {n:'Quick Heal',d:'heal now',f:()=>p.hp=Math.min(p.maxHp,p.hp+45),req:()=>1},
+    {n:'Zoomies Time',d:'zoomies lasts longer',f:()=>p.zDur=Math.min(2.6,p.zDur+.32),req:()=>1},
+    {n:'Zoomies CD',d:'zoomies cooldown down',f:()=>p.zCool=Math.max(1.4,p.zCool-.85),req:()=>1},
+    {n:'Zoomies Speed',d:'zoomies speed up',f:()=>p.zSpd=Math.min(4,p.zSpd+.45),req:()=>1},
+    {n:'Zoomies Charge',d:'zoomies charge faster',f:()=>p.zLoad=Math.max(.55,p.zLoad-.24),req:()=>1},
+    {n:'Territory CD',d:'territory cooldown down',f:()=>p.mkI=Math.max(3.2,p.mkI-.68),req:()=>p.mkOn},
+    {n:'Territory Radius',d:'territory area bigger',f:()=>p.mkR=Math.min(110,p.mkR+16),req:()=>p.mkOn},
+    {n:'Territory Duration',d:'territory lasts longer',f:()=>p.mkD=Math.min(40,p.mkD+5),req:()=>p.mkOn},
+    {n:'Territory Slow',d:'territory slows more',f:()=>p.mkSl=Math.min(.88,p.mkSl+.12),req:()=>p.mkOn},
+    {n:'Chemical Puddle',d:'chem damage up',f:()=>{p.chDo=Math.min(58,p.chDo+10);p.chBurst=Math.min(42,p.chBurst+8)},req:()=>p.cat},
+    {n:'Chemical Radius',d:'chem area bigger',f:()=>p.mkR=Math.min(120,p.mkR+13),req:()=>p.cat},
+    {n:'Chemical Tempo',d:'chem cooldown down',f:()=>p.mkI=Math.max(2.6,p.mkI-.58),req:()=>p.cat},
+    {n:'Bot Rate',d:'bot fires faster',f:()=>p.bRate=Math.max(.18,p.bRate*.76),req:()=>p.bot},
+    {n:'Bot Damage',d:'bot damage up',f:()=>p.bDmg=Math.min(1.7,p.bDmg+.26),req:()=>p.bot},
+    {n:'Bot Radar',d:'bot range up',f:()=>p.bRange=Math.min(820,p.bRange+95),req:()=>p.bot}
   ];
 
   function rollChoices(){
@@ -1111,7 +1111,7 @@ canvas{display:block;width:100%;height:100%}
       x.fillStyle='rgba(16,24,37,.96)';rr(l.bx,l.by,l.bw,l.bh,14);x.fill();
       x.strokeStyle='rgba(106,145,185,.85)';x.lineWidth=1.2;rr(l.bx+.5,l.by+.5,l.bw-1,l.bh-1,14);x.stroke();
       x.fillStyle='#ecf3ff';x.font='700 19px Trebuchet MS,sans-serif';
-      x.fillText(pz.id==='nsh'?'nsh':'mel',l.bx+14,l.by+27);
+      x.fillText(pz.id==='nsh'?'NSH lab':'Mellon lab',l.bx+14,l.by+27);
       if(pz.id==='nsh'){
         x.fillStyle='#dce8ff';x.font='600 12px Trebuchet MS,sans-serif';x.fillText('order',l.bx+14,l.by+66);
         for(let i=0;i<pz.seq.length;i++){
