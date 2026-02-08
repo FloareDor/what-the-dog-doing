@@ -53,11 +53,9 @@ try {
   });
   if (result.code) minJs = result.code;
 } catch {
-  minJs = jsRaw
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/\n+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  // Syntax-safe fallback for environments where terser isn't available
+  // (e.g., GitHub Actions without sibling repos). Keep raw JS.
+  minJs = jsRaw;
 }
 
 let out = raw

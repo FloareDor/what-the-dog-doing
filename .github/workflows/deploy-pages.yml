@@ -30,6 +30,10 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Smoke check built script
+        run: |
+          node -e "const fs=require('node:fs'); const html=fs.readFileSync('build/index.html','utf8'); const m=html.match(/<script>([\s\S]*?)<\/script>/i); if(!m) throw new Error('Missing inline script'); new Function(m[1]);"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
