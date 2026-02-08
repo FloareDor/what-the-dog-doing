@@ -61,7 +61,6 @@ try {
 let out = raw
   .replace(styleMatch[0], `<style>${minCss}</style>`)
   .replace(scriptMatch[0], `<script>${minJs}</script>`)
-  .replace(/\n+/g, "")
   .replace(/>\s+</g, "><")
   .trim();
 
