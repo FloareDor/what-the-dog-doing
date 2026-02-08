@@ -45,7 +45,6 @@ canvas{display:block;width:100%;height:100%}
     const now=performance.now();
     if(now-memeT<1200)return;
     memeT=now;
-    // Keep this cue fully local/synthesized to avoid runtime asset requests.
     beep(392,.07,'square',.02);
     beep(523,.08,'triangle',.014);
   }
@@ -210,10 +209,10 @@ canvas{display:block;width:100%;height:100%}
   function unlockSchool(id){
     if(id==='nsh'&&g.sch.nsh!==2){
       g.sch.nsh=2;queueUnlock('nsh');
-      g.msg='nsh: bot unlock';g.msgT=2.1;trauma(.12);burst(p.x,p.y,'#79d7ff',16,95);beep(760,.07,'square',.024);
+      g.msg='nsh';g.msgT=2.1;trauma(.12);burst(p.x,p.y,'#79d7ff',16,95);beep(760,.07,'square',.024);
     }else if(id==='mel'&&g.sch.mel!==2){
       g.sch.mel=2;queueUnlock('mel');
-      g.msg='mel: chem unlock';g.msgT=2.1;trauma(.12);burst(p.x,p.y,'#ffd58f',16,95);beep(720,.07,'square',.024);
+      g.msg='mel';g.msgT=2.1;trauma(.12);burst(p.x,p.y,'#ffd58f',16,95);beep(720,.07,'square',.024);
     }
   }
   function toggleCatalyst(){
@@ -224,14 +223,14 @@ canvas{display:block;width:100%;height:100%}
     beep(p.catM?520:460,.04,'triangle',.02);
   }
   function objectiveText(){
-    if(!p.mkOn)return 'cohon: mints '+g.homeGot+'/'+g.homeNeed;
+    if(!p.mkOn)return 'm '+g.homeGot+'/'+g.homeNeed;
     if(g.bd)return 'boss down';
     if(g.bs)return 'boss';
     if(g.pz&&g.pz.id==='nsh')return 'nsh puzzle';
     if(g.pz&&g.pz.id==='mel')return 'mel puzzle';
-    if(g.sch.nsh===0)return 'go to nsh';
+    if(g.sch.nsh===0)return 'nsh';
     if(g.sch.nsh===1)return 'nsh puzzle';
-    if(g.sch.mel===0)return 'go 2 mellon';
+    if(g.sch.mel===0)return 'mellon';
     if(g.sch.mel===1)return 'mel puzzle';
     return 'phase2';
   }
@@ -248,7 +247,7 @@ canvas{display:block;width:100%;height:100%}
     g.choices=[u,u,u];
     g.lvup=1;
     g.cardT=0;
-    g.msg='school unlock';
+    g.msg='up';
     g.msgT=1.4;
     beep(760,.07,'triangle',.028);
   }
@@ -485,7 +484,6 @@ canvas{display:block;width:100%;height:100%}
     p.ry*=Math.max(0,1-rdt*18);
     if(p.zcd>0)p.zcd=Math.max(0,p.zcd-rdt);
     if(p.mkS>0)p.mkS=Math.max(0,p.mkS-rdt);
-    // Territory timer pauses during active zoomies so it never interrupts the dash.
     if(p.mkT>0&&p.zt<=0)p.mkT=Math.max(0,p.mkT-rdt);
     for(let i=pudd.length-1;i>=0;i--){const pd=pudd[i];pd.t-=dt;if(pd.t<=0)pudd.splice(i,1);}
     for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.t-=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=480*dt;if(f.t<=0)fx.splice(i,1)}
@@ -509,9 +507,10 @@ canvas{display:block;width:100%;height:100%}
     if(ln>1){mx/=ln;my/=ln;}
 
     const hasInput=(Math.hypot(kx,ky)>.05||(touchMove&&joyMag>JOY_INPUT_DEAD))&&p.mkS<=0;
+    const pSafeChargeZone=safeBuildingAt(p.x,p.y,-6);
     if(p.mkOn&&p.mkT<=0&&p.mkS<=0&&p.zt<=0&&p.zr<=0&&p.zc<=0)markTerritory();
     if(p.zt<=0){
-      if(!hasInput&&p.zcd<=0&&p.mkS<=0){
+      if(!pSafeChargeZone&&!hasInput&&p.zcd<=0&&p.mkS<=0){
         p.zc=Math.min(p.zLoad,p.zc+dt);
         if(p.zc>.25){
           const q=p.zc/p.zLoad;
@@ -751,7 +750,7 @@ canvas{display:block;width:100%;height:100%}
           g.homeGot++;
           if(g.homeGot>=g.homeNeed){
             p.mkOn=1;p.mkT=.25;
-            g.msg='territory: nsh';
+            g.msg='open';
             g.msgT=2.2;
             beep(820,.07,'triangle',.028);
             burst(p.x,p.y,'#ffd56d',16,95);
@@ -761,7 +760,6 @@ canvas{display:block;width:100%;height:100%}
     }
 
     if((keys.gr||touchMove)&&Math.random()<.04&&g.time>2){
-      // tiny bonus eating trail for movement engagement
       pushFood({x:clamp(p.x+rnd(-20,20),12,MAP_W-12),y:clamp(p.y+rnd(-20,20),12,MAP_H-12),v:4,m:1,t:0});
     }
   }
@@ -795,7 +793,7 @@ canvas{display:block;width:100%;height:100%}
       const s=SAFE_BUILDINGS[i],sx=s.x-cm.x,sy=s.y-cm.y;
       if(sx<-s.r-30||sy<-s.r-30||sx>W+s.r+30||sy>H+s.r+30)continue;
       const done=s.id==='home'?0:g.sch[s.id]===2;
-      const active=s.id==='home'?!p.mkOn:g.sch[s.id]===1;
+      const active=s.id==='home'?!p.mkOn:(g.sch[s.id]===1||(s.id==='nsh'&&g.sch.nsh===0)||(s.id==='mel'&&g.sch.nsh===2&&g.sch.mel===0));
       x.globalAlpha=done?.18:active?.14:.08;
       x.fillStyle=s.c;x.beginPath();x.arc(sx,sy,s.r,0,Math.PI*2);x.fill();
       x.globalAlpha=.65;
