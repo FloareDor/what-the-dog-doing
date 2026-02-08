@@ -1117,9 +1117,15 @@ canvas{display:block;width:100%;height:100%}
     if(!g.start){
       const ix=20,iy=H*.16,iw=W-40,ih=H*.68,tx=ix+16;
       x.fillStyle='rgba(6,9,14,.86)';x.fillRect(ix,iy,iw,ih);
-      x.fillStyle='#fff';x.font='700 30px Trebuchet MS,sans-serif';x.fillText('what the dog doing',tx,iy+44);
-      x.fillStyle='#d8e6ff';x.font='600 16px Trebuchet MS,sans-serif';
-      x.fillStyle='#69f0c9';x.font='700 23px Trebuchet MS,sans-serif';x.fillText('tap start',tx,iy+178);
+      x.fillStyle='#fff';x.font='700 30px Trebuchet MS,sans-serif';x.fillText('Project: Zoomies',tx,iy+42);
+      x.fillStyle='#9ec8ff';x.font='600 15px Trebuchet MS,sans-serif';x.fillText('what the dog doing?',tx,iy+64);
+      x.fillStyle='#d8e6ff';x.font='600 14px Trebuchet MS,sans-serif';
+      drawWrap('Goop swallowed CMU paths. People are trapped inside buildings. Scotty is the only one fast enough to move across campus.',tx,iy+98,iw-32,18,5);
+      x.fillStyle='#9ec8ff';x.font='600 13px Trebuchet MS,sans-serif';
+      drawWrap('Collaborate with each college, unlock abilities, and defeat the infestation.',tx,iy+200,iw-32,17,3);
+      x.fillStyle='#dce8ff';x.font='600 12px Trebuchet MS,sans-serif';
+      drawWrap('Controls: drag to move. Hold still to charge Zoomies, then move to dash. Scotty pees to mark territory, and those puddles slow enemies.',tx,iy+250,iw-32,16,4);
+      x.fillStyle='#69f0c9';x.font='700 23px Trebuchet MS,sans-serif';x.fillText('tap start',tx,iy+ih-22);
     }
 
     if(g.lvup&&!g.dead){
