@@ -289,7 +289,7 @@ canvas{display:block;width:100%;height:100%}
       g.choices=[
         {n:'Acidic Puddle',d:'corrosive zone: burst + damage over time',f:()=>setChemVariant(1),bg:'rgba(33,75,34,.96)',st:'rgba(160,236,146,.88)',tx:'#edffe9',sub:'#bce2b3'},
         {n:'Heal Puddle',d:'restorative zone: heals Scotty while inside',f:()=>setChemVariant(2),bg:'rgba(22,79,72,.96)',st:'rgba(151,242,228,.9)',tx:'#e8fffb',sub:'#b6e7df'},
-        {n:'Gravity Puddle',d:'field zone: pulls nearby enemies inward',f:()=>setChemVariant(3),bg:'rgba(30,45,86,.96)',st:'rgba(156,190,255,.9)',tx:'#edf3ff',sub:'#bfd1f0'}
+        {n:'Gravity Puddle',d:'black hole zone: drags enemies from far outside',f:()=>setChemVariant(3),bg:'rgba(30,45,86,.96)',st:'rgba(156,190,255,.9)',tx:'#edf3ff',sub:'#bfd1f0'}
       ];
     }
     if(!g.choices.length)return;
@@ -809,15 +809,17 @@ canvas{display:block;width:100%;height:100%}
         const d2=px*px+py*py;
         const mode=pd.m|0;
         if(mode===3){
-          const gr=pd.r*1.45;
+          const gr=pd.r*2.35;
           if(d2<gr*gr){
             const gd=Math.sqrt(d2)||1;
-            const pull=(1-gd/gr)*260;
+            const q=1-gd/gr;
+            const pull=110+q*q*470;
             m.vx+=(-px/gd)*pull*dt;
             m.vy+=(-py/gd)*pull*dt;
+            sf=Math.min(sf,.82);
             if(d2<pd.r*pd.r){
               padMode=3;
-              sf=Math.min(sf,.42);
+              sf=Math.min(sf,.32);
               inPad=1;
             }
           }
@@ -990,6 +992,16 @@ canvas{display:block;width:100%;height:100%}
       x.strokeStyle=ps;x.lineWidth=1.5;
       x.beginPath();x.arc(sx,sy,pd.r*.68+Math.sin((g.t+i)*4)*2,0,Math.PI*2);x.stroke();
       if(p.cat){
+        if(pd.m===3){
+          x.globalAlpha=.1+.08*q;
+          x.strokeStyle='rgba(175,205,255,.72)';
+          x.lineWidth=1.25;
+          x.beginPath();x.arc(sx,sy,pd.r*2.35*(.97+.03*Math.sin(g.t*2+i)),0,Math.PI*2);x.stroke();
+          x.globalAlpha=.08+.07*q;
+          x.strokeStyle='rgba(140,174,255,.58)';
+          x.lineWidth=1;
+          x.beginPath();x.arc(sx,sy,pd.r*1.6*(.96+.04*Math.sin(g.t*2.7+i*.8)),0,Math.PI*2);x.stroke();
+        }
         x.globalAlpha=.18+.24*q;
         if(pd.m===1)x.fillStyle='#dbff8f';
         else if(pd.m===2)x.fillStyle='#d8fff7';
