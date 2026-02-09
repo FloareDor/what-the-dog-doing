@@ -28,6 +28,9 @@
   const SLINGSHOT_DASH_MIN=.3;
   const SLINGSHOT_DASH_MAX=.58;
   const SLINGSHOT_DASH_SPEED=560;
+  const SLINGSHOT_PERFECT_WINDOW=.24;
+  const SLINGSHOT_AIM_DOT=.82;
+  const SLINGSHOT_TRIPLE_BURST_RADIUS=165;
 
   const imgs={};
   function load(n){const i=new Image();i.src='black_scottish_terrier_dog_with_red_scarf/rotations/'+n+'.png';return i}
@@ -67,7 +70,7 @@
     labCd:0
   };
 
-  const p={x:260,y:MAP_H*.5,vx:0,vy:0,r:15,hp:100,maxHp:100,speed:185,fireCd:0,fireRate:.46,dmg:12,range:400,shots:1,magnet:88,face:1,rx:0,ry:0,flash:0,gx:1,gy:0,zc:0,zr:0,zt:0,zx:1,zy:0,zcd:0,zDur:1,zSpd:2.1,zLoad:1.5,zCool:5.5,zDmg:24,zDr:.55,zb:0,zp:0,mkOn:0,mkT:0,mkI:8.8,mkS:0,mkD:14,mkR:54,mkSl:.54,chDo:14,chBurst:10,chHeal:8,chHealCd:0,chHealI:.85,cat:0,catM:0,catType:0,bot:0,botCount:0,botSlots:0,bType:0,bAtk:1,bAuraR:0,bAuraSl:0,bHealCd:0,bHealI:10,bHealAmt:10,bHealFx:0,triA:0,triFx:0,slCharge:0,slT:0,slPow:0,slWave:0,slDx:1,slDy:0,bx:0,by:0,ba:0,bcd:0,bRate:1.9,bDmg:1.15,bRange:480,bFetch:95,bPull:195,bCarry:0,bCarryMax:2,bGrabCd:0,bGrabI:.38,bPier:4,bSize:6};
+  const p={x:260,y:MAP_H*.5,vx:0,vy:0,r:15,hp:100,maxHp:100,speed:185,fireCd:0,fireRate:.46,dmg:12,range:400,shots:1,magnet:88,face:1,rx:0,ry:0,flash:0,gx:1,gy:0,zc:0,zr:0,zt:0,zx:1,zy:0,zcd:0,zDur:1,zSpd:2.1,zLoad:1.5,zCool:5.5,zDmg:24,zDr:.55,zb:0,zp:0,mkOn:0,mkT:0,mkI:8.8,mkS:0,mkD:14,mkR:54,mkSl:.54,chDo:14,chBurst:10,chHeal:8,chHealCd:0,chHealI:.85,cat:0,catM:0,catType:0,bot:0,botCount:0,botSlots:0,bType:0,bAtk:1,bAuraR:0,bAuraSl:0,bHealCd:0,bHealI:10,bHealAmt:10,bHealFx:0,triA:0,triFx:0,slCharge:0,slFocus:0,slT:0,slPow:0,slWave:0,slComboFx:0,slHitMask:0,slPerfect:0,slDx:1,slDy:0,bx:0,by:0,ba:0,bcd:0,bRate:1.9,bDmg:1.15,bRange:480,bFetch:95,bPull:195,bCarry:0,bCarryMax:2,bGrabCd:0,bGrabI:.38,bPier:4,bSize:6};
   const keys={l:0,r:0,u:0,d:0,gr:0};
   let touchId=-1,touchMove=0;
   const joy={x:78,y:0,r:42,kr:16,tx:0,ty:0,ax:0,ay:0,ttx:0,tty:0,tax:0,tay:0,show:0,act:0};
@@ -757,7 +760,7 @@
 
   function reset(full){
     g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.bossDownT=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;
-    p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slT=0;p.slPow=0;p.slWave=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
+    p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slFocus=0;p.slT=0;p.slPow=0;p.slWave=0;p.slComboFx=0;p.slHitMask=0;p.slPerfect=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
     z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;
     keys.l=keys.r=keys.u=keys.d=keys.gr=0;touchMove=0;joyReset(1);
     g.msg='home: unlock';
@@ -983,6 +986,7 @@
     if(p.bHealFx>0)p.bHealFx=Math.max(0,p.bHealFx-rdt);
     if(p.triFx>0)p.triFx=Math.max(0,p.triFx-rdt*(p.slT>0?1:1.7));
     if(p.slWave>0)p.slWave=Math.max(0,p.slWave-rdt*2.6);
+    if(p.slComboFx>0)p.slComboFx=Math.max(0,p.slComboFx-rdt*2.1);
     for(let i=pudd.length-1;i>=0;i--){const pd=pudd[i];pd.t-=dt;if(pd.t<=0)pudd.splice(i,1);}
     for(let i=react.length-1;i>=0;i--){const rc=react[i];rc.t-=dt;if(rc.pcd>0)rc.pcd=Math.max(0,rc.pcd-dt);if(rc.t<=0)react.splice(i,1);}
     for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.t-=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=480*dt;if(f.t<=0)fx.splice(i,1)}
@@ -1045,7 +1049,10 @@
           p.zx=mx/l2;
           p.zy=my/l2;
           p.slCharge=0;
+          p.slFocus=0;
           p.slPow=0;
+          p.slHitMask=0;
+          p.slPerfect=0;
           hitStop(.04);
           trauma(.28);
           p.flash=.09;
@@ -1075,14 +1082,17 @@
       if(Math.random()<.65)pushFx({x:p.x-rnd(-6,6),y:p.y-rnd(-6,6),vx:-p.vx*.12+rnd(-35,35),vy:-p.vy*.12+rnd(-35,35),t:rnd(.1,.25),c:'#8fffe5'});
       if(p.zt<=0){
         if(p.bot&&bots.length>=3&&p.slCharge>=SLINGSHOT_CHARGE_TRIGGER){
-          const q=Math.min(1,p.slCharge);
+          const perfect=p.slPerfect&&p.slFocus>=.98?1:0;
+          const q=Math.min(1,p.slCharge*(perfect?1.12:1));
           p.slT=SLINGSHOT_DASH_MIN+(SLINGSHOT_DASH_MAX-SLINGSHOT_DASH_MIN)*q;
-          p.slPow=.68+.48*q;
+          p.slPow=.68+.48*q+.34*perfect;
           p.slDx=p.zx;
           p.slDy=p.zy;
           p.slWave=1;
           p.triFx=1;
-          const baseSp=SLINGSHOT_DASH_SPEED*(.78+.58*q);
+          p.slHitMask=0;
+          p.slComboFx=Math.max(p.slComboFx,perfect?.95:0);
+          const baseSp=SLINGSHOT_DASH_SPEED*(.78+.58*q+.32*perfect);
           for(let bi=0;bi<3&&bi<bots.length;bi++){
             const bt=bots[bi];
             const spread=(bi-1)*.34;
@@ -1096,12 +1106,17 @@
           hitStop(.05+.025*q);
           trauma(.2+.14*q);
           burst(p.x,p.y,'#8eefff',14,92+q*58);
-          g.msg='slingshot pack';
+          g.msg=perfect?'perfect slingshot':'slingshot pack';
           g.msgT=.82;
-          beep(940,.05,'square',.026);
-          beep(1220,.04,'triangle',.018);
+          beep(perfect?1020:940,.05,'square',.026);
+          beep(perfect?1350:1220,.04,'triangle',.018);
+          p.slPerfect=0;
+          p.slFocus=0;
         }else{
           p.slCharge=0;
+          p.slFocus=0;
+          p.slPerfect=0;
+          p.slHitMask=0;
           g.msg='zoomies cd';
           g.msgT=.65;
           beep(420,.04,'triangle',.016);
@@ -1200,12 +1215,35 @@
       syncBots();
       triMode=p.zt>0&&bots.length>=3;
       if(triMode){
-        p.slCharge=Math.min(1,p.slCharge+dt*1.35);
-        p.triFx=Math.min(1,p.triFx+dt*3.2);
-      }else if(p.slT<=0&&p.slCharge>0){
+        const aimDot=hasInput?Math.max(0,mx*p.zx+my*p.zy):0;
+        const pullGain=.6+aimDot*.95;
+        p.slCharge=Math.min(1,p.slCharge+dt*pullGain);
+        if(p.zt<=SLINGSHOT_PERFECT_WINDOW){
+          if(hasInput&&aimDot>SLINGSHOT_AIM_DOT){
+            p.slFocus=Math.min(1,p.slFocus+dt*4.5);
+            if(p.slFocus>=1&&!p.slPerfect){
+              p.slPerfect=1;
+              p.slComboFx=Math.max(p.slComboFx,.55);
+              g.msg='perfect line';
+              g.msgT=.45;
+              beep(1180,.03,'triangle',.014);
+            }
+          }else if(!p.slPerfect){
+            p.slFocus=Math.max(0,p.slFocus-dt*3.8);
+          }
+        }else if(!p.slPerfect){
+          p.slFocus=Math.max(0,p.slFocus-dt*1.6);
+        }
+        p.triFx=Math.min(1,p.triFx+dt*(p.slPerfect?4.1:3.2));
+      }else if(p.slT<=0&&(p.slCharge>0||p.slFocus>0||p.slPerfect)){
         p.slCharge=Math.max(0,p.slCharge-dt*2.6);
+        p.slFocus=Math.max(0,p.slFocus-dt*2.8);
+        if(p.slFocus<=.02)p.slPerfect=0;
       }
-      if(p.slT>0)p.slT=Math.max(0,p.slT-dt);
+      if(p.slT>0){
+        p.slT=Math.max(0,p.slT-dt);
+        if(p.slT<=0)p.slHitMask=0;
+      }
       p.ba+=dt*((triMode||p.slT>0)?4.9:2.3);
       p.triA+=dt*(triMode?9.2:4.2);
       for(let bi=0;bi<bots.length;bi++){
@@ -1296,8 +1334,12 @@
       p.botSlots=0;
       triMode=0;
       p.slCharge=0;
+      p.slFocus=0;
       p.slT=0;
       p.slPow=0;
+      p.slHitMask=0;
+      p.slPerfect=0;
+      p.slComboFx=0;
     }
 
     // auto-shoot
@@ -1340,6 +1382,7 @@
     // zombies + contact damage
     let contact=0;
     let zoomHits=0,zoomKills=0;
+    let slBurst=0,slBurstPow=0;
     const pSafe=pSafeNow;
     for(let i=z.length-1;i>=0;i--){
       const m=z[i];
@@ -1602,6 +1645,18 @@
             zoomHits++;
             burst(m.x,m.y,'#8eefff',7,64);
             slammed=1;
+            const bit=1<<bi;
+            if(!(p.slHitMask&bit))p.slHitMask|=bit;
+            if(!slBurst&&p.slHitMask===7){
+              slBurst=1;
+              slBurstPow=Math.max(slBurstPow,p.slPow);
+              p.slWave=Math.max(p.slWave,.95);
+              p.slComboFx=Math.max(p.slComboFx,1.2);
+              g.msg='triple crack';
+              g.msgT=.7;
+              beep(1240,.04,'square',.024);
+              beep(820,.05,'triangle',.017);
+            }
             if(m.hp<=0){
               killZombie(i,'#8eefff',12,92,1);
               zoomKills++;
@@ -1669,6 +1724,30 @@
         }
         contact+=m.k===4?m.dmg*1.2:m.dmg;
       }
+    }
+    if(slBurst){
+      const rr=SLINGSHOT_TRIPLE_BURST_RADIUS*(.9+.35*slBurstPow);
+      const rr2=rr*rr;
+      const dmgBase=p.zDmg*(.7+1.1*slBurstPow);
+      for(let i=z.length-1;i>=0;i--){
+        const m=z[i],dx=m.x-p.x,dy=m.y-p.y,d2=dx*dx+dy*dy;
+        if(d2>rr2)continue;
+        const d=Math.sqrt(d2)||1,q=1-d/rr;
+        m.hp-=dmgBase*(.55+.45*q);
+        m.ht=Math.max(m.ht,.14);
+        const push=220+280*slBurstPow*q;
+        m.vx+=dx/d*push;
+        m.vy+=dy/d*push;
+        zoomHits++;
+        if(Math.random()<.32)burst(m.x,m.y,'#b8f6ff',3,40);
+        if(m.hp<=0){
+          killZombie(i,'#b8f6ff',11,86,1);
+          zoomKills++;
+        }
+      }
+      hitStop(.06+.03*Math.min(1,slBurstPow));
+      trauma(.2+.14*Math.min(1,slBurstPow));
+      burst(p.x,p.y,'#b8f6ff',20,130+90*slBurstPow);
     }
     if(zoomHits>0){
       hitStop(Math.min(.04,.012*zoomHits));
@@ -1965,7 +2044,7 @@
         }
       }
       if((p.zt>0||p.slT>0)&&bots.length>=3){
-        const q=Math.max(p.triFx,p.slCharge,p.slPow*(p.slT>0?1:0));
+        const q=Math.max(p.triFx,p.slCharge,p.slFocus,p.slPow*(p.slT>0?1:0),p.slComboFx*.55);
         const dx=p.zt>0?p.zx:p.slDx,dy=p.zt>0?p.zy:p.slDy;
         const ph=g.t*4.6;
         for(let bi=0;bi<3;bi++){
@@ -1991,6 +2070,18 @@
             x.strokeStyle='rgba(167,244,255,'+(0.22+.44*q)+')';
             x.lineWidth=2.2+q*.9;
             x.beginPath();x.moveTo(tx2,ty2);x.lineTo(bx,by);x.stroke();
+          }
+        }
+        if(p.zt>0&&p.slFocus>0){
+          const fq=Math.min(1,p.slFocus);
+          const rr=30+fq*9+Math.sin(g.t*20)*1.1;
+          x.strokeStyle=p.slPerfect?'rgba(255,233,160,.95)':'rgba(196,239,255,'+(0.35+.45*fq)+')';
+          x.lineWidth=1.4+fq*1.6;
+          x.beginPath();x.arc(psx,psy,rr,-Math.PI*.5,-Math.PI*.5+Math.PI*2*fq);x.stroke();
+          if(p.slPerfect){
+            x.fillStyle='rgba(255,240,190,.96)';
+            x.font='700 10px Trebuchet MS,sans-serif';
+            x.fillText('PERFECT',psx-22,psy-28);
           }
         }
       }
@@ -2047,6 +2138,17 @@
       x.globalAlpha=.74*q;
       x.strokeStyle='rgba(214,250,255,.96)';
       x.lineWidth=2+q*2.4;
+      x.beginPath();x.arc(psx,psy,rr,0,Math.PI*2);x.stroke();
+      x.globalAlpha=1;
+    }
+    if(p.slComboFx>0){
+      const q=Math.min(1,p.slComboFx),rr=42+(1-q)*58;
+      x.globalAlpha=.07+.2*q;
+      x.fillStyle='rgba(185,244,255,.95)';
+      x.beginPath();x.arc(psx,psy,rr*1.1,0,Math.PI*2);x.fill();
+      x.globalAlpha=.2+.45*q;
+      x.strokeStyle='rgba(229,251,255,.96)';
+      x.lineWidth=1.8+q*1.5;
       x.beginPath();x.arc(psx,psy,rr,0,Math.PI*2);x.stroke();
       x.globalAlpha=1;
     }
