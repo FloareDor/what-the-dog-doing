@@ -287,29 +287,41 @@ canvas{display:block;width:100%;height:100%}
     queueLabMilestoneRewards();
   }
   function chemLabel(){
-    if(p.catType===1)return 'acid';
-    if(p.catType===2)return 'heal';
-    if(p.catType===3)return 'grav';
+    const m=g.chemMask,n=knownVariants(m);
+    if(n>=3)return 'campus brew';
+    if(n===2){
+      if((m&3)===3)return 'caustic mist';
+      if((m&5)===5)return 'vortex acid';
+      return 'sanctuary';
+    }
+    if(m&1)return 'acid';
+    if(m&2)return 'heal';
+    if(m&4)return 'grav';
     return 'chem';
   }
   function chemColor(){
-    if(p.catType===1)return '#8fdd73';
-    if(p.catType===2)return '#7ad8cd';
-    if(p.catType===3)return '#8fb6ff';
+    const m=g.chemMask,n=knownVariants(m);
+    if(n>=3)return '#5ccba0';
+    if(n===2){
+      if((m&3)===3)return '#7ae88a';
+      if((m&5)===5)return '#7ab0ff';
+      return '#62d8c0';
+    }
+    if(m&1)return '#8fdd73';
+    if(m&2)return '#7ad8cd';
+    if(m&4)return '#8fb6ff';
     return '#f4d96e';
   }
   function toggleCatalyst(){
     if(!p.cat)return;
-    const owned=[];
-    for(let i=1;i<=3;i++)if(g.chemMask&(1<<(i-1)))owned.push(i);
-    g.msg='brew cycle: '+owned.map(t=>t===1?'acid':t===2?'heal':'grav').join(' > ')+' (auto)';
+    g.msg='brew: '+chemLabel();
     g.msgT=1.1;
     beep(520,.04,'triangle',.016);
   }
   function objectiveText(){
     if(!p.mkOn)return 'collect mints '+g.homeGot+'/'+g.homeNeed;
     if(g.bd2)return 'campus secured';
-    if(g.bs2&&knownVariants(g.chemMask)>=3)return 'brew all 3 puddles to counter apex!';
+    if(g.bs2&&knownVariants(g.chemMask)>=3)return 'campus brew active! overlap puddles to storm apex!';
     if(g.bs2)return 'defeat apex boss';
     if(g.bd)return 'apex signal rising';
     if(g.bs)return 'defeat boss';
@@ -631,30 +643,16 @@ canvas{display:block;width:100%;height:100%}
   }
   function markTerritory(){
     if(pudd.length>=MAX_PUDD)pudd.shift();
-    let mode=0;
-    if(p.cat){
-      const owned=[];
-      for(let i=1;i<=3;i++)if(g.chemMask&(1<<(i-1)))owned.push(i);
-      if(owned.length>0){
-        mode=p.catType||owned[0];
-        if(owned.length>1){
-          const cur=owned.indexOf(mode);
-          p.catType=owned[(cur+1)%owned.length];
-        }
-      }
-    }
-    const label=mode===1?'acid':mode===2?'heal':mode===3?'grav':'territory';
-    const nextLabel=p.cat&&knownVariants(g.chemMask)>1?(' > '+chemLabel()+' next'):'';
+    const mode=p.cat?g.chemMask:0;
     pudd.push({x:p.x+p.gx*4,y:p.y+8,r:p.mkR,t:p.mkD,d:p.mkD,m:mode});
     p.mkS=.32;
     p.mkT=p.mkI;
-    g.msg=label+nextLabel;
+    g.msg=p.cat?chemLabel():'territory';
     g.msgT=.7;
     hitStop(.02);
     trauma(.05);
-    const col=mode===1?'#8fdd73':mode===2?'#7ad8cd':mode===3?'#8fb6ff':'#ffd56d';
-    burst(p.x,p.y+8,col,10,46);
-    beep(mode===1?540:mode===2?600:mode===3?480:560,.04,'triangle',.02);
+    burst(p.x,p.y+8,p.cat?chemColor():'#ffd56d',10,46);
+    beep(p.cat?560:540,.04,'triangle',.02);
   }
   function reactionNear(k,px,py,r){
     for(let i=0;i<react.length;i++){
@@ -690,92 +688,61 @@ canvas{display:block;width:100%;height:100%}
     if(c!==undefined&&pudd[c])pudd[c].t=Math.min(pudd[c].t,.05);
   }
   function brewReactions(){
-    const chem=[];
+    if(g.chemMask!==7||g.stormCd>0)return;
+    const brews=[];
     for(let i=0;i<pudd.length;i++){
-      const pd=pudd[i];
-      if(pd.t>.08&&pd.m>=1&&pd.m<=3)chem.push(i);
+      if(pudd[i].t>.08&&pudd[i].m===7)brews.push(i);
     }
-    if(chem.length<2)return;
-    if(g.stormCd<=0&&chem.length>=3){
-      for(let a=0;a<chem.length-2;a++){
-        const pa=pudd[chem[a]];
-        for(let b=a+1;b<chem.length-1;b++){
-          const pb=pudd[chem[b]];
-          for(let c=b+1;c<chem.length;c++){
-            const pc=pudd[chem[c]];
-            const mask=(1<<pa.m)|(1<<pb.m)|(1<<pc.m);
-            if(mask!==14)continue;
-            const dab=Math.hypot(pa.x-pb.x,pa.y-pb.y),dbc=Math.hypot(pb.x-pc.x,pb.y-pc.y),dca=Math.hypot(pc.x-pa.x,pc.y-pa.y);
-            if(dab>(pa.r+pb.r)*.72||dbc>(pb.r+pc.r)*.72||dca>(pc.r+pa.r)*.72)continue;
-            const px=(pa.x+pb.x+pc.x)/3,py=(pa.y+pb.y+pc.y)/3;
-            const rr=Math.min(138,(pa.r+pb.r+pc.r)/3+30);
-            addReaction(4,px,py,rr,5.6);
-            g.stormCd=8;
-            consumePuddles(chem[a],chem[b],chem[c]);
-            // dispel nearby apex storms
-            for(let ri=react.length-1;ri>=0;ri--){
-              const ar=react[ri];
-              if(ar.k===5){
-                const dd=Math.hypot(ar.x-px,ar.y-py);
-                if(dd<rr+ar.r+60){
-                  burst(ar.x,ar.y,'#8effdc',10,64);
-                  react.splice(ri,1);
-                }
-              }
+    if(brews.length<2)return;
+    for(let a=0;a<brews.length-1;a++){
+      const pa=pudd[brews[a]];
+      for(let b=a+1;b<brews.length;b++){
+        const pb=pudd[brews[b]];
+        const d=Math.hypot(pa.x-pb.x,pa.y-pb.y);
+        if(d>(pa.r+pb.r)*.72)continue;
+        const px=(pa.x+pb.x)*.5,py=(pa.y+pb.y)*.5;
+        const rr=Math.min(152,(pa.r+pb.r)*.5+38);
+        addReaction(4,px,py,rr,6);
+        g.stormCd=8;
+        consumePuddles(brews[a],brews[b]);
+        for(let ri=react.length-1;ri>=0;ri--){
+          const ar=react[ri];
+          if(ar.k===5){
+            const dd=Math.hypot(ar.x-px,ar.y-py);
+            if(dd<rr+ar.r+80){
+              burst(ar.x,ar.y,'#8effdc',12,72);
+              react.splice(ri,1);
             }
-            for(let zi=z.length-1;zi>=0;zi--){
-              const m=z[zi],dx=m.x-px,dy=m.y-py,d2=dx*dx+dy*dy;
-              // apex boss takes massive damage from campus storm
-              const apexHit=m.k===4&&d2<(rr*1.8)*(rr*1.8);
-              if(apexHit){
-                m.hp-=(p.chBurst*4+p.chDo*3);
-                m.ht=.28;
-                m.s*=.5;
-                m.apStormCd=Math.max(m.apStormCd||0,3.5);
-                const ln2=Math.hypot(dx,dy)||1;
-                m.vx+=dx/ln2*480;
-                m.vy+=dy/ln2*480;
-                burst(m.x,m.y,'#8effdc',22,140);
-                g.msg='campus storm: apex vulnerable!';
-                g.msgT=1.8;
-                beep(860,.08,'triangle',.03);
-                if(m.hp<=0){killZombie(zi,'#8effdc',16,120,1);continue;}
-              }
-              if(d2<rr*rr*1.2){
-                const ln=Math.hypot(dx,dy)||1;
-                m.hp-=p.chBurst*2.4+p.chDo*1.2;
-                m.ht=.2;
-                m.vx+=dx/ln*320;
-                m.vy+=dy/ln*320;
-                if(m.hp<=0)killZombie(zi,'#c8f3ff',12,96,1);
-              }
-            }
-            return;
           }
         }
-      }
-    }
-    const used={};
-    for(let a=0;a<chem.length-1;a++){
-      const ia=chem[a];
-      if(used[ia])continue;
-      const pa=pudd[ia];
-      for(let b=a+1;b<chem.length;b++){
-        const ib=chem[b];
-        if(used[ib])continue;
-        const pb=pudd[ib];
-        if(pa.m===pb.m)continue;
-        const d=Math.hypot(pa.x-pb.x,pa.y-pb.y);
-        if(d>(pa.r+pb.r)*.66)continue;
-        const m1=Math.min(pa.m,pb.m),m2=Math.max(pa.m,pb.m);
-        const k=(m1===1&&m2===3)?1:(m1===2&&m2===3)?2:3;
-        const px=(pa.x+pb.x)*.5,py=(pa.y+pb.y)*.5;
-        const rr=Math.min(122,(pa.r+pb.r)*.44+18);
-        const dur=k===1?5.4:k===2?6.1:5.8;
-        addReaction(k,px,py,rr,dur);
-        consumePuddles(ia,ib);
-        used[ia]=1;used[ib]=1;
-        break;
+        for(let zi=z.length-1;zi>=0;zi--){
+          const m=z[zi],dx=m.x-px,dy=m.y-py,d2=dx*dx+dy*dy;
+          if(m.k===4&&d2<(rr*1.8)*(rr*1.8)){
+            m.hp-=(p.chBurst*4.5+p.chDo*3.5);
+            m.ht=.3;
+            m.s*=.45;
+            m.apStormCd=Math.max(m.apStormCd||0,4);
+            const ln2=Math.hypot(dx,dy)||1;
+            m.vx+=dx/ln2*520;
+            m.vy+=dy/ln2*520;
+            burst(m.x,m.y,'#8effdc',26,160);
+            g.msg='campus storm: apex vulnerable!';
+            g.msgT=1.8;
+            beep(860,.08,'triangle',.03);
+            if(m.hp<=0){killZombie(zi,'#8effdc',18,130,1);continue;}
+          }
+          if(d2<rr*rr*1.2){
+            const ln=Math.hypot(dx,dy)||1;
+            m.hp-=p.chBurst*2.8+p.chDo*1.5;
+            m.ht=.2;
+            m.vx+=dx/ln*360;
+            m.vy+=dy/ln*360;
+            if(m.hp<=0)killZombie(zi,'#c8f3ff',12,96,1);
+          }
+        }
+        g.msg='campus storm!';
+        g.msgT=1.6;
+        return;
       }
     }
   }
@@ -1120,16 +1087,22 @@ canvas{display:block;width:100%;height:100%}
     g.inB=bid;
     if(p.cat){
       if(p.chHealCd>0)p.chHealCd=Math.max(0,p.chHealCd-dt);
-      let healPad=0;
+      let healPad=0,healTier=0;
       for(let i=0;i<pudd.length;i++){
         const pd=pudd[i],dx=p.x-pd.x,dy=p.y-pd.y;
-        if(pd.m===2&&dx*dx+dy*dy<pd.r*pd.r){healPad=1;break;}
+        if((pd.m&2)&&dx*dx+dy*dy<pd.r*pd.r){
+          healPad=1;
+          const t=((pd.m&1)?1:0)+((pd.m&2)?1:0)+((pd.m&4)?1:0);
+          healTier=Math.max(healTier,t);
+          break;
+        }
       }
       if(healPad&&p.chHealCd<=0&&p.hp<p.maxHp){
-        const heal=Math.min(p.chHeal,p.maxHp-p.hp);
+        const tb=1+(healTier-1)*.35;
+        const heal=Math.min(p.chHeal*tb,p.maxHp-p.hp);
         p.hp+=heal;
         p.chHealCd=p.chHealI;
-        burst(p.x,p.y,'#7fe8dd',8,52);
+        burst(p.x,p.y,healTier>=3?'#8effdc':'#7fe8dd',8+healTier*2,52+healTier*6);
         g.msg='heal +'+(heal|0);
         g.msgT=.65;
       }
@@ -1476,35 +1449,33 @@ canvas{display:block;width:100%;height:100%}
         const pd=pudd[k],px=m.x-pd.x,py=m.y-pd.y;
         const d2=px*px+py*py;
         const mode=pd.m|0;
-        if(mode===3){
-          const gr=pd.r*2.35;
+        if(!mode)continue;
+        const hasA=mode&1,hasH=mode&2,hasG=mode&4;
+        const tier=(hasA?1:0)+(hasH?1:0)+(hasG?1:0);
+        const tb=1+(tier-1)*.32;
+        if(hasG){
+          const gr=pd.r*(2.35+tier*.18);
           if(d2<gr*gr){
-            const gd=Math.sqrt(d2)||1;
-            const q=1-gd/gr;
-            const pull=90+q*q*350;
+            const gd=Math.sqrt(d2)||1,q=1-gd/gr;
+            const pull=(90+q*q*350)*tb;
             m.vx+=(-px/gd)*pull*dt;
             m.vy+=(-py/gd)*pull*dt;
             sf=Math.min(sf,.88);
-            if(d2<pd.r*pd.r){
-              padMode=3;
-              sf=Math.min(sf,.42);
-              inPad=1;
-            }
           }
-          continue;
         }
-        if(d2<pd.r*pd.r){
-          padMode=mode;
-          const slow=padMode===1?.3:padMode===2?.18:p.mkSl;
-          sf=Math.min(sf,1-slow);
-          inPad=1;
-          if(padMode===1&&p.cat&&m.ce<=0){
-            m.ce=.55;
-            m.hp-=p.chBurst;
-            burst(m.x,m.y,'#ffd58f',5,44);
-          }
-          break;
+        if(d2>=pd.r*pd.r)continue;
+        inPad=1;padMode=mode;
+        let slow=p.mkSl;
+        if(hasG)slow=Math.max(slow,.52*tb);
+        if(hasA)slow=Math.max(slow,.3*tb);
+        if(hasH)slow=Math.max(slow,.22*tb);
+        sf=Math.min(sf,1-Math.min(.88,slow));
+        if(hasA&&p.cat&&m.ce<=0){
+          m.ce=.55;
+          m.hp-=p.chBurst*tb;
+          burst(m.x,m.y,tier>=3?'#8effdc':tier>=2?'#b8ffa8':'#ffd58f',4+tier,40+tier*8);
         }
+        break;
       }
       if(p.bot&&bots.length){
         for(let bi=0;bi<bots.length;bi++){
@@ -1555,10 +1526,12 @@ canvas{display:block;width:100%;height:100%}
       }
       m.sl=inPad;
       if(inPad){
-        const dot=(p.cat&&padMode===1)?p.chDo:0;
+        const hasA=padMode&1,tier=((padMode&1)?1:0)+((padMode&2)?1:0)+((padMode&4)?1:0);
+        const tb=1+(tier-1)*.32;
+        const dot=p.cat&&hasA?(p.chDo*tb):0;
         if(dot>0)m.hp-=dot*dt;
         m.ht=Math.max(m.ht,.08);
-        if(m.hp<=0){killZombie(i,'#f7d96b',8,60);continue;}
+        if(m.hp<=0){killZombie(i,tier>=3?'#8effdc':tier>=2?'#b8ffa8':'#f7d96b',8+tier*2,60+tier*10);continue;}
       }
       if(reactDot>0){
         m.hp-=reactDot*dt;
@@ -1720,37 +1693,53 @@ canvas{display:block;width:100%;height:100%}
       const pd=pudd[i],sx=pd.x-cm.x,sy=pd.y-cm.y;
       if(sx<-pd.r-20||sy<-pd.r-20||sx>W+pd.r+20||sy>H+pd.r+20)continue;
       const q=pd.t/pd.d;
-      x.globalAlpha=.12+.1*q;
+      const mm=pd.m|0,hA=mm&1,hH=mm&2,hG=mm&4;
+      const tier=(hA?1:0)+(hH?1:0)+(hG?1:0);
+      x.globalAlpha=.12+.1*q+tier*.02;
       let pf='#f4d96e',ps='#fff0a9';
-      if(p.cat){
-        if(pd.m===1){pf='#53d93d';ps='#baff87';}
-        else if(pd.m===2){pf='#42cdb9';ps='#a8f6ea';}
-        else if(pd.m===3){pf='#597fd6';ps='#bdd4ff';}
+      if(p.cat&&mm){
+        if(tier>=3){pf='#4cc89a';ps='#b0ffdf';}
+        else if(tier===2){
+          if(hA&&hH){pf='#4cd37a';ps='#b4ffe0';}
+          else if(hA&&hG){pf='#50ac89';ps='#a0e8d0';}
+          else{pf='#4ea6ca';ps='#a8f0ff';}
+        }else{
+          if(hA){pf='#53d93d';ps='#baff87';}
+          else if(hH){pf='#42cdb9';ps='#a8f6ea';}
+          else{pf='#597fd6';ps='#bdd4ff';}
+        }
       }
       x.fillStyle=pf;
       x.beginPath();x.arc(sx,sy,pd.r,0,Math.PI*2);x.fill();
       x.globalAlpha=.2+.2*Math.sin((g.t+i)*5)*q;
       x.strokeStyle=ps;x.lineWidth=1.5;
       x.beginPath();x.arc(sx,sy,pd.r*.68+Math.sin((g.t+i)*4)*2,0,Math.PI*2);x.stroke();
-      if(p.cat){
-        if(pd.m===3){
+      if(p.cat&&mm){
+        if(hG){
+          const gr=pd.r*(2.35+tier*.18);
           x.globalAlpha=.1+.08*q;
-          x.strokeStyle='rgba(175,205,255,.72)';
+          x.strokeStyle=tier>=3?'rgba(140,255,210,.72)':'rgba(175,205,255,.72)';
           x.lineWidth=1.25;
-          x.beginPath();x.arc(sx,sy,pd.r*2.35*(.97+.03*Math.sin(g.t*2+i)),0,Math.PI*2);x.stroke();
+          x.beginPath();x.arc(sx,sy,gr*(.97+.03*Math.sin(g.t*2+i)),0,Math.PI*2);x.stroke();
           x.globalAlpha=.08+.07*q;
-          x.strokeStyle='rgba(140,174,255,.58)';
+          x.strokeStyle=tier>=3?'rgba(110,230,190,.58)':'rgba(140,174,255,.58)';
           x.lineWidth=1;
-          x.beginPath();x.arc(sx,sy,pd.r*1.6*(.96+.04*Math.sin(g.t*2.7+i*.8)),0,Math.PI*2);x.stroke();
+          x.beginPath();x.arc(sx,sy,gr*.68*(.96+.04*Math.sin(g.t*2.7+i*.8)),0,Math.PI*2);x.stroke();
         }
         x.globalAlpha=.18+.24*q;
-        if(pd.m===1)x.fillStyle='#dbff8f';
-        else if(pd.m===2)x.fillStyle='#d8fff7';
-        else if(pd.m===3)x.fillStyle='#e1ebff';
-        else x.fillStyle='#f1ffb3';
-        x.beginPath();x.arc(sx+Math.sin(g.t*4+i)*pd.r*.22,sy-pd.r*.16,2.4+Math.sin(g.t*7+i)*.7,0,Math.PI*2);x.fill();
-        x.beginPath();x.arc(sx-pd.r*.18,sy+Math.sin(g.t*3+i*.7)*pd.r*.14,1.9+Math.sin(g.t*8+i*.4)*.5,0,Math.PI*2);x.fill();
-        x.beginPath();x.arc(sx+pd.r*.12,sy+pd.r*.2,1.6+Math.sin(g.t*6+i*.5)*.4,0,Math.PI*2);x.fill();
+        x.fillStyle=tier>=3?'#c0fff0':tier===2?'#d0ffe0':'#dbff8f';
+        const dots=2+tier;
+        for(let n=0;n<dots;n++){
+          const a=g.t*(3+n*.7)+i*1.3+n*2.1;
+          const dr=pd.r*(.16+n*.06);
+          x.beginPath();x.arc(sx+Math.cos(a)*dr,sy+Math.sin(a)*dr,1.6+.4*tier+Math.sin(g.t*7+i+n)*.5,0,Math.PI*2);x.fill();
+        }
+        if(tier>=2){
+          x.globalAlpha=.12+.1*q;
+          x.strokeStyle=tier>=3?'rgba(142,255,220,.6)':'rgba(180,255,200,.5)';
+          x.lineWidth=1.2;
+          x.beginPath();x.arc(sx,sy,pd.r*(.88+.04*Math.sin(g.t*3+i)),0,Math.PI*2);x.stroke();
+        }
       }
       x.globalAlpha=1;
     }
