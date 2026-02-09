@@ -23,6 +23,7 @@
   const FIRST_BOSS_TRIGGER_KILLS=45;
   const FIRST_BOSS_TRIGGER_TIME=72;
   const LAB_REFRESH_KILLS=50;
+  const NSH_THIRD_BOT_INTEL_COST=4;
 
   const imgs={};
   function load(n){const i=new Image();i.src='black_scottish_terrier_dog_with_red_scarf/rotations/'+n+'.png';return i}
@@ -387,8 +388,12 @@
     while(g.labBank>0){
       const nshQueued=g.uq.indexOf('nsh')>=0?1:0;
       const melQueued=g.uq.indexOf('mel')>=0?1:0;
-      const needNsh=g.sch.nsh===2&&knownVariants(g.botMask)>=1&&(knownVariants(g.botMask)+g.labNsh+nshQueued)<3;
-      const needMel=g.sch.mel===2&&knownVariants(g.chemMask)>=1&&(knownVariants(g.chemMask)+g.labMel+melQueued)<3;
+      const nshKnown=knownVariants(g.botMask);
+      const melKnown=knownVariants(g.chemMask);
+      const nshProgress=nshKnown+g.labNsh+nshQueued;
+      const nshCost=nshProgress===2?NSH_THIRD_BOT_INTEL_COST:1;
+      const needNsh=g.sch.nsh===2&&nshKnown>=1&&nshProgress<3&&g.labBank>=nshCost;
+      const needMel=g.sch.mel===2&&melKnown>=1&&(melKnown+g.labMel+melQueued)<3;
       if(!needNsh&&!needMel)break;
       let id='';
       if(needNsh&&needMel){g.labFlip^=1;id=g.labFlip?'nsh':'mel';}
@@ -398,13 +403,14 @@
         g.msg='nsh: prototype bench ready';
         g.msgT=1.6;
         beep(700,.05,'triangle',.02);
+        g.labBank-=nshCost;
       }else{
         g.labMel++;
         g.msg='mellon: catalyst bench ready';
         g.msgT=1.6;
         beep(680,.05,'triangle',.02);
+        g.labBank--;
       }
-      g.labBank--;
     }
   }
   function claimLabVisit(id){
