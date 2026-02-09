@@ -154,12 +154,15 @@ canvas{display:block;width:100%;height:100%}
     if(row<maxLines&&line)x.fillText(line,px,py+row*lineH);
   }
   function upIcon(n){
-    if(n.includes('Chemical'))return '🧪';
-    if(n.includes('Bot'))return '🤖';
-    if(n.includes('Shock'))return '⚡';
-    if(n.includes('Zoomies'))return '⚡';
-    if(n.includes('Territory'))return '💧';
-    return '⭐';
+    if(n.includes('Buddy')||n.includes('Bot'))return '🤖';
+    if(n.includes('Catalyst')||n.includes('Chemical')||n.includes('Acidic'))return '🧪';
+    if(n.includes('Heal')||n.includes('Tough'))return '❤️';
+    if(n.includes('Shock')||n.includes('Zoomies')||n.includes('Rapid')||n.includes('Speed'))return '⚡';
+    if(n.includes('Magnet'))return '🧲';
+    if(n.includes('Shot'))return '🎯';
+    if(n.includes('Territory')||n.includes('Puddle')||n.includes('Gravity'))return '💧';
+    if(n.includes('Bite'))return '🦴';
+    return '🛠️';
   }
   function school(id){for(let i=0;i<SAFE_BUILDINGS.length;i++)if(SAFE_BUILDINGS[i].id===id)return SAFE_BUILDINGS[i];return 0}
   function safeBuildingAt(px,py,pad){
