@@ -35,10 +35,10 @@ canvas{display:block;width:100%;height:100%}
   const JOY_SMOOTH=22;
   const JOY_VIS_SMOOTH=16;
   const MAX_Z=180,MAX_FOOD=260,MAX_FX=420,MAX_PUDD=18,MAX_B=260,MAX_REACT=14;
-  const FIRST_BOSS_MIN_KILLS=20;
-  const FIRST_BOSS_TRIGGER_KILLS=26;
-  const FIRST_BOSS_TRIGGER_TIME=52;
-  const LAB_REFRESH_KILLS=30;
+  const FIRST_BOSS_MIN_KILLS=35;
+  const FIRST_BOSS_TRIGGER_KILLS=45;
+  const FIRST_BOSS_TRIGGER_TIME=72;
+  const LAB_REFRESH_KILLS=50;
 
   const imgs={};
   function load(n){const i=new Image();i.src='black_scottish_terrier_dog_with_red_scarf/rotations/'+n+'.png';return i}
@@ -301,6 +301,12 @@ canvas{display:block;width:100%;height:100%}
   }
   function toggleCatalyst(){
     if(!p.cat)return;
+    const owned=[];
+    for(let i=1;i<=3;i++)if(g.chemMask&(1<<(i-1)))owned.push(i);
+    if(owned.length>1){
+      const cur=owned.indexOf(p.catType);
+      p.catType=owned[(cur+1)%owned.length];
+    }
     g.msg='chem: '+chemLabel();
     g.msgT=.95;
     const tone=p.catType===1?540:p.catType===2?620:470;
@@ -396,8 +402,8 @@ canvas{display:block;width:100%;height:100%}
     while(g.labBank>0){
       const nshQueued=g.uq.indexOf('nsh')>=0?1:0;
       const melQueued=g.uq.indexOf('mel')>=0?1:0;
-      const needNsh=g.sch.nsh===2&&(knownVariants(g.botMask)+g.labNsh+nshQueued)<3;
-      const needMel=g.sch.mel===2&&(knownVariants(g.chemMask)+g.labMel+melQueued)<3;
+      const needNsh=g.sch.nsh===2&&knownVariants(g.botMask)>=1&&(knownVariants(g.botMask)+g.labNsh+nshQueued)<3;
+      const needMel=g.sch.mel===2&&knownVariants(g.chemMask)>=1&&(knownVariants(g.chemMask)+g.labMel+melQueued)<3;
       if(!needNsh&&!needMel)break;
       let id='';
       if(needNsh&&needMel){g.labFlip^=1;id=g.labFlip?'nsh':'mel';}
@@ -1075,7 +1081,7 @@ canvas{display:block;width:100%;height:100%}
     if(!pSafeNow)g.time+=dt;
     const bid=pSafeNow?pSafeNow.id:'';
     g.inB=bid;
-    if(p.catType===2){
+    if(p.cat){
       if(p.chHealCd>0)p.chHealCd=Math.max(0,p.chHealCd-dt);
       let healPad=0;
       for(let i=0;i<pudd.length;i++){
@@ -1124,12 +1130,12 @@ canvas{display:block;width:100%;height:100%}
       syncBots();
       triMode=p.zt>0&&bots.length>=3;
       p.ba+=dt*(triMode?5.8:2.3);
-      if(triMode)p.triA+=dt*11.8;
+      if(triMode)p.triA+=dt*7.5;
       for(let bi=0;bi<bots.length;bi++){
         const bt=bots[bi];
         let tx=0,ty=0;
         if(triMode&&bi<3){
-          const a=p.triA+bi*(Math.PI*2/3),rr=78+Math.sin(g.t*12+bi)*4.4;
+          const a=p.triA+bi*(Math.PI*2/3),rr=160+Math.sin(g.t*12+bi)*8;
           tx=p.x+Math.cos(a)*rr;
           ty=p.y+Math.sin(a)*rr;
         }else{
@@ -1456,7 +1462,7 @@ canvas{display:block;width:100%;height:100%}
       }
       if(triMode&&bots.length>=3){
         const b0=bots[0],b1=bots[1],b2=bots[2];
-        const rad=(m.r+20),rad2=rad*rad;
+        const rad=(m.r+30),rad2=rad*rad;
         const edgeHit=
           segDist2(m.x,m.y,b0.x,b0.y,b1.x,b1.y)<rad2||
           segDist2(m.x,m.y,b1.x,b1.y,b2.x,b2.y)<rad2||
@@ -1465,7 +1471,7 @@ canvas{display:block;width:100%;height:100%}
         if(edgeHit||coreHit){
           sf=Math.min(sf,.52);
           if((m.tc||0)<=0){
-            const slash=p.zDmg*(m.k>=3?.58:.92);
+            const slash=p.zDmg*(m.k>=3?.72:1.15);
             m.hp-=slash;
             m.ht=.16;
             const qx=m.x-p.x,qy=m.y-p.y,ql=Math.hypot(qx,qy)||1;
