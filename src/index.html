@@ -76,7 +76,7 @@ canvas{display:block;width:100%;height:100%}
     labNshRuns:0,labMelRuns:0
   };
 
-  const p={x:260,y:MAP_H*.5,vx:0,vy:0,r:15,hp:100,maxHp:100,speed:185,fireCd:0,fireRate:.46,dmg:12,range:400,shots:1,magnet:88,face:1,rx:0,ry:0,flash:0,gx:1,gy:0,zc:0,zr:0,zt:0,zx:1,zy:0,zcd:0,zDur:1,zSpd:2.1,zLoad:1.5,zCool:5.5,zDmg:24,zDr:.55,zb:0,zp:0,mkOn:0,mkT:0,mkI:8.8,mkS:0,mkD:14,mkR:54,mkSl:.62,chDo:20,chBurst:14,chHeal:8,chHealCd:0,chHealI:.85,cat:0,catM:0,catType:0,bot:0,botCount:0,bType:0,bAtk:1,bAuraR:0,bAuraSl:0,bHealCd:0,bHealI:10,bHealAmt:10,bHealFx:0,triA:0,triFx:0,bx:0,by:0,ba:0,bcd:0,bRate:1.9,bDmg:1.15,bRange:480,bFetch:95,bPull:195,bCarry:0,bCarryMax:2,bGrabCd:0,bGrabI:.38,bPier:4,bSize:6};
+  const p={x:260,y:MAP_H*.5,vx:0,vy:0,r:15,hp:100,maxHp:100,speed:185,fireCd:0,fireRate:.46,dmg:12,range:400,shots:1,magnet:88,face:1,rx:0,ry:0,flash:0,gx:1,gy:0,zc:0,zr:0,zt:0,zx:1,zy:0,zcd:0,zDur:1,zSpd:2.1,zLoad:1.5,zCool:5.5,zDmg:24,zDr:.55,zb:0,zp:0,mkOn:0,mkT:0,mkI:8.8,mkS:0,mkD:14,mkR:54,mkSl:.62,chDo:20,chBurst:14,chHeal:8,chHealCd:0,chHealI:.85,cat:0,catM:0,catType:0,bot:0,botCount:0,botSlots:0,bType:0,bAtk:1,bAuraR:0,bAuraSl:0,bHealCd:0,bHealI:10,bHealAmt:10,bHealFx:0,triA:0,triFx:0,bx:0,by:0,ba:0,bcd:0,bRate:1.9,bDmg:1.15,bRange:480,bFetch:95,bPull:195,bCarry:0,bCarryMax:2,bGrabCd:0,bGrabI:.38,bPier:4,bSize:6};
   const keys={l:0,r:0,u:0,d:0,gr:0};
   let touchId=-1,touchMove=0;
   const joy={x:78,y:0,r:42,kr:16,tx:0,ty:0,ax:0,ay:0,ttx:0,tty:0,tax:0,tay:0,show:0,act:0};
@@ -396,13 +396,23 @@ canvas{display:block;width:100%;height:100%}
   }
   function syncBots(){
     const want=p.bot?Math.max(1,p.botCount|0):0;
-    while(bots.length<want){
-      bots.push({x:p.x+rnd(-10,10),y:p.y+rnd(-10,10),cd:rnd(.05,.3),grabCd:rnd(.03,.22)});
-    }
+    while(bots.length<want)bots.push({x:p.x,y:p.y,cd:rnd(.05,.3),grabCd:rnd(.03,.22)});
     while(bots.length>want)bots.pop();
+    if(p.botSlots!==want){
+      const rr=40;
+      for(let i=0;i<bots.length;i++){
+        const a=p.ba+i*(Math.PI*2/Math.max(1,bots.length));
+        bots[i].x=p.x+Math.cos(a)*rr;
+        bots[i].y=p.y+Math.sin(a)*rr;
+        bots[i].cd=rnd(.05,.3);
+        bots[i].grabCd=rnd(.03,.22);
+      }
+      p.botSlots=want;
+    }
     if(!bots.length){
       p.bx=p.x+20;
       p.by=p.y+4;
+      p.botSlots=0;
     }
   }
   function setBotVariant(t){
@@ -594,7 +604,7 @@ canvas{display:block;width:100%;height:100%}
 
   function reset(full){
     g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.bossDownT=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;
-    p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.62;p.chDo=20;p.chBurst=14;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.bot=0;p.botCount=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
+    p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.62;p.chDo=20;p.chBurst=14;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
     z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;
     keys.l=keys.r=keys.u=keys.d=keys.gr=0;touchMove=0;joyReset(1);
     g.msg='home: unlock';
@@ -935,8 +945,9 @@ canvas{display:block;width:100%;height:100%}
           ty=p.y+Math.sin(a)*rr;
         }else{
           const a=p.ba+bi*(Math.PI*2/bots.length);
-          tx=p.x+Math.cos(a)*34;
-          ty=p.y+Math.sin(a*1.17)*20;
+          const rr=38+Math.sin(g.t*2+bi*.7)*2;
+          tx=p.x+Math.cos(a)*rr;
+          ty=p.y+Math.sin(a)*rr;
         }
         bt.x+=(tx-bt.x)*Math.min(1,dt*8);
         bt.y+=(ty-bt.y)*Math.min(1,dt*8);
@@ -981,6 +992,7 @@ canvas{display:block;width:100%;height:100%}
     }else{
       bots.length=0;
       p.bCarry=0;
+      p.botSlots=0;
       triMode=0;
     }
 
