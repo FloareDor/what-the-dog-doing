@@ -42,9 +42,9 @@ canvas{display:block;width:100%;height:100%}
   const LAB_REFRESH_KILLS=50;
   const NSH_THIRD_BOT_INTEL_COST=4;
   const SLINGSHOT_CHARGE_TRIGGER=.25;
-  const SLINGSHOT_DASH_MIN=.3;
-  const SLINGSHOT_DASH_MAX=.58;
-  const SLINGSHOT_DASH_SPEED=560;
+  const SLINGSHOT_DASH_MIN=.34;
+  const SLINGSHOT_DASH_MAX=.72;
+  const SLINGSHOT_DASH_SPEED=620;
   const SLINGSHOT_RECALL_TIME=.42;
   const SLINGSHOT_RECALL_HOME_RATE=7.2;
   const SLINGSHOT_RECALL_BURST_RADIUS=132;
@@ -59,6 +59,11 @@ canvas{display:block;width:100%;height:100%}
   const SLINGSHOT_LINK_DAMP=.58;
   const SLINGSHOT_LINK_TANGENT=.32;
   const SLINGSHOT_LINK_DOG_SHARE=.62;
+  const SLINGSHOT_THROW_STEER=860;
+  const SLINGSHOT_THROW_DRAG=2.35;
+  const SLINGSHOT_ROPE_START=176;
+  const SLINGSHOT_ROPE_DEFAULT=44;
+  const SLINGSHOT_ROPE_SHRINK=142;
 
   const imgs={};
   function load(n){const i=new Image();i.src='black_scottish_terrier_dog_with_red_scarf/rotations/'+n+'.png';return i}
@@ -357,6 +362,9 @@ canvas{display:block;width:100%;height:100%}
   }
   function zoomiesBusy(){
     return p.zt>0||p.slT>0||p.slRecallT>0||p.slLinkT>0;
+  }
+  function scottyShielded(){
+    return p.zt>0;
   }
   function levelUiBlocked(){
     return zoomiesBusy()||g.lvGrace>0;
@@ -802,6 +810,7 @@ canvas{display:block;width:100%;height:100%}
   function reset(full){
     g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.bossDownT=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.lvPend=0;g.lvGrace=0;
     p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slFocus=0;p.slT=0;p.slRecallT=0;p.slLinkT=0;p.slRecallPulse=0;p.slCarryVx=0;p.slCarryVy=0;p.slPow=0;p.slWave=0;p.slComboFx=0;p.slHitMask=0;p.slPerfect=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
+    p.slRopeRest=0;
     z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;
     keys.l=keys.r=keys.u=keys.d=keys.gr=0;touchMove=0;joyReset(1);
     g.msg='home: unlock';
@@ -1005,7 +1014,10 @@ canvas{display:block;width:100%;height:100%}
   }
 
   function hitPlayer(d){
-    if(p.zt>0)d*=p.zDr;
+    if(scottyShielded()){
+      p.flash=Math.max(p.flash,.03);
+      return;
+    }
     p.hp-=d;
     trauma(.03);
     if(p.hp<=0){
@@ -1115,6 +1127,7 @@ canvas{display:block;width:100%;height:100%}
           p.slLinkT=0;
           p.slHitMask=0;
           p.slPerfect=0;
+          p.slRopeRest=0;
           hitStop(.04);
           trauma(.28);
           p.flash=.09;
@@ -1145,7 +1158,7 @@ canvas{display:block;width:100%;height:100%}
       if(p.zt<=0){
         if(p.bot&&bots.length>=3&&p.slCharge>=SLINGSHOT_CHARGE_TRIGGER){
           const perfect=p.slPerfect&&p.slFocus>=.98?1:0;
-          const q=Math.min(1,p.slCharge*(perfect?1.12:1));
+          const q=Math.min(1,p.slCharge*(perfect?1.15:1));
           p.slT=SLINGSHOT_DASH_MIN+(SLINGSHOT_DASH_MAX-SLINGSHOT_DASH_MIN)*q;
           p.slRecallT=0;
           p.slRecallPulse=0;
@@ -1158,16 +1171,20 @@ canvas{display:block;width:100%;height:100%}
           p.slWave=1;
           p.triFx=1;
           p.slHitMask=0;
+          p.slRopeRest=SLINGSHOT_ROPE_START+72*q+36*perfect;
           p.slComboFx=Math.max(p.slComboFx,perfect?.95:0);
-          const baseSp=SLINGSHOT_DASH_SPEED*(.78+.58*q+.32*perfect);
+          const carry=Math.max(0,p.vx*p.zx+p.vy*p.zy);
+          const baseSp=SLINGSHOT_DASH_SPEED*(1.02+.82*q+.46*perfect)+carry*.6;
           for(let bi=0;bi<3&&bi<bots.length;bi++){
             const bt=bots[bi];
-            const spread=(bi-1)*.34;
+            const spread=(bi-1)*.26;
             const cs=Math.cos(spread),sn=Math.sin(spread);
             const dx=p.zx*cs-p.zy*sn,dy=p.zx*sn+p.zy*cs;
-            const sp=baseSp*(1-Math.abs(bi-1)*.08);
-            bt.slx=dx*sp;
-            bt.sly=dy*sp;
+            const sp=baseSp*(1-Math.abs(bi-1)*.06);
+            bt.slx=dx*sp+p.vx*.28;
+            bt.sly=dy*sp+p.vy*.28;
+            bt.vx=bt.slx;
+            bt.vy=bt.sly;
             burst(bt.x,bt.y,'#b6f6ff',6,50+q*44);
           }
           hitStop(.05+.025*q);
@@ -1189,6 +1206,7 @@ canvas{display:block;width:100%;height:100%}
           p.slCarryVx=0;
           p.slCarryVy=0;
           p.slHitMask=0;
+          p.slRopeRest=0;
           g.msg='zoomies cd';
           g.msgT=.65;
           beep(420,.04,'triangle',.016);
@@ -1336,6 +1354,24 @@ canvas{display:block;width:100%;height:100%}
       p.ba+=dt*((triMode||p.slT>0||p.slRecallT>0||p.slLinkT>0)?4.9:2.3);
       p.triA+=dt*((triMode||p.slLinkT>0)?9.2:4.2);
       const linkMode=bots.length>=3&&p.slLinkT>0;
+      if((p.slT>0||p.slRecallT>0||linkMode)&&hasInput){
+        const tln=Math.hypot(mx,my)||1;
+        const tx=mx/tln,ty=my/tln;
+        const steerRate=p.slT>0?9.2:(p.slRecallT>0?7.4:6.1);
+        const steerBlend=Math.min(1,dt*steerRate);
+        p.slDx+=((tx)-p.slDx)*steerBlend;
+        p.slDy+=((ty)-p.slDy)*steerBlend;
+        const sn=Math.hypot(p.slDx,p.slDy)||1;
+        p.slDx/=sn;
+        p.slDy/=sn;
+      }
+      if(bots.length>=3&&(p.slT>0||p.slRecallT>0||linkMode)){
+        if((p.slRopeRest||0)<=0)p.slRopeRest=SLINGSHOT_ROPE_START;
+        const ropeShrink=SLINGSHOT_ROPE_SHRINK*(.7+.45*Math.min(1,p.slPow)+(p.slT>0?.24:0));
+        p.slRopeRest=Math.max(SLINGSHOT_ROPE_DEFAULT,p.slRopeRest-dt*ropeShrink);
+      }else if((p.slRopeRest||0)>0){
+        p.slRopeRest=Math.max(0,p.slRopeRest-dt*220);
+      }
       let carryMode=0,carryFx=0,carryFy=0,carryN=0,carryGain=.18;
       let tetherCarryFx=0,tetherCarryFy=0,tetherCarryN=0;
       if(bots.length>=3){
@@ -1349,20 +1385,23 @@ canvas{display:block;width:100%;height:100%}
         const px0=bt.x,py0=bt.y;
         const dtt=Math.max(.001,dt);
         if(p.slT>0&&bi<3){
+          const steer=SLINGSHOT_THROW_STEER*(.62+.48*Math.min(1,p.slPow));
+          bt.slx+=p.slDx*steer*dt;
+          bt.sly+=p.slDy*steer*dt;
           bt.x=clamp(bt.x+bt.slx*dt,16,MAP_W-16);
           bt.y=clamp(bt.y+bt.sly*dt,16,MAP_H-16);
-          const drag=Math.max(0,1-dt*(4.8+2.2*p.slPow));
+          const drag=Math.max(0,1-dt*(SLINGSHOT_THROW_DRAG+1.2*Math.max(0,.9-p.slPow)));
           bt.slx*=drag;
           bt.sly*=drag;
         }else{
           let tx=0,ty=0;
           if(p.slRecallT>0&&bi<3){
             const rq=clamp(p.slRecallT/SLINGSHOT_RECALL_TIME,0,1);
-            const front=16+10*rq;
-            const side=(bi-1)*(18+10*rq);
+            const front=24+22*rq;
+            const side=(bi-1)*(24+12*rq);
             tx=p.x+p.slDx*front-p.slDy*side;
             ty=p.y+p.slDy*front+p.slDx*side;
-            const k=24+18*(1-rq);
+            const k=22+20*(1-rq);
             bt.vx+=(tx-bt.x)*k*dt;
             bt.vy+=(ty-bt.y)*k*dt;
             const damp=Math.max(0,1-dt*(SLINGSHOT_RECALL_HOME_RATE+1.8*(1-rq)));
@@ -1405,9 +1444,10 @@ canvas{display:block;width:100%;height:100%}
           const ldx=bt.x-p.x,ldy=bt.y-p.y,ld=Math.hypot(ldx,ldy)||1;
           const nx=ldx/ld,ny=ldy/ld;
           const linkQ=clamp(p.slLinkT/SLINGSHOT_LINK_HOLD,0,1);
-          let rest=SLINGSHOT_LINK_REST+SLINGSHOT_LINK_SWING*(1-linkQ)+24*Math.min(1,p.slPow);
-          if(p.slT>0)rest+=34;
-          else if(p.slRecallT>0)rest*=.62;
+          const ropeBase=Math.max(SLINGSHOT_ROPE_DEFAULT,(p.slRopeRest||SLINGSHOT_LINK_REST));
+          let rest=ropeBase+SLINGSHOT_LINK_SWING*.34*linkQ+20*Math.min(1,p.slPow);
+          if(p.slT>0)rest+=28;
+          else if(p.slRecallT>0)rest=Math.max(SLINGSHOT_ROPE_DEFAULT,rest*.74);
           const rvx=bt.vx-p.vx,rvy=bt.vy-p.vy;
           const radial=rvx*nx+rvy*ny;
           const springVel=clamp(((ld-rest)*SLINGSHOT_LINK_SPRING+radial*(SLINGSHOT_LINK_SPRING*SLINGSHOT_LINK_DAMP))*dt,-125,125);
@@ -1477,6 +1517,7 @@ canvas{display:block;width:100%;height:100%}
       else if(!triMode&&p.slLinkT<=0&&p.slPow>0)p.slPow=Math.max(0,p.slPow-dt*2.2);
       if(p.slT<=0&&p.slRecallT<=0&&p.slLinkT<=0&&p.slWave<=0&&p.slPow<.01){
         p.slPow=0;
+        p.slRopeRest=0;
         p.triFx=Math.max(0,p.triFx-dt*2.2);
       }
       p.bx=bots[0].x;
@@ -1541,6 +1582,7 @@ canvas{display:block;width:100%;height:100%}
       p.slHitMask=0;
       p.slPerfect=0;
       p.slComboFx=0;
+      p.slRopeRest=0;
     }
 
     // auto-shoot
@@ -1803,8 +1845,9 @@ canvas{display:block;width:100%;height:100%}
           if(bs.auraR>0&&d2<bs.auraR*bs.auraR)sf=Math.min(sf,1-bs.auraSl);
         }
       }
-      if(triMode&&bots.length>=3){
-        sf=Math.min(sf,.58);
+      const bladeRopeMode=(triMode||p.slRecallT>0||p.slLinkT>0)&&bots.length>=3;
+      if(bladeRopeMode){
+        sf=Math.min(sf,triMode?.58:.66);
         let tetherHit=0;
         for(let bi=0;bi<3;bi++){
           const bt=bots[bi],hitR=m.r+14;
@@ -1814,17 +1857,21 @@ canvas{display:block;width:100%;height:100%}
           }
         }
         if(tetherHit&&((m.tc||0)<=0)){
-          const lash=p.zDmg*(.24+.38*p.slCharge)*(m.k>=3?.82:1);
+          const ropePow=triMode?Math.max(.1,p.slCharge):Math.max(.32,p.slPow);
+          const lashMul=triMode?(.24+.38*ropePow):(.34+.92*ropePow);
+          const lash=p.zDmg*lashMul*(m.k>=3?.82:1);
           m.hp-=lash;
-          m.ht=.12;
-          const shove=170+120*p.slCharge;
-          m.vx+=p.zx*shove;
-          m.vy+=p.zy*shove;
-          m.tc=.08;
+          m.ht=Math.max(m.ht,triMode?.12:.16);
+          const shove=(triMode?170:230)+(triMode?120:250)*ropePow;
+          const dirx=triMode?p.zx:p.slDx;
+          const diry=triMode?p.zy:p.slDy;
+          m.vx+=dirx*shove;
+          m.vy+=diry*shove;
+          m.tc=triMode?.08:.06;
           zoomHits++;
-          burst(m.x,m.y,'#95edff',3,34);
+          burst(m.x,m.y,triMode?'#95edff':'#bff8ff',triMode?3:5,triMode?34:48);
           if(m.hp<=0){
-            killZombie(i,'#95edff',9,70,1);
+            killZombie(i,triMode?'#95edff':'#bff8ff',triMode?9:11,triMode?70:84,1);
             zoomKills++;
             continue;
           }
@@ -1834,9 +1881,9 @@ canvas{display:block;width:100%;height:100%}
         const recallOnly=p.slT<=0&&p.slRecallT>0;
         let slammed=0;
         for(let bi=0;bi<3;bi++){
-          const bt=bots[bi],bx=m.x-bt.x,by=m.y-bt.y,hitR=m.r+18;
+          const bt=bots[bi],bx=m.x-bt.x,by=m.y-bt.y,hitR=m.r+(recallOnly?20:22);
           if(bx*bx+by*by<hitR*hitR&&((m.tc||0)<=0)){
-            const slamMul=(recallOnly?.88:1.25)+(recallOnly?.9:1.35)*p.slPow;
+            const slamMul=(recallOnly?1.05:1.45)+(recallOnly?1.05:1.75)*p.slPow;
             const slam=p.zDmg*slamMul*(m.k>=3?.82:(recallOnly?1:1.05));
             m.hp-=slam;
             m.ht=.18;
@@ -1844,10 +1891,10 @@ canvas{display:block;width:100%;height:100%}
             const dirL=Math.hypot(p.x-bt.x,p.y-bt.y)||1;
             const dirx=recallOnly?(p.x-bt.x)/dirL:p.slDx;
             const diry=recallOnly?(p.y-bt.y)/dirL:p.slDy;
-            const push=(recallOnly?180:260)+(recallOnly?150:220)*p.slPow;
+            const push=(recallOnly?240:340)+(recallOnly?190:320)*p.slPow;
             m.vx+=dirx*push+bx/bl*(130+100*p.slPow);
             m.vy+=diry*push+by/bl*(130+100*p.slPow);
-            m.tc=recallOnly?.095:.11;
+            m.tc=recallOnly?.08:.095;
             zoomHits++;
             burst(m.x,m.y,recallOnly?'#bdf7ff':'#8eefff',recallOnly?5:7,recallOnly?52:64);
             slammed=1;
@@ -2289,29 +2336,31 @@ canvas{display:block;width:100%;height:100%}
       if((p.zt>0||p.slT>0||p.slRecallT>0||p.slLinkT>0)&&bots.length>=3){
         const linkQ=clamp(p.slLinkT/SLINGSHOT_LINK_HOLD,0,1);
         const q=Math.max(p.triFx,p.slCharge,p.slFocus,p.slPow*((p.slT>0||p.slRecallT>0||p.slLinkT>0)?1:.35),linkQ*.85,p.slComboFx*.55);
+        const ropeRest=Math.max(SLINGSHOT_ROPE_DEFAULT,(p.slRopeRest||SLINGSHOT_LINK_REST));
+        const ropeTight=1-clamp((ropeRest-SLINGSHOT_ROPE_DEFAULT)/(SLINGSHOT_ROPE_START-SLINGSHOT_ROPE_DEFAULT),0,1);
         const dx=p.zt>0?p.zx:(p.slT>0||p.slRecallT>0?p.slDx:p.gx),dy=p.zt>0?p.zy:(p.slT>0||p.slRecallT>0?p.slDy:p.gy);
         const ph=g.t*4.6;
         for(let bi=0;bi<3;bi++){
           const bt=bots[bi],bx=bt.x-cm.x,by=bt.y-cm.y;
-          const bend=(bi-1)*(14+10*q);
+          const bend=(bi-1)*(12+(9+6*(1-ropeTight))*q);
           const cx=(psx+bx)*.5+(-dy)*bend;
           const cy=(psy+by)*.5+(dx)*bend;
-          x.strokeStyle='rgba(150,238,255,'+(0.28+.42*q)+')';
+          x.strokeStyle='rgba(150,238,255,'+(0.28+.42*q+.08*ropeTight)+')';
           x.lineWidth=1.8+q*1.6;
           x.beginPath();x.moveTo(psx,psy);x.quadraticCurveTo(cx,cy,bx,by);x.stroke();
-          x.strokeStyle='rgba(223,252,255,'+(0.2+.48*q)+')';
+          x.strokeStyle='rgba(223,252,255,'+(0.2+.48*q+.06*ropeTight)+')';
           x.lineWidth=.9+q*.9;
           x.beginPath();x.moveTo(psx,psy);x.quadraticCurveTo(cx,cy,bx,by);x.stroke();
           const u=(ph+bi*.27)%1;
           const su=1-u;
           const sx2=su*su*psx+2*su*u*cx+u*u*bx;
           const sy2=su*su*psy+2*su*u*cy+u*u*by;
-          x.fillStyle='rgba(219,250,255,'+(0.5+.45*q)+')';
+          x.fillStyle='rgba(219,250,255,'+(0.5+.45*q+.04*ropeTight)+')';
           x.beginPath();x.arc(sx2,sy2,1.9+q*1.1,0,Math.PI*2);x.fill();
-          if(p.slT>0){
-            const svx=bt.slx||0,svy=bt.sly||0,sl=Math.hypot(svx,svy)||1;
+          if(p.slT>0||p.slRecallT>0||p.slLinkT>0){
+            const svx=(bt.slx||0)+p.slDx*(28+44*ropeTight),svy=(bt.sly||0)+p.slDy*(28+44*ropeTight),sl=Math.hypot(svx,svy)||1;
             const tx2=bx-svx/sl*(18+10*q),ty2=by-svy/sl*(18+10*q);
-            x.strokeStyle='rgba(167,244,255,'+(0.22+.44*q)+')';
+            x.strokeStyle='rgba(167,244,255,'+(0.22+.44*q+.14*ropeTight)+')';
             x.lineWidth=2.2+q*.9;
             x.beginPath();x.moveTo(tx2,ty2);x.lineTo(bx,by);x.stroke();
           }
@@ -2495,7 +2544,7 @@ canvas{display:block;width:100%;height:100%}
       const bw2=W-44;
       const triReady=p.zt>0&&p.slT<=0&&p.slRecallT<=0;
       const prog=triReady?clamp(p.slCharge,0,1):(p.slT>0?clamp(p.slT/SLINGSHOT_DASH_MAX,0,1):(p.slRecallT>0?clamp(p.slRecallT/SLINGSHOT_RECALL_TIME,0,1):(p.slLinkT>0?clamp(p.slLinkT/SLINGSHOT_LINK_HOLD,0,1):0)));
-      const label=triReady?'triple buddy: momentum rig':(p.slT>0?'triple buddy: carry dash':(p.slRecallT>0?'triple buddy: carry recall':(p.slLinkT>0?'triple buddy: elastic carry':'triple buddy: zoomies to arm')));
+      const label=triReady?'triple buddy: rope windup':(p.slT>0?'triple buddy: blade throw':(p.slRecallT>0?'triple buddy: blade recall':(p.slLinkT>0?'triple buddy: ropes tightening':'triple buddy: zoomies to arm')));
       x.fillStyle='rgba(8,12,19,.64)';
       x.fillRect(14,slY,W-28,22);
       x.fillStyle='rgba(48,72,98,.9)';
