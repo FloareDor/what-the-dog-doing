@@ -79,11 +79,11 @@
   const APEX_ARRIVAL_DELAY=12;
   const APEX_WARN_ONE=8.5;
   const APEX_WARN_TWO=3.6;
-  const APEX_STORM_PULL_BASE=24;
-  const APEX_STORM_PULL_GROW=14;
-  const APEX_STORM_ZOOMIES_RESIST=.32;
-  const APEX_STORM_TICK_DMG=2.4;
-  const APEX_STORM_TICK_CD=.42;
+  const APEX_STORM_PULL_BASE=32;
+  const APEX_STORM_PULL_GROW=20;
+  const APEX_STORM_ZOOMIES_RESIST=.28;
+  const APEX_STORM_TICK_DMG=3.6;
+  const APEX_STORM_TICK_CD=.34;
 
   const imgs={};
   function load(n){const i=new Image();i.src='black_scottish_terrier_dog_with_red_scarf/rotations/'+n+'.png';return i}
@@ -1018,14 +1018,14 @@
     if(z.length>=MAX_Z-1)return;
     const tier=Math.max(1,phase|0);
     for(let s=0;s<count&&z.length<MAX_Z;s++){
-      const aa=Math.random()*Math.PI*2,dd=rnd(30,82);
+      const aa=Math.random()*Math.PI*2,dd=rnd(30,90);
       const mx=clamp(src.x+Math.cos(aa)*dd,20,MAP_W-20);
       const my=clamp(src.y+Math.sin(aa)*dd,20,MAP_H-20);
-      const kind=(tier>=3&&Math.random()<.34)?2:1;
-      const hp=kind===2?(86+g.time*4.8+rnd(-8,10)):(54+g.time*3.4+rnd(-6,8));
-      const sp=kind===2?(70+rnd(-8,10)):(96+rnd(-10,18));
-      const dmg=kind===2?(18+g.time*.28):(13+g.time*.24);
-      const add={x:mx,y:my,r:kind===2?rnd(14,19):rnd(11,16),hp,s:sp,dmg,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:kind};
+      const kind=(tier>=2&&Math.random()<.38)?2:1;
+      const hp=kind===2?(110+g.time*5.6+rnd(-8,12)):(68+g.time*4.0+rnd(-6,10));
+      const sp=kind===2?(78+rnd(-8,12)):(108+rnd(-10,20));
+      const dmg=kind===2?(22+g.time*.34):(16+g.time*.28);
+      const add={x:mx,y:my,r:kind===2?rnd(15,20):rnd(12,17),hp,s:sp,dmg,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:kind};
       pushOutsideSafe(add,10);
       z.push(add);
     }
@@ -1056,9 +1056,9 @@
   function spawnApexBoss(){
     if(g.bs2||g.bd2||z.length>=MAX_Z)return;
     const a=Math.random()*Math.PI*2,d=560;
-    const hp=2280+g.time*30;
-    const m={x:clamp(p.x+Math.cos(a)*d,44,MAP_W-44),y:clamp(p.y+Math.sin(a)*d,44,MAP_H-44),r:42,hp,s:62,dmg:42,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:4,apMax:hp,apBaseS:62,apCd:rnd(1.4,2.2),apTele:0,apTeleD:0,apAimX:0,apAimY:0,apBurstLeft:0,apBurstSpd:860,apPhase:1,apStormCd:rnd(3.4,5.2),apSummonCd:rnd(3.4,4.8),apEvadeCd:0,apImpactCd:0};
-    pushOutsideSafe(m,36);z.push(m);g.bs2=1;g.bd=0;g.msg='apex boss! phase omega';g.msgT=1.7;beep(120,.2,'sawtooth',.04);trauma(.34);
+    const hp=3200+g.time*42;
+    const m={x:clamp(p.x+Math.cos(a)*d,44,MAP_W-44),y:clamp(p.y+Math.sin(a)*d,44,MAP_H-44),r:46,hp,s:68,dmg:52,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:4,apMax:hp,apBaseS:68,apCd:rnd(1.1,1.8),apTele:0,apTeleD:0,apAimX:0,apAimY:0,apBurstLeft:0,apBurstSpd:920,apPhase:1,apStormCd:rnd(2.8,4.2),apSummonCd:rnd(2.6,3.8),apEvadeCd:0,apImpactCd:0,apSlamCd:0,apRegenCd:0,apShieldT:0};
+    pushOutsideSafe(m,36);z.push(m);g.bs2=1;g.bd=0;g.msg='APEX DEAN APPROACHES';g.msgT=2.0;beep(120,.2,'sawtooth',.04);beep(60,.3,'sawtooth',.03);trauma(.38);
   }
   function nearestZombie(){
     let best=0,bd=1e9;
@@ -1825,7 +1825,9 @@
         const m=z[j],dx=m.x-q.x,dy=m.y-q.y;
         const br=q.r||3;
         if(dx*dx+dy*dy<(m.r+br)*(m.r+br)){
-          m.hp-=q.d;
+          let dmgMul=1;
+          if(m.k===4&&m.apShieldT>0)dmgMul=.45;
+          m.hp-=q.d*dmgMul;
           m.ht=q.pulse ? .12 : .09;
           m.vx+=q.vx*(q.pulse ? .11 : .07);
           m.vy+=q.vy*(q.pulse ? .11 : .07);
@@ -1930,118 +1932,186 @@
       if(m.k===4){
         if(!m.apMax)m.apMax=m.hp;
         if(!m.apBaseS)m.apBaseS=m.s;
-        if(!m.apCd)m.apCd=rnd(1.4,2.2);
-        if(!m.apStormCd)m.apStormCd=rnd(3.4,5.2);
-        if(!m.apSummonCd)m.apSummonCd=rnd(3.4,4.8);
-        if(!m.apBurstSpd)m.apBurstSpd=860;
+        if(!m.apCd)m.apCd=rnd(1.1,1.8);
+        if(!m.apStormCd)m.apStormCd=rnd(2.8,4.2);
+        if(!m.apSummonCd)m.apSummonCd=rnd(2.6,3.8);
+        if(!m.apBurstSpd)m.apBurstSpd=920;
         if(!m.apTele)m.apTele=0;
         if(!m.apBurstLeft)m.apBurstLeft=0;
         if(!m.apEvadeCd)m.apEvadeCd=0;
         if(!m.apImpactCd)m.apImpactCd=0;
+        if(!m.apSlamCd)m.apSlamCd=0;
+        if(!m.apRegenCd)m.apRegenCd=0;
+        if(!m.apShieldT)m.apShieldT=0;
         const hpR=clamp(m.hp/(m.apMax||1),0,1);
         const phase=hpR>.66?1:(hpR>.33?2:3);
         const rage=phase-1;
         m.apPhase=phase;
-        m.s=(m.apBaseS||62)*(1+.14*rage+(p.zt>0?.18:0));
+        m.s=(m.apBaseS||68)*(1+.18*rage+(p.zt>0?.22:0));
         m.apCd-=dt;
         m.apStormCd-=dt;
         m.apSummonCd-=dt;
         if(m.apEvadeCd>0)m.apEvadeCd=Math.max(0,m.apEvadeCd-dt);
         if(m.apImpactCd>0)m.apImpactCd=Math.max(0,m.apImpactCd-dt);
+        if(m.apSlamCd>0)m.apSlamCd=Math.max(0,m.apSlamCd-dt);
+        if(m.apRegenCd>0)m.apRegenCd=Math.max(0,m.apRegenCd-dt);
+        if(m.apShieldT>0)m.apShieldT=Math.max(0,m.apShieldT-dt);
         const qx=p.x-m.x,qy=p.y-m.y,ql=Math.hypot(qx,qy)||1;
-        const pred=phase===1?.34:phase===2?.52:.72;
-        const aimX=clamp(p.x+p.vx*pred+(p.zx||0)*28,20,MAP_W-20);
-        const aimY=clamp(p.y+p.vy*pred+(p.zy||0)*28,20,MAP_H-20);
+        const pred=phase===1?.38:phase===2?.58:.78;
+        const aimX=clamp(p.x+p.vx*pred+(p.zx||0)*34,20,MAP_W-20);
+        const aimY=clamp(p.y+p.vy*pred+(p.zy||0)*34,20,MAP_H-20);
+        // GROUND SLAM: when close, slam the ground dealing AOE damage + knockback
+        if(!pSafeNow&&ql<140+phase*20&&m.apSlamCd<=0&&m.apTele<=0){
+          m.apSlamCd=Math.max(2.2,4.2-rage*1.1);
+          const slamDmg=14+phase*6+rage*4;
+          const slamR=120+phase*28;
+          if(ql<slamR)hitPlayer(slamDmg);
+          // knockback player away
+          const kbStr=320+phase*80;
+          p.vx+=(p.x-m.x)/ql*kbStr;
+          p.vy+=(p.y-m.y)/ql*kbStr;
+          trauma(.22+.08*rage);
+          hitStop(.04);
+          // slam visual: expanding ring + particles
+          burst(m.x,m.y,'#e0c8ff',22+phase*6,160+phase*30);
+          burst(m.x,m.y,'#ff8bd9',10+phase*3,100+phase*20);
+          addApexStorm(clamp(m.x+rnd(-18,18),24,MAP_W-24),clamp(m.y+rnd(-18,18),24,MAP_H-24),52+phase*14,1.6+phase*.4);
+          beep(90,.1,'sawtooth',.035);
+          beep(55,.14,'sawtooth',.025);
+          g.msg=phase===3?'APEX SLAM! OMEGA FURY!':'apex ground slam!';g.msgT=.9;
+          m.vx*=.1;m.vy*=.1; // brief pause after slam
+        }
+        // OMEGA PHASE HP REGEN: slowly regenerates HP in phase 3
+        if(phase>=3&&m.apRegenCd<=0){
+          const regenAmt=Math.min(m.apMax*.008,m.apMax-m.hp);
+          if(regenAmt>0){
+            m.hp+=regenAmt;
+            if(Math.random()<.35)pushFx({x:m.x+rnd(-14,14),y:m.y+rnd(-14,14),vx:rnd(-10,10),vy:rnd(-30,-10),t:rnd(.15,.3),c:'#d8b4ff'});
+          }
+          m.apRegenCd=.35;
+        }
+        // DAMAGE SHIELD: brief damage reduction after phase transitions
+        if(m.apShieldT>0){
+          // reduce incoming damage handled in bullet section implicitly via ht extension
+          if(Math.random()<.5)pushFx({x:m.x+rnd(-m.r,m.r),y:m.y+rnd(-m.r,m.r),vx:rnd(-16,16),vy:rnd(-16,16),t:rnd(.08,.16),c:'#c8b6ff'});
+        }
+        // trigger shield on phase transition
+        if(phase>1&&!m.apLastPhase)m.apLastPhase=1;
+        if(m.apLastPhase&&phase!==m.apLastPhase){
+          m.apShieldT=1.8;
+          m.apLastPhase=phase;
+          burst(m.x,m.y,'#c8b6ff',18,140);
+          beep(180,.08,'triangle',.022);
+          g.msg=phase===2?'APEX RAGE MODE':'APEX OMEGA FRENZY';
+          g.msgT=1.2;
+          // summon a wave on transition
+          spawnApexAdds(m,phase+1,phase);
+        }
+        // evade: smarter, more frequent, sometimes dodges into flanking position
         if(!pSafeNow&&p.zt>0&&m.apEvadeCd<=0){
           const side=Math.random()<.5?-1:1;
-          const evade=260+rage*70;
+          const evade=300+rage*90;
           m.vx+=(-p.zy)*side*evade;
           m.vy+=(p.zx)*side*evade;
-          m.apEvadeCd=.65-rage*.08;
-          if(phase>=3&&Math.random()<.45){
+          // sometimes dash behind the player
+          if(phase>=2&&Math.random()<.35){
+            m.vx+=qx/ql*180;
+            m.vy+=qy/ql*180;
+          }
+          m.apEvadeCd=Math.max(.35,.55-rage*.1);
+          if(phase>=2&&Math.random()<.55+rage*.15){
             addApexStorm(
-              clamp(m.x+(-p.zy)*side*54,24,MAP_W-24),
-              clamp(m.y+(p.zx)*side*54,24,MAP_H-24),
-              58+rage*10,
-              1.8+rage*.35
+              clamp(m.x+(-p.zy)*side*60,24,MAP_W-24),
+              clamp(m.y+(p.zx)*side*60,24,MAP_H-24),
+              62+rage*14,
+              2.0+rage*.45
             );
           }
-          burst(m.x,m.y,'#d7c1ff',10,70);
-          beep(176,.05,'sawtooth',.02);
+          burst(m.x,m.y,'#d7c1ff',12+phase*2,80+phase*10);
+          beep(176-.05*rage,.05,'sawtooth',.02);
         }
         if(m.apTele>0){
           m.apTele=Math.max(0,m.apTele-dt);
           m.vx*=Math.max(0,1-dt*13);
           m.vy*=Math.max(0,1-dt*13);
-          if(Math.random()<.6){
+          if(Math.random()<.65){
             pushFx({x:m.x+rnd(-8,8),y:m.y+rnd(-8,8),vx:rnd(-26,26),vy:rnd(-26,26),t:rnd(.1,.2),c:'#dab9ff'});
           }
-          if(Math.random()<.55){
+          if(Math.random()<.6){
             pushFx({x:m.apAimX+rnd(-10,10),y:m.apAimY+rnd(-10,10),vx:rnd(-20,20),vy:rnd(-20,20),t:rnd(.08,.18),c:'#f4dcff'});
           }
           if(m.apTele<=0){
             const lx=m.apAimX-m.x,ly=m.apAimY-m.y,ll=Math.hypot(lx,ly)||1;
-            const burstSp=(m.apBurstSpd||860)+rage*140+rnd(-45,60);
+            const burstSp=(m.apBurstSpd||920)+rage*180+rnd(-45,70);
             m.vx+=lx/ll*burstSp;
             m.vy+=ly/ll*burstSp;
             m.ht=Math.max(m.ht,.18);
-            trauma(.2+.05*rage);
-            hitStop(.03);
-            burst(m.x,m.y,'#c7a9ff',20,140);
-            addApexStorm(clamp(m.apAimX+rnd(-22,22),24,MAP_W-24),clamp(m.apAimY+rnd(-22,22),24,MAP_H-24),68+rage*12,2.2+rage*.5);
-            if(phase>=2&&Math.random()<.7)spawnApexAdds(m,phase===3?3:2,phase);
+            trauma(.22+.06*rage);
+            hitStop(.035);
+            burst(m.x,m.y,'#c7a9ff',24,160);
+            addApexStorm(clamp(m.apAimX+rnd(-22,22),24,MAP_W-24),clamp(m.apAimY+rnd(-22,22),24,MAP_H-24),72+rage*16,2.4+rage*.6);
+            // always spawn adds on burst from phase 2+, sometimes in phase 1 too
+            if(phase>=2)spawnApexAdds(m,phase===3?4:2,phase);
+            else if(Math.random()<.3)spawnApexAdds(m,1,phase);
             m.apBurstLeft=(m.apBurstLeft|0)-1;
             if(m.apBurstLeft>0){
-              m.apTeleD=Math.max(.18,.34-rage*.04);
+              m.apTeleD=Math.max(.16,.30-rage*.04);
               m.apTele=m.apTeleD;
-              m.apAimX=clamp(p.x+p.vx*(pred*.7)+rnd(-30,30),20,MAP_W-20);
-              m.apAimY=clamp(p.y+p.vy*(pred*.7)+rnd(-30,30),20,MAP_H-20);
+              m.apAimX=clamp(p.x+p.vx*(pred*.7)+rnd(-36,36),20,MAP_W-20);
+              m.apAimY=clamp(p.y+p.vy*(pred*.7)+rnd(-36,36),20,MAP_H-20);
             }else{
-              m.apCd=rnd(Math.max(.44,1.25-rage*.26),Math.max(.8,1.95-rage*.3));
+              m.apCd=rnd(Math.max(.36,1.0-rage*.28),Math.max(.65,1.6-rage*.34));
             }
-            beep(145-rage*8,.07,'sawtooth',.032);
+            beep(140-rage*10,.07,'sawtooth',.035);
           }
         }else if(m.apCd<=0){
           const close=ql<180,far=ql>360;
-          let bursts=phase===1?1:(phase===2?2:3);
+          let bursts=phase===1?2:(phase===2?3:4);
           if(close&&phase>=2)bursts++;
-          if(far&&phase===1)bursts=2;
+          if(far)bursts=Math.max(bursts,3);
           m.apBurstLeft=bursts;
-          m.apTeleD=Math.max(.24,.52-rage*.08-(close?.08:0));
+          m.apTeleD=Math.max(.20,.46-rage*.09-(close?.08:0));
           m.apTele=m.apTeleD;
           m.apAimX=aimX;
           m.apAimY=aimY;
-          m.apBurstSpd=820+rage*150+(far?90:0);
-          if(Math.random()<.4+rage*.2){
+          m.apBurstSpd=880+rage*190+(far?110:0);
+          if(Math.random()<.45+rage*.25){
             const side=Math.random()<.5?-1:1;
-            m.apAimX=clamp(m.apAimX+(-qy/ql)*side*(70+rage*40),20,MAP_W-20);
-            m.apAimY=clamp(m.apAimY+(qx/ql)*side*(70+rage*40),20,MAP_H-20);
+            m.apAimX=clamp(m.apAimX+(-qy/ql)*side*(80+rage*50),20,MAP_W-20);
+            m.apAimY=clamp(m.apAimY+(qx/ql)*side*(80+rage*50),20,MAP_H-20);
           }
-          g.msg=phase===3?'apex frenzy':'apex charging';
-          g.msgT=.5;
-          burst(m.x,m.y,'#b59bff',12+phase*4,90+phase*18);
-          beep(190-rage*10,.05,'square',.02);
-          if(phase>=2&&m.apSummonCd<=0){
-            spawnApexAdds(m,phase,phase);
-            m.apSummonCd=rnd(Math.max(1.2,3-rage*.6),Math.max(1.8,4.1-rage*.7));
+          g.msg=phase===3?'APEX FRENZY!':'apex charging';
+          g.msgT=.6;
+          burst(m.x,m.y,'#b59bff',14+phase*5,100+phase*22);
+          beep(185-rage*12,.06,'square',.022);
+          if(m.apSummonCd<=0){
+            spawnApexAdds(m,phase+1,phase);
+            m.apSummonCd=rnd(Math.max(.9,2.4-rage*.7),Math.max(1.4,3.4-rage*.8));
           }
         }
+        // storms: more frequent, bigger, double-storm in omega
         if(m.apStormCd<=0&&!pSafeNow){
-          addApexStorm(clamp(p.x+p.vx*.32+rnd(-36,36),24,MAP_W-24),clamp(p.y+p.vy*.32+rnd(-36,36),24,MAP_H-24),62+phase*10,2.0+phase*.45);
-          if(phase>=3&&Math.random()<.16){
-            addApexStorm(clamp(m.x+rnd(-120,120),24,MAP_W-24),clamp(m.y+rnd(-120,120),24,MAP_H-24),56+phase*8,1.8+phase*.35);
+          addApexStorm(clamp(p.x+p.vx*.36+rnd(-40,40),24,MAP_W-24),clamp(p.y+p.vy*.36+rnd(-40,40),24,MAP_H-24),68+phase*14,2.2+phase*.55);
+          if(phase>=2&&Math.random()<.35+rage*.15){
+            addApexStorm(clamp(m.x+rnd(-140,140),24,MAP_W-24),clamp(m.y+rnd(-140,140),24,MAP_H-24),60+phase*12,2.0+phase*.45);
           }
-          m.apStormCd=rnd(Math.max(2.8,4.9-rage*.4),Math.max(3.6,6.1-rage*.45));
+          if(phase>=3&&Math.random()<.28){
+            // triple storm in omega
+            const sa=Math.random()*Math.PI*2;
+            addApexStorm(clamp(p.x+Math.cos(sa)*130+rnd(-30,30),24,MAP_W-24),clamp(p.y+Math.sin(sa)*130+rnd(-30,30),24,MAP_H-24),56+rage*10,1.8+rage*.4);
+          }
+          m.apStormCd=rnd(Math.max(2.0,3.8-rage*.55),Math.max(2.8,5.0-rage*.55));
         }
+        // gravity pull: stronger, wider
         if(!pSafeNow){
           const px=m.x-p.x,py=m.y-p.y,pl=Math.hypot(px,py)||1;
-          const pullR=300+phase*40;
+          const pullR=340+phase*50;
           if(pl<pullR){
-            const pull=(1-pl/pullR)*(110+phase*38);
+            const pull=(1-pl/pullR)*(130+phase*48);
             p.x=clamp(p.x+px/pl*pull*dt,12,MAP_W-12);
             p.y=clamp(p.y+py/pl*pull*dt,12,MAP_H-12);
-            p.rx-=px/pl*(1.5+phase*.35);
-            p.ry-=py/pl*(1.3+phase*.3);
+            p.rx-=px/pl*(1.8+phase*.42);
+            p.ry-=py/pl*(1.5+phase*.36);
           }
         }
       }
@@ -2621,6 +2691,38 @@
           x.beginPath();
           x.arc(tx2,ty2,3.2,0,Math.PI*2);
           x.fill();
+        }
+        // damage shield glow
+        if(m.apShieldT>0){
+          const sq=clamp(m.apShieldT/1.8,0,1);
+          x.globalAlpha=.12+.22*sq;
+          x.fillStyle='rgba(200,182,255,.8)';
+          x.beginPath();x.arc(sx,sy,m.r+16+Math.sin(g.t*14)*3,0,Math.PI*2);x.fill();
+          x.globalAlpha=.35+.4*sq;
+          x.strokeStyle='rgba(220,200,255,.9)';
+          x.lineWidth=2.5+sq*2;
+          x.beginPath();x.arc(sx,sy,m.r+14+Math.sin(g.t*10)*2,0,Math.PI*2);x.stroke();
+        }
+        // slam warning ring (shows when slam is nearly ready)
+        if((m.apSlamCd||0)<.8&&(m.apSlamCd||0)>0){
+          const slamQ=1-clamp((m.apSlamCd||0)/.8,0,1);
+          x.globalAlpha=.08+.18*slamQ;
+          x.strokeStyle='#ff8bd9';
+          x.lineWidth=1.5+slamQ*2;
+          x.setLineDash([6,4]);
+          x.lineDashOffset=-g.t*60;
+          const slamR=120+((m.apPhase||1))*28;
+          x.beginPath();x.arc(sx,sy,slamR,0,Math.PI*2);x.stroke();
+          x.setLineDash([]);
+        }
+        // omega regen particles
+        if((m.apPhase||1)>=3){
+          if(Math.random()<.12){
+            const ra=Math.random()*Math.PI*2,rd=m.r*.6;
+            x.globalAlpha=.25+.15*Math.sin(g.t*12+i);
+            x.fillStyle='#d8b4ff';
+            x.beginPath();x.arc(sx+Math.cos(ra)*rd,sy+Math.sin(ra)*rd,1.8,0,Math.PI*2);x.fill();
+          }
         }
         x.globalAlpha=1;
       }
