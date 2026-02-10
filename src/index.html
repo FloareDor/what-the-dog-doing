@@ -138,7 +138,7 @@ canvas{display:block;width:100%;height:100%}
     inB:'',mb:0,mbd:0,bs:0,bd:0,bs2:0,bd2:0,b2At:0,
     pred:0,predDead:0,moth:0,mothDead:0,
     bossDownT:0,won:0,
-    postDeanT:0,endWave:0,endT:0,endSpawnT:0,
+    endWave:0,endT:0,endSpawnT:0,
     apWarn1:0,apWarn2:0,apStormHitCd:0,
     botMask:0,chemMask:0,
     labStep:0,labBank:0,labFlip:0,
@@ -528,11 +528,6 @@ canvas{display:block;width:100%;height:100%}
     }
     if(g.bs2&&knownVariants(g.chemMask)>=3)return 'triple burst! overlap all 3 puddles to storm apex!';
     if(g.bs2)return 'defeat apex dean';
-    if(g.bd){
-      const rem=Math.max(0,g.b2At-g.t);
-      const txt=rem<=APEX_WARN_TWO?'someone...':'something big is approaching...';
-      return txt+' '+rem.toFixed(1)+'s';
-    }
     if(g.bs)return 'defeat the dean \u2014 grab mints before he walks over them!';
     if(g.mb)return 'defeat the provost!';
     if(g.pz&&g.pz.id==='nsh')return 'solve nsh puzzle';
@@ -545,6 +540,7 @@ canvas{display:block;width:100%;height:100%}
     if(g.labNsh>0)return 'visit nsh for buddy prototype';
     if(g.labMel>0)return 'visit mellon institute for catalyst prototype';
     if(g.sch.mel===2&&g.kills<FIRST_BOSS_MIN_KILLS)return 'survive \u2014 '+g.kills+'/'+FIRST_BOSS_MIN_KILLS+' kills';
+    if(g.bd&&!g.bs2&&!g.bd2)return 'survive \u2014 '+g.kills+' kills';
     return 'survive \u2014 '+g.kills+' kills';
   }
   function queueUnlock(id){
@@ -1079,7 +1075,7 @@ canvas{display:block;width:100%;height:100%}
   }
 
   function reset(full){
-    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.mb=0;g.mbd=0;g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.pred=0;g.predDead=0;g.moth=0;g.mothDead=0;g.bossDownT=0;g.won=0;g.postDeanT=0;g.endWave=0;g.endT=0;g.endSpawnT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;g.lbTopErr='';g.lbRankErr='';g.lbRankText='';g.lbFetchT=0;g.lbRankFetchT=0;g.lbBtnX=0;g.lbBtnY=0;g.lbBtnW=0;g.lbBtnH=0;
+    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.mb=0;g.mbd=0;g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.pred=0;g.predDead=0;g.moth=0;g.mothDead=0;g.bossDownT=0;g.won=0;g.endWave=0;g.endT=0;g.endSpawnT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;g.lbTopErr='';g.lbRankErr='';g.lbRankText='';g.lbFetchT=0;g.lbRankFetchT=0;g.lbBtnX=0;g.lbBtnY=0;g.lbBtnW=0;g.lbBtnH=0;
     p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slFocus=0;p.slT=0;p.slRecallT=0;p.slLinkT=0;p.slRecallPulse=0;p.slCarryVx=0;p.slCarryVy=0;p.slPow=0;p.slWave=0;p.slComboFx=0;p.slHitMask=0;p.slPerfect=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
     p.slRopeRest=0;
     z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;
@@ -1239,7 +1235,7 @@ canvas{display:block;width:100%;height:100%}
     const a=Math.random()*Math.PI*2,d=560;
     const hp=3200+g.time*42;
     const m={x:clamp(p.x+Math.cos(a)*d,44,MAP_W-44),y:clamp(p.y+Math.sin(a)*d,44,MAP_H-44),r:46,hp,s:68,dmg:52,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:4,apMax:hp,apBaseS:68,apCd:rnd(1.1,1.8),apTele:0,apTeleD:0,apAimX:0,apAimY:0,apBurstLeft:0,apBurstSpd:920,apPhase:1,apStormCd:rnd(2.8,4.2),apSummonCd:rnd(2.6,3.8),apEvadeCd:0,apImpactCd:0,apSlamCd:0,apRegenCd:0,apShieldT:0};
-    pushOutsideSafe(m,36);z.push(m);g.bs2=1;g.bd=0;g.msg='APEX DEAN APPROACHES';g.msgT=2.0;beep(120,.2,'sawtooth',.04);beep(60,.3,'sawtooth',.03);trauma(.38);
+    pushOutsideSafe(m,36);z.push(m);g.bs2=1;g.msg='APEX DEAN APPROACHES';g.msgT=2.0;beep(120,.2,'sawtooth',.04);beep(60,.3,'sawtooth',.03);trauma(.38);
   }
   function nearestZombie(){
     let best=0,bd=1e9;
@@ -1339,7 +1335,7 @@ canvas{display:block;width:100%;height:100%}
     {n:'Rapid Fire',d:'shoot faster',f:()=>p.fireRate=Math.max(.06,p.fireRate*(1-.22*Math.min(upScale(),4))),req:()=>1},
     {n:'Big Bites',d:'more damage',f:()=>p.dmg+=10*upScale(),req:()=>1},
     {n:'Speed Paws',d:'move faster',f:()=>p.speed+=35*upScale(),req:()=>1},
-    {n:'Extra Shot',d:'+projectiles',f:()=>{const add=1+Math.floor(upScale()/3);p.shots=Math.min(12,p.shots+add)},req:()=>1},
+    {n:'Extra Shot',d:'+projectiles',f:()=>{const add=1+Math.floor(upScale()/2);p.shots=Math.min(14,p.shots+add)},req:()=>1},
     {n:'Snack Magnet',d:'pickup range up',f:()=>p.magnet+=45*upScale(),req:()=>1},
     {n:'Tough Fur',d:'+max hp +heal',f:()=>{const v=40*upScale();p.maxHp+=v;p.hp=Math.min(p.maxHp,p.hp+v)},req:()=>1},
     {n:'Quick Heal',d:'heal now',f:()=>p.hp=Math.min(p.maxHp,p.hp+55*upScale()),req:()=>1},
@@ -2036,7 +2032,7 @@ canvas{display:block;width:100%;height:100%}
     if(canSpawn&&g.sch.nsh===2&&!g.mb&&!g.mbd&&!g.bs&&!g.bd&&g.kills>=MINI_BOSS_MIN_KILLS)spawnMiniBoss();
     const firstBossReadyByProgress=g.kills>FIRST_BOSS_TRIGGER_KILLS||g.time>FIRST_BOSS_TRIGGER_TIME;
     if(canSpawn&&g.sch.mel===2&&!g.bs&&!g.bd&&!g.bs2&&!g.bd2&&g.kills>=FIRST_BOSS_MIN_KILLS&&firstBossReadyByProgress)spawnBoss();
-    if(canSpawn&&g.bd&&!g.bs2&&!g.bd2&&(g.t>=g.b2At||g.kills>=2500))spawnApexBoss();
+    if(canSpawn&&g.bd&&!g.pred&&!g.bs2&&!g.bd2&&(g.t>=g.b2At||g.kills>=2500))spawnApexBoss();
     if(canSpawn&&g.spawnT<=0){
       g.spawnT=g.nextSpawn;
       const baseRate=.78-g.time*.018;
@@ -2138,9 +2134,12 @@ canvas{display:block;width:100%;height:100%}
           if(!pSafeNow){
             const sdx=p.x-m.x,sdy=p.y-m.y,sl2=Math.hypot(sdx,sdy)||1;
             if(sl2<320+m.moRage*60){
-              p.speed=Math.max(40,p.speed-120*dt);
-              p.vx-=sdx/sl2*60*dt;
-              p.vy-=sdy/sl2*60*dt;
+              // temporary slow: reduce velocity, don't touch base speed
+              p.vx*=Math.max(.3,1-3.5*dt);
+              p.vy*=Math.max(.3,1-3.5*dt);
+              // push away
+              p.vx-=sdx/sl2*80*dt;
+              p.vy-=sdy/sl2*80*dt;
             }
           }
           if(Math.random()<.4)pushFx({x:m.x+rnd(-m.r*2,m.r*2),y:m.y+rnd(-m.r*2,m.r*2),vx:rnd(-30,30),vy:rnd(-30,30),t:rnd(.1,.22),c:'#cc44cc'});
@@ -2246,7 +2245,7 @@ canvas{display:block;width:100%;height:100%}
           m.cloneLife-=dt;
           if(m.cloneLife<=0){
             burst(m.x,m.y,'#661111',6,30);
-            z.splice(i,1);i--;continue;
+            z.splice(i,1);continue;
           }
         }
       }
@@ -3483,7 +3482,7 @@ canvas{display:block;width:100%;height:100%}
       const statRight=abX-8;
       x.font='600 12px Trebuchet MS,sans-serif';
       x.fillStyle='#9ec8ff';x.fillText('Time '+g.time.toFixed(1)+'s',20,statsY);
-      x.fillStyle='#ffd56d';x.fillText(g.bd2?g.kills+'/'+KILL_CAP:'Kills '+g.kills,118,statsY);
+      x.fillStyle='#ffd56d';x.fillText(g.bd2?g.kills+'/'+MOTHER_TRIGGER:'Kills '+g.kills,118,statsY);
       if(g.endWave>0){x.fillStyle='#ff9a7a';x.fillText('W'+g.endWave,210,statsY);}
       x.textAlign='right';
       x.fillStyle='#dce8ff';x.fillText('Best '+g.best,statRight,statsY);
@@ -3492,7 +3491,7 @@ canvas{display:block;width:100%;height:100%}
     }else{
       x.font='600 14px Trebuchet MS,sans-serif';
       x.fillStyle='#9ec8ff';x.fillText('Time '+g.time.toFixed(1)+'s',20,54);
-      x.fillStyle='#ffd56d';x.fillText(g.bd2?g.kills+'/'+KILL_CAP:'Kills '+g.kills,150,54);
+      x.fillStyle='#ffd56d';x.fillText(g.bd2?g.kills+'/'+MOTHER_TRIGGER:'Kills '+g.kills,150,54);
       if(g.endWave>0){x.fillStyle='#ff9a7a';x.fillText('Wave '+g.endWave,280,54);}
       x.textAlign='right';
       x.fillStyle='#dce8ff';x.fillText('Best '+g.best,W-24,54);
