@@ -91,7 +91,8 @@ canvas{display:block;width:100%;height:100%}
   const SLINGSHOT_ROPE_DEFAULT=44;
   const SLINGSHOT_ROPE_SHRINK=142;
   const KILL_CAP=9999;
-  const PREDATOR_TRIGGER=9000;
+  const PREDATOR_TRIGGER=1500;
+  const MOTHER_TRIGGER=9000;
   const MINI_BOSS_MIN_KILLS=200;
   const EXPLODER_INTRO_KILLS=100;
   const SHIELDED_INTRO_KILLS=400;
@@ -135,7 +136,7 @@ canvas{display:block;width:100%;height:100%}
     pz:0,
     uq:[],
     inB:'',mb:0,mbd:0,bs:0,bd:0,bs2:0,bd2:0,b2At:0,
-    pred:0,predDead:0,
+    pred:0,predDead:0,moth:0,mothDead:0,
     bossDownT:0,won:0,
     postDeanT:0,endWave:0,endT:0,endSpawnT:0,
     apWarn1:0,apWarn2:0,apStormHitCd:0,
@@ -517,12 +518,13 @@ canvas{display:block;width:100%;height:100%}
   function objectiveText(){
     if(!p.mkOn)return 'collect mints '+g.homeGot+'/'+g.homeNeed;
     if(g.won)return 'CAMPUS SECURED \u2014 you did it!';
-    if(g.pred)return 'defeat the predator to secure campus!';
+    if(g.moth)return 'defeat the mother to secure campus!';
+    if(g.pred)return 'defeat the predator!';
     if(g.kills>=KILL_CAP)return 'clear remaining enemies! '+z.length+' left';
     if(g.bd2){
-      if(g.kills>=PREDATOR_TRIGGER-200)return 'WAVE '+g.endWave+' \u2014 '+g.kills+'/'+PREDATOR_TRIGGER+' \u2014 something lurks...';
-      if(g.endWave>0)return 'WAVE '+g.endWave+' \u2014 '+g.kills+'/'+PREDATOR_TRIGGER+' kills';
-      return 'endless mode \u2014 '+g.kills+'/'+PREDATOR_TRIGGER+' kills to final boss';
+      if(g.kills>=MOTHER_TRIGGER-200)return 'WAVE '+g.endWave+' \u2014 '+g.kills+'/'+MOTHER_TRIGGER+' \u2014 something stirs...';
+      if(g.endWave>0)return 'WAVE '+g.endWave+' \u2014 '+g.kills+'/'+MOTHER_TRIGGER+' kills';
+      return 'endless mode \u2014 '+g.kills+'/'+MOTHER_TRIGGER+' kills to final boss';
     }
     if(g.bs2&&knownVariants(g.chemMask)>=3)return 'triple burst! overlap all 3 puddles to storm apex!';
     if(g.bs2)return 'defeat apex dean';
@@ -850,26 +852,41 @@ canvas{display:block;width:100%;height:100%}
       trauma(.1);
       beep(180,.06,'sawtooth',.02);
     }
-    // predator kill = VICTORY
+    // predator kill -- advances game, not a win
     if(m.k===9){
       g.pred=0;g.predDead=1;
-      // stop all spawning, trigger campus secured
+      g.msg='predator down!';g.msgT=2.2;
+      g.bossDownT=2.0;
+      hitStop(.1);
+      trauma(.45);
+      burst(m.x,m.y,'#ff2222',30,200);
+      burst(m.x,m.y,'#ffa64d',18,140);
+      beep(240,.1,'sawtooth',.03);
+      beep(380,.1,'triangle',.022);
+      // kill all remaining clones
+      for(let j=z.length-1;j>=0;j--){
+        if(z[j].k===10){burst(z[j].x,z[j].y,'#882222',8,40);z.splice(j,1);}
+      }
+    }
+    // MOTHER kill = VICTORY
+    if(m.k===11){
+      g.moth=0;g.mothDead=1;
       g.won=1;
       g.msg='CAMPUS SECURED';g.msgT=999;
       g.bossDownT=5;
       hitStop(.15);
-      trauma(.65);
-      burst(m.x,m.y,'#ff2222',50,320);
-      burst(m.x,m.y,'#ffd56d',40,260);
-      burst(m.x,m.y,'#69f0c9',35,220);
-      burst(m.x,m.y,'#8ec0ff',28,180);
+      trauma(.7);
+      burst(m.x,m.y,'#ff44ff',60,360);
+      burst(m.x,m.y,'#ffd56d',50,300);
+      burst(m.x,m.y,'#69f0c9',40,250);
+      burst(m.x,m.y,'#8ec0ff',30,200);
       beep(440,.22,'triangle',.035);
       beep(554,.2,'triangle',.03);
       beep(659,.24,'triangle',.035);
-      beep(880,.3,'triangle',.025);
-      // kill all remaining clones
+      beep(880,.3,'triangle',.03);
+      // kill all adds she spawned
       for(let j=z.length-1;j>=0;j--){
-        if(z[j].k===10){burst(z[j].x,z[j].y,'#882222',8,40);z.splice(j,1);}
+        if(z[j].k===12){burst(z[j].x,z[j].y,'#662266',6,34);z.splice(j,1);}
       }
     }
     // shadow clone despawn (k=10) -- no special handler, just dies normally
@@ -1062,7 +1079,7 @@ canvas{display:block;width:100%;height:100%}
   }
 
   function reset(full){
-    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.mb=0;g.mbd=0;g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.pred=0;g.predDead=0;g.bossDownT=0;g.won=0;g.postDeanT=0;g.endWave=0;g.endT=0;g.endSpawnT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;g.lbTopErr='';g.lbRankErr='';g.lbRankText='';g.lbFetchT=0;g.lbRankFetchT=0;g.lbBtnX=0;g.lbBtnY=0;g.lbBtnW=0;g.lbBtnH=0;
+    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.mb=0;g.mbd=0;g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.pred=0;g.predDead=0;g.moth=0;g.mothDead=0;g.bossDownT=0;g.won=0;g.postDeanT=0;g.endWave=0;g.endT=0;g.endSpawnT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;g.lbTopErr='';g.lbRankErr='';g.lbRankText='';g.lbFetchT=0;g.lbRankFetchT=0;g.lbBtnX=0;g.lbBtnY=0;g.lbBtnW=0;g.lbBtnH=0;
     p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slFocus=0;p.slT=0;p.slRecallT=0;p.slLinkT=0;p.slRecallPulse=0;p.slCarryVx=0;p.slCarryVy=0;p.slPow=0;p.slWave=0;p.slComboFx=0;p.slHitMask=0;p.slPerfect=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
     p.slRopeRest=0;
     z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;
@@ -1117,28 +1134,50 @@ canvas{display:block;width:100%;height:100%}
   }
   function spawnPredator(){
     if(g.pred||g.predDead||z.length>=MAX_Z)return;
-    const a=Math.random()*Math.PI*2,d=580;
-    const hp=4800+g.time*18;
+    const a=Math.random()*Math.PI*2,d=500;
+    const hp=1600+g.time*8;
     const m={x:clamp(p.x+Math.cos(a)*d,50,MAP_W-50),y:clamp(p.y+Math.sin(a)*d,50,MAP_H-50),
-      r:36,hp,s:88,dmg:38,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:9,
-      prMax:hp,prCloak:0,prCloakCd:rnd(4,6),prLunge:0,prLungeDx:0,prLungeDy:0,
-      prCloneCd:rnd(8,12),prPhase:1,prTrailT:0};
-    pushOutsideSafe(m,30);z.push(m);
+      r:32,hp,s:76,dmg:24,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:9,
+      prMax:hp,prCloak:0,prCloakCd:rnd(5,7),prLunge:0,prLungeDx:0,prLungeDy:0,
+      prCloneCd:rnd(10,15),prPhase:1,prTrailT:0};
+    pushOutsideSafe(m,26);z.push(m);
     g.pred=1;
-    g.msg='THE PREDATOR STALKS...';g.msgT=2.4;
-    beep(80,.3,'sawtooth',.04);beep(55,.4,'sawtooth',.025);
-    trauma(.32);
+    g.msg='the predator stalks...';g.msgT=2.0;
+    beep(80,.2,'sawtooth',.03);beep(55,.25,'sawtooth',.018);
+    trauma(.22);
   }
   function spawnPredatorClone(src){
     if(z.length>=MAX_Z-1)return;
     const a=Math.random()*Math.PI*2,dd=rnd(60,120);
-    const hp=140+g.time*2;
+    const hp=80+g.time*1.5;
     const cl={x:clamp(src.x+Math.cos(a)*dd,20,MAP_W-20),y:clamp(src.y+Math.sin(a)*dd,20,MAP_H-20),
-      r:src.r*.85,hp,s:src.s*1.1,dmg:src.dmg*.4,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:10,
-      cloneLife:rnd(5,8)};
+      r:src.r*.8,hp,s:src.s*.95,dmg:src.dmg*.3,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:10,
+      cloneLife:rnd(4,6)};
     pushOutsideSafe(cl,8);z.push(cl);
     burst(cl.x,cl.y,'rgba(180,20,40,.6)',6,40);
     beep(140,.04,'sawtooth',.012);
+  }
+  function spawnMother(){
+    if(g.moth||g.mothDead||z.length>=MAX_Z)return;
+    const a=Math.random()*Math.PI*2,d=600;
+    const hp=8400+g.time*22;
+    const m={x:clamp(p.x+Math.cos(a)*d,60,MAP_W-60),y:clamp(p.y+Math.sin(a)*d,60,MAP_H-60),
+      r:52,hp,s:54,dmg:48,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:11,
+      moMax:hp,moPhase:1,moScreamCd:rnd(6,9),moScreamT:0,
+      moBroodCd:rnd(5,8),moWaveCd:rnd(4,6),moWaveT:0,moRage:0};
+    pushOutsideSafe(m,40);z.push(m);
+    g.moth=1;
+    g.msg='THE MOTHER AWAKENS';g.msgT=3.0;
+    beep(60,.4,'sawtooth',.05);beep(40,.5,'sawtooth',.035);beep(90,.3,'triangle',.025);
+    trauma(.42);
+  }
+  function spawnBroodling(src){
+    if(z.length>=MAX_Z-1)return;
+    const a=Math.random()*Math.PI*2,dd=rnd(40,100);
+    const hp=60+g.time*1.2;
+    const br={x:clamp(src.x+Math.cos(a)*dd,20,MAP_W-20),y:clamp(src.y+Math.sin(a)*dd,20,MAP_H-20),
+      r:rnd(9,13),hp,s:rnd(90,120),dmg:8+g.time*.2,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:12};
+    pushOutsideSafe(br,6);z.push(br);
   }
   function spawnMiniBoss(){
     if(g.mb||g.mbd||g.bs||g.bd||g.bs2||g.bd2||z.length>=MAX_Z)return;
@@ -1972,8 +2011,8 @@ canvas{display:block;width:100%;height:100%}
     if(g.bd2)g.endT+=dt;
 
     // victory is triggered by killing the Predator boss (handled in killZombie)
-    // fallback: if somehow past KILL_CAP with no predator and no enemies, also win
-    if(!g.won&&g.kills>=KILL_CAP&&g.predDead===0&&z.length===0){
+    // fallback: if somehow past KILL_CAP with no mother and no enemies, also win
+    if(!g.won&&g.kills>=KILL_CAP&&!g.mothDead&&z.length===0){
       g.won=1;
       g.msg='CAMPUS SECURED';g.msgT=999;
       g.bossDownT=4;
@@ -1987,10 +2026,12 @@ canvas{display:block;width:100%;height:100%}
     }
 
     // spawn (stop all spawning at kill cap or after predator dies)
-    const canSpawn=g.kills<KILL_CAP&&!g.won&&!g.predDead;
+    const canSpawn=g.kills<KILL_CAP&&!g.won&&!g.mothDead;
     g.spawnT-=dt;
-    // predator: spawns at 9000 kills during endless mode
-    if(canSpawn&&g.bd2&&!g.pred&&!g.predDead&&g.kills>=PREDATOR_TRIGGER)spawnPredator();
+    // predator: spawns after Dean dies at 1500 kills (before apex)
+    if(canSpawn&&g.bd&&!g.pred&&!g.predDead&&!g.bs2&&!g.bd2&&g.kills>=PREDATOR_TRIGGER)spawnPredator();
+    // mother: spawns at 9000 kills during endless mode
+    if(canSpawn&&g.bd2&&!g.moth&&!g.mothDead&&g.kills>=MOTHER_TRIGGER)spawnMother();
     // mini-boss: spawns after NSH done + enough kills
     if(canSpawn&&g.sch.nsh===2&&!g.mb&&!g.mbd&&!g.bs&&!g.bd&&g.kills>=MINI_BOSS_MIN_KILLS)spawnMiniBoss();
     const firstBossReadyByProgress=g.kills>FIRST_BOSS_TRIGGER_KILLS||g.time>FIRST_BOSS_TRIGGER_TIME;
@@ -2083,6 +2124,58 @@ canvas{display:block;width:100%;height:100%}
         }
       }else{
         m.bi='';m.bt=0;m.bm=0;
+      }
+      // --- MOTHER BOSS (k===11): scream + broodlings + damaging wave ---
+      if(m.k===11){
+        if(!m.moMax)m.moMax=m.hp;
+        const moHpR=clamp(m.hp/(m.moMax||1),0,1);
+        m.moPhase=moHpR>.6?1:(moHpR>.25?2:3);
+        m.moRage=m.moPhase-1;
+        // scream: slows player + knockback
+        m.moScreamCd-=dt;
+        if(m.moScreamT>0){
+          m.moScreamT=Math.max(0,m.moScreamT-dt);
+          if(!pSafeNow){
+            const sdx=p.x-m.x,sdy=p.y-m.y,sl2=Math.hypot(sdx,sdy)||1;
+            if(sl2<320+m.moRage*60){
+              p.speed=Math.max(40,p.speed-120*dt);
+              p.vx-=sdx/sl2*60*dt;
+              p.vy-=sdy/sl2*60*dt;
+            }
+          }
+          if(Math.random()<.4)pushFx({x:m.x+rnd(-m.r*2,m.r*2),y:m.y+rnd(-m.r*2,m.r*2),vx:rnd(-30,30),vy:rnd(-30,30),t:rnd(.1,.22),c:'#cc44cc'});
+        }else if(m.moScreamCd<=0){
+          m.moScreamT=1.2+m.moRage*.4;
+          m.moScreamCd=rnd(Math.max(3,6-m.moRage*1.5),Math.max(5,9-m.moRage*2));
+          burst(m.x,m.y,'#dd66dd',16+m.moRage*4,200+m.moRage*40);
+          beep(70,.12,'sawtooth',.03);
+          g.msg=m.moPhase===3?'MOTHER SCREAMS!':'mother scream!';g.msgT=.8;
+        }
+        // spawn broodlings
+        m.moBroodCd-=dt;
+        if(m.moBroodCd<=0){
+          const count=2+m.moPhase;
+          for(let bb=0;bb<count;bb++)spawnBroodling(m);
+          m.moBroodCd=rnd(Math.max(3,6-m.moRage),Math.max(4,8-m.moRage));
+          burst(m.x,m.y,'#993399',8,80);
+          beep(100,.05,'sawtooth',.015);
+        }
+        // damaging wave pulse
+        m.moWaveCd-=dt;
+        if(m.moWaveT>0){
+          m.moWaveT=Math.max(0,m.moWaveT-dt);
+        }else if(m.moWaveCd<=0){
+          m.moWaveT=.6;
+          m.moWaveCd=rnd(Math.max(2.5,4.5-m.moRage*.8),Math.max(3.5,6-m.moRage));
+          const waveR=180+m.moRage*50;
+          const waveDmg=10+m.moRage*5;
+          const ddp=Math.hypot(p.x-m.x,p.y-m.y);
+          if(ddp<waveR&&!pSafeNow)hitPlayer(waveDmg*(1-ddp/waveR));
+          burst(m.x,m.y,'#ee55ee',14+m.moRage*4,waveR*.6);
+          beep(90,.08,'sawtooth',.022);
+        }
+        // speed scales with rage
+        m.s=54+m.moRage*12;
       }
       // --- PREDATOR BOSS (k===9): cloak + lunge + shadow clones ---
       if(m.k===9){
@@ -2906,7 +2999,7 @@ canvas{display:block;width:100%;height:100%}
     for(let i=0;i<z.length;i++){
       const m=z[i],sx=m.x-cm.x,sy=m.y-cm.y;
       if(sx<-40||sy<-40||sx>W+40||sy>H+40)continue;
-      const mc=m.k===10?'#661122':m.k===9?'#bb1122':m.k===8?'#3dba5a':m.k===7?'#8899aa':m.k===6?'#d95530':m.k===5?'#cc7a2e':m.k===4?'#713ce8':m.k===3?'#a789ff':m.k===2?'#665a78':m.k===1?'#5687a1':(m.sl?'#70805a':'#4b667f');
+      const mc=m.k===12?'#884488':m.k===11?'#aa22aa':m.k===10?'#661122':m.k===9?'#bb1122':m.k===8?'#3dba5a':m.k===7?'#8899aa':m.k===6?'#d95530':m.k===5?'#cc7a2e':m.k===4?'#713ce8':m.k===3?'#a789ff':m.k===2?'#665a78':m.k===1?'#5687a1':(m.sl?'#70805a':'#4b667f');
       // predator cloak: near-invisible when cloaked
       if(m.k===9&&(m.prCloak||0)>0){
         const cq=clamp((m.prCloak||0)/1.5,0,1);
@@ -3014,6 +3107,52 @@ canvas{display:block;width:100%;height:100%}
         fg9.addColorStop(0,prRage?'#ff2222':'#cc2244');
         fg9.addColorStop(1,prRage?'#ff6644':'#ee4466');
         x.fillStyle=fg9;x.fillRect(px2,py2,pw*prHpR,ph);
+        x.globalAlpha=1;
+      }
+      if(m.k===11){
+        // mother boss: purple aura, scream ring, wave pulse, HP bar
+        const moHpR=clamp(m.hp/((m.moMax||m.hp)||1),0,1);
+        const moRage=(m.moRage||0);
+        const moPulse=.5+.5*Math.sin(g.t*3.5+i);
+        // outer aura
+        x.globalAlpha=.10+.06*moPulse+.05*moRage;
+        x.fillStyle=moRage>1?'#dd22dd':'#aa33aa';
+        x.beginPath();x.arc(sx,sy,m.r+22+moPulse*6+moRage*8,0,Math.PI*2);x.fill();
+        // pulsing ring
+        x.globalAlpha=.3+.15*Math.sin(g.t*5);
+        x.strokeStyle=moRage>1?'#ff44ff':'#cc44cc';x.lineWidth=3+moRage;
+        x.beginPath();x.arc(sx,sy,m.r+12+Math.sin(g.t*4.5)*3,0,Math.PI*2);x.stroke();
+        // scream shockwave
+        if((m.moScreamT||0)>0){
+          const sq=clamp((m.moScreamT||0)/1.6,0,1);
+          x.globalAlpha=.15*sq;
+          x.strokeStyle='#ff66ff';x.lineWidth=4;
+          x.beginPath();x.arc(sx,sy,(320+moRage*60)*(1-sq*.3),0,Math.PI*2);x.stroke();
+        }
+        // wave pulse ring
+        if((m.moWaveT||0)>0){
+          const wq=(m.moWaveT||0)/.6;
+          x.globalAlpha=.2*wq;
+          x.fillStyle='#ee55ee';
+          x.beginPath();x.arc(sx,sy,(180+moRage*50)*(1-wq*.4),0,Math.PI*2);x.fill();
+        }
+        // eyes
+        x.globalAlpha=.9;
+        x.fillStyle='#ff44ff';
+        x.beginPath();x.arc(sx-8,sy-4,3+moRage*.5,0,Math.PI*2);x.fill();
+        x.beginPath();x.arc(sx+8,sy-4,3+moRage*.5,0,Math.PI*2);x.fill();
+        x.fillStyle='#ffaaff';
+        x.beginPath();x.arc(sx,sy+6,2,0,Math.PI*2);x.fill();
+        // HP bar
+        const mw=Math.max(60,m.r*2.8),mh=7,mx2=sx-mw*.5,my2=sy-m.r-20;
+        x.globalAlpha=.9;
+        x.fillStyle='rgba(12,4,12,.92)';x.fillRect(mx2-2,my2-2,mw+4,mh+4);
+        x.fillStyle='#2a0e2a';x.fillRect(mx2,my2,mw,mh);
+        const fgM=x.createLinearGradient(mx2,0,mx2+mw,0);
+        if(moRage>1){fgM.addColorStop(0,'#ff22ff');fgM.addColorStop(1,'#ff77ff');}
+        else if(moRage>0){fgM.addColorStop(0,'#cc33cc');fgM.addColorStop(1,'#ee55ee');}
+        else{fgM.addColorStop(0,'#993399');fgM.addColorStop(1,'#cc55cc');}
+        x.fillStyle=fgM;x.fillRect(mx2,my2,mw*moHpR,mh);
         x.globalAlpha=1;
       }
       if(m.k===3){
@@ -3366,6 +3505,8 @@ canvas{display:block;width:100%;height:100%}
     // xp
     x.fillStyle='#24374d';x.fillRect(20,xpY,barsW,8);
     x.fillStyle='#69f0c9';x.fillRect(20,xpY,barsW*(g.xp/g.nextXp),8);
+    let mothBoss=0;
+    for(let i=0;i<z.length;i++)if(z[i].k===11){mothBoss=z[i];break;}
     let predBoss=0;
     for(let i=0;i<z.length;i++)if(z[i].k===9){predBoss=z[i];break;}
     let miniBoss=0;
@@ -3375,6 +3516,28 @@ canvas{display:block;width:100%;height:100%}
     let apex=0;
     for(let i=0;i<z.length;i++)if(z[i].k===4){apex=z[i];break;}
     let objectiveY=hudBottom+4;
+    if(mothBoss&&g.moth){
+      const moHpR=clamp(mothBoss.hp/((mothBoss.moMax||mothBoss.hp)||1),0,1);
+      const moPhase=moHpR>.6?'AWAKENED':moHpR>.25?'FURIOUS':'BERSERK';
+      const bw=clamp(W*.62,260,660),bh=14,bx=(W-bw)*.5,by=objectiveY+2;
+      x.fillStyle='rgba(14,4,14,.92)';
+      rr(bx-10,by-20,bw+20,42,11);
+      x.fill();
+      x.fillStyle='rgba(50,10,50,.95)';x.fillRect(bx,by,bw,bh);
+      const fgMo=x.createLinearGradient(bx,0,bx+bw,0);
+      if(moHpR>.6){fgMo.addColorStop(0,'#993399');fgMo.addColorStop(1,'#cc55cc');}
+      else if(moHpR>.25){fgMo.addColorStop(0,'#cc33cc');fgMo.addColorStop(1,'#ee55ee');}
+      else{fgMo.addColorStop(0,'#ff22ff');fgMo.addColorStop(1,'#ff77ff');}
+      x.fillStyle=fgMo;x.fillRect(bx,by,bw*moHpR,bh);
+      x.strokeStyle='rgba(255,100,255,.5)';x.lineWidth=1.2;
+      x.strokeRect(bx+.5,by+.5,bw-1,bh-1);
+      x.fillStyle=moHpR>.25?'#ffaaff':'#ff66ff';
+      x.font='700 12px Trebuchet MS,sans-serif';
+      x.textAlign='center';
+      x.fillText('THE MOTHER // '+moPhase,bx+bw*.5,by-7);
+      x.textAlign='left';
+      objectiveY+=38;
+    }
     if(predBoss&&g.pred){
       const prHpR=clamp(predBoss.hp/((predBoss.prMax||predBoss.hp)||1),0,1);
       const prPhase=prHpR>.5?'STALKING':'ENRAGED';
@@ -3617,11 +3780,11 @@ canvas{display:block;width:100%;height:100%}
       x.textAlign='center';
       x.fillStyle='rgba(255,227,143,'+(0.44+0.4*q)+')';
       x.font=(W<520?'700 30px':'700 40px')+' Trebuchet MS,sans-serif';
-      const bdt=g.won?'CAMPUS SECURED':g.pred?'THE PREDATOR HAS ARRIVED':g.bd&&!g.bd2?'THE DEAN IS DOWN':g.mbd&&!g.bd?'THE PROVOST IS DOWN':g.bd2?'APEX DOWN \u2014 ENDLESS MODE':'BOSS DOWN';
+      const bdt=g.won?'CAMPUS SECURED':g.moth?'THE MOTHER HAS AWAKENED':g.predDead&&!g.bs2&&!g.bd2?'PREDATOR DOWN':g.bd&&!g.bd2?'THE DEAN IS DOWN':g.mbd&&!g.bd?'THE PROVOST IS DOWN':g.bd2?'APEX DOWN \u2014 ENDLESS MODE':'BOSS DOWN';
       x.fillText(bdt,cx,cy-8);
       x.fillStyle='rgba(209,231,255,'+(0.58+0.32*q)+')';
       x.font=(W<520?'600 13px':'600 15px')+' Trebuchet MS,sans-serif';
-      const bds=g.won?g.kills+' kills \u2014 '+g.time.toFixed(1)+'s \u2014 scotty saved campus!':(g.bd2&&!g.pred?'survive to '+PREDATOR_TRIGGER+' kills':g.bd?'something big is approaching...':'keep going...');
+      const bds=g.won?g.kills+' kills \u2014 '+g.time.toFixed(1)+'s \u2014 scotty saved campus!':(g.bd2&&!g.moth?'survive to '+MOTHER_TRIGGER+' kills':g.bd?'something big is approaching...':'keep going...');
       x.fillText(bds,cx,cy+20);
       x.restore();
       x.textAlign='left';
