@@ -28,6 +28,26 @@ canvas{display:block;width:100%;height:100%}
     {id:'nsh',n:'NSH',x:980,y:460,r:170,c:'#79d7ff'},
     {id:'mel',n:'Mellon Inst',x:1880,y:1260,r:185,c:'#ffd58f'}
   ];
+  function randomizeBuildings(){
+    // Cohon Centre stays fixed at HOME. Randomize NSH and Mellon Inst.
+    const pad=220,minSep=520,minFromHome=560;
+    const nsh=school('nsh'),mel=school('mel');
+    // pick NSH position: right half of map, anywhere vertically
+    for(let tries=0;tries<80;tries++){
+      const nx=rnd(pad+500,MAP_W-pad),ny=rnd(pad,MAP_H-pad);
+      const dh=Math.hypot(nx-HOME.x,ny-HOME.y);
+      if(dh<minFromHome)continue;
+      nsh.x=nx;nsh.y=ny;break;
+    }
+    // pick Mellon position: must be far from both Cohon and NSH
+    for(let tries=0;tries<80;tries++){
+      const mx=rnd(pad+400,MAP_W-pad),my=rnd(pad,MAP_H-pad);
+      const dh=Math.hypot(mx-HOME.x,my-HOME.y);
+      const dn=Math.hypot(mx-nsh.x,my-nsh.y);
+      if(dh<minFromHome||dn<minSep)continue;
+      mel.x=mx;mel.y=my;break;
+    }
+  }
   const WHO=['i need to go out','these things are scary','may lord help us','can we ever go out?'];
   const WHI=['a dog?','scotty??','what the dog doing?'];
   const JOY_CENTER_SNAP=10;
@@ -963,6 +983,7 @@ canvas{display:block;width:100%;height:100%}
     p.slRopeRest=0;
     z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;
     keys.l=keys.r=keys.u=keys.d=keys.gr=0;touchMove=0;joyReset(1);
+    randomizeBuildings();
     g.msg='home: unlock';
     g.msgT=1.6;
     if(full){
@@ -2736,6 +2757,62 @@ canvas{display:block;width:100%;height:100%}
     x.fillStyle='#d7ffe8';
     x.font='600 12px Trebuchet MS,sans-serif';
     x.fillText(ot,22,objectiveY+17);
+
+    // --- direction arrow pointing toward next objective building ---
+    if(g.start&&!g.dead){
+      let navTarget=0;
+      if(!p.mkOn){navTarget=school('home');}
+      else if(g.sch.nsh===0){navTarget=school('nsh');}
+      else if(g.sch.nsh===1){navTarget=school('nsh');}
+      else if(g.sch.mel===0){navTarget=school('mel');}
+      else if(g.sch.mel===1){navTarget=school('mel');}
+      else if(g.labNsh>0){navTarget=school('nsh');}
+      else if(g.labMel>0){navTarget=school('mel');}
+      if(navTarget){
+        const tx=navTarget.x-cm.x,ty=navTarget.y-cm.y;
+        const onScreen=tx>-navTarget.r&&tx<W+navTarget.r&&ty>-navTarget.r&&ty<H+navTarget.r;
+        if(!onScreen){
+          // draw edge-of-screen arrow
+          const dx=navTarget.x-p.x,dy=navTarget.y-p.y;
+          const ang=Math.atan2(dy,dx);
+          const edgePad=28;
+          const cx=W*.5,cy=H*.5;
+          // project to screen edge
+          let ax=cx+Math.cos(ang)*400,ay=cy+Math.sin(ang)*400;
+          // clamp to viewport edges with padding
+          if(ax<edgePad){const t2=(edgePad-cx)/(ax-cx);ay=cy+(ay-cy)*t2;ax=edgePad;}
+          else if(ax>W-edgePad){const t2=(W-edgePad-cx)/(ax-cx);ay=cy+(ay-cy)*t2;ax=W-edgePad;}
+          if(ay<edgePad){const t2=(edgePad-cy)/(ay-cy);ax=cx+(ax-cx)*t2;ay=edgePad;}
+          else if(ay>H-edgePad){const t2=(H-edgePad-cy)/(ay-cy);ax=cx+(ax-cx)*t2;ay=H-edgePad;}
+          const dist=Math.hypot(dx,dy);
+          const pulse=.6+.4*Math.sin(g.t*3.6);
+          const arrowSize=9+2*pulse;
+          const col=navTarget.c;
+          // outer glow
+          x.globalAlpha=.18*pulse;
+          x.fillStyle=col;
+          x.beginPath();x.arc(ax,ay,arrowSize+6,0,Math.PI*2);x.fill();
+          // arrow triangle
+          x.globalAlpha=.65+.25*pulse;
+          x.fillStyle=col;
+          x.beginPath();
+          x.moveTo(ax+Math.cos(ang)*arrowSize,ay+Math.sin(ang)*arrowSize);
+          x.lineTo(ax+Math.cos(ang+2.5)*arrowSize*.7,ay+Math.sin(ang+2.5)*arrowSize*.7);
+          x.lineTo(ax+Math.cos(ang-2.5)*arrowSize*.7,ay+Math.sin(ang-2.5)*arrowSize*.7);
+          x.closePath();x.fill();
+          // distance label
+          x.globalAlpha=.7;
+          x.fillStyle='#dce8ff';x.font='600 9px Trebuchet MS,sans-serif';
+          x.textAlign='center';
+          x.fillText(navTarget.n,ax,ay-arrowSize-4);
+          const dm=dist<1000?(dist|0)+'':((dist/1000).toFixed(1)+'k');
+          x.fillText(dm,ax,ay+arrowSize+11);
+          x.textAlign='left';
+          x.globalAlpha=1;
+        }
+      }
+    }
+
     if(p.bot&&bots.length>=3){
       const slY=objectiveY+30;
       const bw2=W-44;
