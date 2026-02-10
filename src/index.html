@@ -60,8 +60,16 @@ canvas{display:block;width:100%;height:100%}
   const FIRST_BOSS_MIN_KILLS=600;
   const FIRST_BOSS_TRIGGER_KILLS=800;
   const FIRST_BOSS_TRIGGER_TIME=999;
-  const LAB_REFRESH_KILLS=50;
+  const LAB_REFRESH_KILLS=110;
+  const NSH_SECOND_BOT_INTEL_COST=2;
   const NSH_THIRD_BOT_INTEL_COST=4;
+  const MEL_SECOND_PUDDLE_INTEL_COST=2;
+  const MEL_THIRD_PUDDLE_INTEL_COST=3;
+  const SHELTER_GRACE=9;
+  const SHELTER_WARN=6;
+  const SHELTER_PULSE=.9;
+  const SHELTER_THREAT_RADIUS=230;
+  const SHELTER_MIN_THREAT=6;
   const BOSS1_EAT_CD=.14;
   const BOSS1_GROW_R=1.6;
   const BOSS1_GROW_HP=35;
@@ -146,6 +154,9 @@ canvas{display:block;width:100%;height:100%}
     labNshRuns:0,labMelRuns:0,
     stormCd:0,
     labCd:0,
+    safeCampT:0,
+    safeBreachCd:0,
+    safeThreat:0,
     lvPend:0,
     lvGrace:0,
     lbSent:0,
@@ -515,33 +526,95 @@ canvas{display:block;width:100%;height:100%}
     g.msgT=1.1;
     beep(520,.04,'triangle',.016);
   }
+  function botVariantCap(){
+    if(g.sch.nsh!==2)return 0;
+    let cap=1;
+    if(g.mbd||g.bs||g.bd||g.bs2||g.bd2)cap=2;
+    if(g.bs2||g.bd2)cap=3;
+    return cap;
+  }
+  function chemVariantCap(){
+    if(g.sch.mel!==2)return 0;
+    let cap=1;
+    if(g.bd||g.bs2||g.bd2)cap=2;
+    if(g.bs2||g.bd2)cap=3;
+    return cap;
+  }
   function objectiveText(){
-    if(!p.mkOn)return 'collect mints '+g.homeGot+'/'+g.homeNeed;
-    if(g.won)return 'CAMPUS SECURED \u2014 you did it!';
+    if(!p.mkOn)return 'collect mints '+g.homeGot+'/'+g.homeNeed+' to unlock territory puddles';
+    if(g.inB&&g.safeCampT>=SHELTER_WARN&&g.safeThreat>=SHELTER_MIN_THREAT)return 'shelter breached - move out and clear pressure';
+    if(g.won)return 'CAMPUS SECURED - you did it!';
     if(g.moth)return 'defeat the mother to secure campus!';
     if(g.pred)return 'defeat the predator!';
     if(g.kills>=KILL_CAP)return 'clear remaining enemies! '+z.length+' left';
+    if(g.pz&&g.pz.id==='nsh')return 'solve nsh lab sequence';
+    if(g.pz&&g.pz.id==='mel')return 'solve mellon lab sequence';
+    if(g.sch.nsh===0)return 'reach nsh and request robotics support';
+    if(g.sch.nsh===1)return 'complete nsh puzzle to unlock first buddy';
+    if(g.sch.mel===0)return 'reach mellon institute and request catalyst support';
+    if(g.sch.mel===1)return 'complete mellon puzzle to unlock first catalyst';
     if(g.bd2){
-      if(g.kills>=MOTHER_TRIGGER-200)return 'WAVE '+g.endWave+' \u2014 '+g.kills+'/'+MOTHER_TRIGGER+' \u2014 something stirs...';
-      if(g.endWave>0)return 'WAVE '+g.endWave+' \u2014 '+g.kills+'/'+MOTHER_TRIGGER+' kills';
-      return 'endless mode \u2014 '+g.kills+'/'+MOTHER_TRIGGER+' kills to final boss';
+      if(g.kills>=MOTHER_TRIGGER-200)return 'WAVE '+g.endWave+' - '+g.kills+'/'+MOTHER_TRIGGER+' - something stirs...';
+      if(g.endWave>0)return 'WAVE '+g.endWave+' - '+g.kills+'/'+MOTHER_TRIGGER+' kills';
+      return 'endless cleanup - '+g.kills+'/'+MOTHER_TRIGGER+' kills to final boss';
     }
     if(g.bs2&&knownVariants(g.chemMask)>=3)return 'triple burst! overlap all 3 puddles to storm apex!';
     if(g.bs2)return 'defeat apex dean';
-    if(g.bs)return 'defeat the dean \u2014 grab mints before he walks over them!';
+    if(g.bs)return 'defeat dean and keep evac mints out of his reach';
     if(g.mb)return 'defeat the provost!';
-    if(g.pz&&g.pz.id==='nsh')return 'solve nsh puzzle';
-    if(g.pz&&g.pz.id==='mel')return 'solve mellon puzzle';
-    if(g.sch.nsh===0)return 'find nsh';
-    if(g.sch.nsh===1)return 'solve nsh puzzle';
-    if(g.sch.mel===0)return 'find mellon institute';
-    if(g.sch.mel===1)return 'solve mellon puzzle';
+    const botKnown=knownVariants(g.botMask);
+    const chemKnown=knownVariants(g.chemMask);
+    if(g.sch.nsh===2&&botKnown<botVariantCap()){
+      if(botVariantCap()===2&&!g.mbd)return 'push midgame pressure to unlock buddy prototype tier 2';
+      if(botVariantCap()===3&&!g.bs2&&!g.bd2)return 'reach apex phase to unlock final buddy prototype';
+      return 'visit nsh for buddy prototype trial';
+    }
+    if(g.sch.mel===2&&chemKnown<chemVariantCap()){
+      if(chemVariantCap()===2&&!g.bd)return 'take down dean to unlock catalyst tier 2';
+      if(chemVariantCap()===3&&!g.bs2&&!g.bd2)return 'reach apex phase to unlock final catalyst';
+      return 'visit mellon institute for catalyst prototype trial';
+    }
     if(g.labNsh>0&&g.labMel>0)return 'visit nsh / mellon for prototype upgrades';
     if(g.labNsh>0)return 'visit nsh for buddy prototype';
     if(g.labMel>0)return 'visit mellon institute for catalyst prototype';
-    if(g.sch.mel===2&&g.kills<FIRST_BOSS_MIN_KILLS)return 'survive \u2014 '+g.kills+'/'+FIRST_BOSS_MIN_KILLS+' kills';
-    if(g.bd&&!g.bs2&&!g.bd2)return 'survive \u2014 '+g.kills+' kills';
-    return 'survive \u2014 '+g.kills+' kills';
+    if(g.sch.mel===2&&g.kills<FIRST_BOSS_MIN_KILLS)return 'stabilize evacuation lanes - '+g.kills+'/'+FIRST_BOSS_MIN_KILLS+' threat cleared';
+    if(g.bd&&!g.bs2&&!g.bd2){
+      const eta=Math.max(0,g.b2At-g.t);
+      return 'hold campus perimeter - apex eta '+eta.toFixed(1)+'s';
+    }
+    return 'clear routes and protect evac paths - '+g.kills+' threats down';
+  }
+  function shelterThreatCount(safe){
+    if(!safe)return 0;
+    const rr=safe.r+SHELTER_THREAT_RADIUS,rr2=rr*rr;
+    let n=0;
+    for(let i=0;i<z.length;i++){
+      const m=z[i],dx=m.x-safe.x,dy=m.y-safe.y;
+      if(dx*dx+dy*dy<rr2)n++;
+    }
+    return n;
+  }
+  function applyShelterPressure(safe,dt){
+    if(!safe){
+      g.safeCampT=0;
+      g.safeBreachCd=0;
+      g.safeThreat=0;
+      return;
+    }
+    g.safeCampT+=dt;
+    g.safeThreat=shelterThreatCount(safe);
+    if(g.safeCampT<SHELTER_GRACE||g.safeThreat<SHELTER_MIN_THREAT)return;
+    g.safeBreachCd-=dt;
+    if(g.safeBreachCd>0)return;
+    const over=g.safeCampT-SHELTER_GRACE;
+    const pressure=Math.max(0,g.safeThreat-SHELTER_MIN_THREAT);
+    const dmg=2.6+Math.min(7.5,over*.35)+Math.min(5.5,pressure*.45);
+    hitPlayer(dmg);
+    g.safeBreachCd=SHELTER_PULSE;
+    g.msg='shelter breached - move!';
+    g.msgT=.65;
+    burst(p.x,p.y,'#ef4f6c',8,55);
+    beep(150,.04,'sawtooth',.018);
   }
   function queueUnlock(id){
     if(g.uq.indexOf(id)<0)g.uq.push(id);
@@ -616,7 +689,7 @@ canvas{display:block;width:100%;height:100%}
   function queueLabMilestoneRewards(){
     while(g.kills>=(g.labStep+1)*LAB_REFRESH_KILLS){
       g.labStep++;
-      g.labBank++;
+      g.labBank=Math.min(6,g.labBank+1);
       g.msg='new prototype intel';
       g.msgT=1.25;
       beep(620,.04,'triangle',.018);
@@ -626,10 +699,16 @@ canvas{display:block;width:100%;height:100%}
       const melQueued=g.uq.indexOf('mel')>=0?1:0;
       const nshKnown=knownVariants(g.botMask);
       const melKnown=knownVariants(g.chemMask);
+      const nshCap=botVariantCap();
+      const melCap=chemVariantCap();
       const nshProgress=nshKnown+g.labNsh+nshQueued;
-      const nshCost=nshProgress===2?NSH_THIRD_BOT_INTEL_COST:1;
-      const needNsh=g.sch.nsh===2&&nshKnown>=1&&nshProgress<3&&g.labBank>=nshCost;
-      const needMel=g.sch.mel===2&&melKnown>=1&&(melKnown+g.labMel+melQueued)<3;
+      const melProgress=melKnown+g.labMel+melQueued;
+      const nshNext=nshProgress+1;
+      const melNext=melProgress+1;
+      const nshCost=nshNext===2?NSH_SECOND_BOT_INTEL_COST:NSH_THIRD_BOT_INTEL_COST;
+      const melCost=melNext===2?MEL_SECOND_PUDDLE_INTEL_COST:MEL_THIRD_PUDDLE_INTEL_COST;
+      const needNsh=g.sch.nsh===2&&nshKnown>=1&&nshProgress<nshCap&&g.labBank>=nshCost;
+      const needMel=g.sch.mel===2&&melKnown>=1&&melProgress<melCap&&g.labBank>=melCost;
       if(!needNsh&&!needMel)break;
       let id='';
       if(needNsh&&needMel){g.labFlip^=1;id=g.labFlip?'nsh':'mel';}
@@ -645,7 +724,7 @@ canvas{display:block;width:100%;height:100%}
         g.msg='mellon: catalyst bench ready';
         g.msgT=1.6;
         beep(680,.05,'triangle',.02);
-        g.labBank--;
+        g.labBank-=melCost;
       }
     }
   }
@@ -1075,7 +1154,7 @@ canvas{display:block;width:100%;height:100%}
   }
 
   function reset(full){
-    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.mb=0;g.mbd=0;g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.pred=0;g.predDead=0;g.moth=0;g.mothDead=0;g.bossDownT=0;g.won=0;g.endWave=0;g.endT=0;g.endSpawnT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;g.lbTopErr='';g.lbRankErr='';g.lbRankText='';g.lbFetchT=0;g.lbRankFetchT=0;g.lbBtnX=0;g.lbBtnY=0;g.lbBtnW=0;g.lbBtnH=0;
+    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.mb=0;g.mbd=0;g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.pred=0;g.predDead=0;g.moth=0;g.mothDead=0;g.bossDownT=0;g.won=0;g.endWave=0;g.endT=0;g.endSpawnT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.safeCampT=0;g.safeBreachCd=0;g.safeThreat=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;g.lbTopErr='';g.lbRankErr='';g.lbRankText='';g.lbFetchT=0;g.lbRankFetchT=0;g.lbBtnX=0;g.lbBtnY=0;g.lbBtnW=0;g.lbBtnH=0;
     p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slFocus=0;p.slT=0;p.slRecallT=0;p.slLinkT=0;p.slRecallPulse=0;p.slCarryVx=0;p.slCarryVy=0;p.slPow=0;p.slWave=0;p.slComboFx=0;p.slHitMask=0;p.slPerfect=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
     p.slRopeRest=0;
     z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;
@@ -1317,8 +1396,9 @@ canvas{display:block;width:100%;height:100%}
     if(!p.mkOn){
       g.homeGot++;
       if(g.homeGot>=g.homeNeed){
-        p.mkOn=1;p.mkT=.25;
-        g.msg='open';
+        p.mkOn=1;p.mkT=0;
+        startBurst();
+        g.msg='territory online';
         g.msgT=2.2;
         beep(820,.07,'triangle',.028);
         burst(p.x,p.y,'#ffd56d',16,95);
@@ -1651,9 +1731,10 @@ canvas{display:block;width:100%;height:100%}
       }
     }
     const pSafeNow=safeBuildingAt(p.x,p.y,-6);
-    if(!pSafeNow)g.time+=dt;
+    g.time+=dt;
     const bid=pSafeNow?pSafeNow.id:'';
     g.inB=bid;
+    applyShelterPressure(pSafeNow,dt);
     if(p.cat){
       if(p.chHealCd>0)p.chHealCd=Math.max(0,p.chHealCd-dt);
       let healPad=0;
@@ -2921,7 +3002,7 @@ canvas{display:block;width:100%;height:100%}
       const pd=pudd[i],sx=pd.x-cm.x,sy=pd.y-cm.y;
       if(sx<-pd.r-20||sy<-pd.r-20||sx>W+pd.r+20||sy>H+pd.r+20)continue;
       const q=pd.t/pd.d;
-      x.globalAlpha=.12+.1*q;
+      x.globalAlpha=.24+.22*q;
       let pf='#f4d96e',ps='#fff0a9';
       if(p.cat){
         if(pd.m===1){pf='#53d93d';ps='#baff87';}
@@ -2930,8 +3011,8 @@ canvas{display:block;width:100%;height:100%}
       }
       x.fillStyle=pf;
       x.beginPath();x.arc(sx,sy,pd.r,0,Math.PI*2);x.fill();
-      x.globalAlpha=.2+.2*Math.sin((g.t+i)*5)*q;
-      x.strokeStyle=ps;x.lineWidth=1.5;
+      x.globalAlpha=.34+.28*Math.sin((g.t+i)*5)*q;
+      x.strokeStyle=ps;x.lineWidth=1.9;
       x.beginPath();x.arc(sx,sy,pd.r*.68+Math.sin((g.t+i)*4)*2,0,Math.PI*2);x.stroke();
       if(p.cat){
         if(pd.m===3){
@@ -3783,7 +3864,7 @@ canvas{display:block;width:100%;height:100%}
       x.fillText(bdt,cx,cy-8);
       x.fillStyle='rgba(209,231,255,'+(0.58+0.32*q)+')';
       x.font=(W<520?'600 13px':'600 15px')+' Trebuchet MS,sans-serif';
-      const bds=g.won?g.kills+' kills \u2014 '+g.time.toFixed(1)+'s \u2014 scotty saved campus!':(g.bd2&&!g.moth?'survive to '+MOTHER_TRIGGER+' kills':g.bd?'something big is approaching...':'keep going...');
+      const bds=g.won?g.kills+' kills - '+g.time.toFixed(1)+'s - scotty saved campus!':(g.bd2&&!g.moth?'restore campus flow: '+g.kills+'/'+MOTHER_TRIGGER+' threats':g.bd?'something big is approaching...':'keep going...');
       x.fillText(bds,cx,cy+20);
       x.restore();
       x.textAlign='left';
@@ -3808,9 +3889,9 @@ canvas{display:block;width:100%;height:100%}
       x.fillStyle='#d8e6ff';x.font='600 14px Trebuchet MS,sans-serif';
       drawWrap('Goop swallowed CMU paths. People are trapped inside buildings. Scotty is the only one fast enough to move across campus.',tx,iy+98,iw-32,18,5);
       x.fillStyle='#9ec8ff';x.font='600 13px Trebuchet MS,sans-serif';
-      drawWrap('Collaborate with each school lab to keep evacuation routes open and push back the goop across campus.',tx,iy+200,iw-32,17,3);
+      drawWrap('Collaborate with each school lab to keep evacuation routes open and push back the goop across campus in escalating phases.',tx,iy+200,iw-32,17,3);
       x.fillStyle='#dce8ff';x.font='600 12px Trebuchet MS,sans-serif';
-      drawWrap('Controls: drag to move. Remove finger to charge Zoomies, then move to dash. Scotty also marks his territory with pee puddles that slow enemies and protect escape lanes.',tx,iy+250,iw-32,16,4);
+      drawWrap('Controls: drag to move. Remove finger to charge Zoomies, then move to dash. Buildings are temporary shelters, not permanent safety. Keep moving and clearing routes.',tx,iy+250,iw-32,16,4);
       x.fillStyle='#69f0c9';x.font='700 23px Trebuchet MS,sans-serif';x.fillText('tap start',tx,iy+ih-22);
     }
 
