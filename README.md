@@ -14,6 +14,7 @@ The leaderboard now uses Supabase directly from the browser (works with GitHub P
 - UI: global top 10 + your latest rank
 - Sort order: `kills DESC`, then `time_seconds ASC`
 - Game flow: on game over, players can opt in and auto-submit score (name + kills + time)
+- In-game game-over card shows top 3 preview + your rank + `open leaderboard` button
 - Config file: `src/leaderboard-config.js`
 
 Update `src/leaderboard-config.js` with your Supabase values:

@@ -157,7 +157,7 @@ const TOP_LIMIT = 10;
 const LAST_ENTRY_STORAGE_KEY = "zoomies_last_entry";
 const NAME_STORAGE_KEY = "zoomies_lb_name";
 
-let supabase = null;
+let supabaseClient = null;
 let nextSubmitAt = 0;
 
 function setStatus(text, isError) {
@@ -232,7 +232,7 @@ function validateInput(name, kills, timeSeconds) {
 
 async function loadTopLeaderboard() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from(tableName)
       .select("id,name,kills,time_seconds,created_at")
       .order("kills", { ascending: false })
@@ -255,7 +255,7 @@ async function loadUserRank() {
   }
 
   try {
-    const { data: ownRows, error: ownError } = await supabase
+    const { data: ownRows, error: ownError } = await supabaseClient
       .from(tableName)
       .select("id,name,kills,time_seconds")
       .eq("id", lastEntry.id)
@@ -268,14 +268,14 @@ async function loadUserRank() {
     }
 
     const own = ownRows[0];
-    const higherKills = await supabase
+    const higherKills = await supabaseClient
       .from(tableName)
       .select("id", { head: true, count: "exact" })
       .gt("kills", own.kills);
 
     if (higherKills.error) throw higherKills.error;
 
-    const sameKillsLowerTime = await supabase
+    const sameKillsLowerTime = await supabaseClient
       .from(tableName)
       .select("id", { head: true, count: "exact" })
       .eq("kills", own.kills)
@@ -283,7 +283,7 @@ async function loadUserRank() {
 
     if (sameKillsLowerTime.error) throw sameKillsLowerTime.error;
 
-    const sameKillsSameTimeLowerId = await supabase
+    const sameKillsSameTimeLowerId = await supabaseClient
       .from(tableName)
       .select("id", { head: true, count: "exact" })
       .eq("kills", own.kills)
@@ -304,7 +304,7 @@ async function loadUserRank() {
 }
 
 async function refreshLeaderboardView() {
-  if (!supabase) return;
+  if (!supabaseClient) return;
   try {
     await loadTopLeaderboard();
     await loadUserRank();
@@ -316,7 +316,7 @@ async function refreshLeaderboardView() {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!supabase) return;
+  if (!supabaseClient) return;
 
   const now = Date.now();
   if (now < nextSubmitAt) {
@@ -338,7 +338,7 @@ form.addEventListener("submit", async (event) => {
   setStatus("Submitting...");
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from(tableName)
       .insert([{ name, kills, time_seconds: timeSeconds }])
       .select("id,name,kills,time_seconds")
@@ -376,7 +376,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
     const savedName = localStorage.getItem(NAME_STORAGE_KEY);
     if (savedName) form.name.value = savedName;
   } catch {}
-  supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+  supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
   refreshLeaderboardView();
 }
 </script>

@@ -113,7 +113,17 @@ canvas{display:block;width:100%;height:100%}
     labCd:0,
     lvPend:0,
     lvGrace:0,
-    lbSent:0
+    lbSent:0,
+    lbTop:[],
+    lbTopErr:'',
+    lbFetchT:0,
+    lbRankText:'',
+    lbRankErr:'',
+    lbRankFetchT:0,
+    lbBtnX:0,
+    lbBtnY:0,
+    lbBtnW:0,
+    lbBtnH:0
   };
 
   const lbCfg=window.LEADERBOARD_CONFIG||{};
@@ -123,9 +133,13 @@ canvas{display:block;width:100%;height:100%}
   const LB_ENTRY_KEY='zoomies_last_entry';
   const LB_NAME_KEY='zoomies_lb_name';
   const LB_OPTIN_KEY='zoomies_lb_optin';
+  const LB_PREVIEW_LIMIT=3;
   function lsGet(k){try{return localStorage.getItem(k)||''}catch{return''}}
   function lsSet(k,v){try{localStorage.setItem(k,v)}catch{}}
+  function lsGetJson(k){try{const raw=localStorage.getItem(k);return raw?JSON.parse(raw):0}catch{return 0}}
   function validLbName(v){return typeof v==='string'&&v.length>0&&v.length<=24&&/^[A-Za-z0-9 _.-]+$/.test(v)}
+  function openLeaderboardPage(){location.href='leaderboard.html'}
+  function parseCount(h){const m=String(h||'').match(/\/(\d+)$/);return m?+m[1]:0}
   function getLbName(){
     let n=lsGet(LB_NAME_KEY).trim();
     if(validLbName(n))return n;
@@ -147,6 +161,60 @@ canvas{display:block;width:100%;height:100%}
     const ok=confirm('Join the global leaderboard? Your name, kills, and time will be submitted when a run ends.');
     lsSet(LB_OPTIN_KEY,ok?'yes':'no');
     return ok?1:0;
+  }
+  async function fetchLeaderboardPreview(force){
+    if(!LB_URL||!LB_KEY||!LB_TABLE)return;
+    const now=Date.now();
+    if(!force&&now-g.lbFetchT<8000)return;
+    g.lbFetchT=now;
+    g.lbTopErr='';
+    try{
+      const q='?select=name,kills,time_seconds&order=kills.desc,time_seconds.asc,id.asc&limit='+LB_PREVIEW_LIMIT;
+      const res=await fetch(LB_URL+'/rest/v1/'+encodeURIComponent(LB_TABLE)+q,{
+        headers:{
+          apikey:LB_KEY,
+          Authorization:'Bearer '+LB_KEY
+        }
+      });
+      if(!res.ok){g.lbTopErr='leaderboard unavailable';return;}
+      const rows=await res.json();
+      g.lbTop=Array.isArray(rows)?rows:[];
+    }catch{
+      g.lbTopErr='leaderboard unavailable';
+    }
+  }
+  async function fetchOwnRankPreview(force){
+    if(!LB_URL||!LB_KEY||!LB_TABLE)return;
+    const now=Date.now();
+    if(!force&&now-g.lbRankFetchT<8000)return;
+    g.lbRankFetchT=now;
+    g.lbRankErr='';
+    const last=lsGetJson(LB_ENTRY_KEY);
+    if(!last||!last.id){g.lbRankText='submit once to track your rank';return;}
+    try{
+      const ownRes=await fetch(LB_URL+'/rest/v1/'+encodeURIComponent(LB_TABLE)+'?select=id,name,kills,time_seconds&id=eq.'+last.id+'&limit=1',{
+        headers:{apikey:LB_KEY,Authorization:'Bearer '+LB_KEY}
+      });
+      if(!ownRes.ok){g.lbRankErr='rank unavailable';return;}
+      const ownRows=await ownRes.json();
+      if(!Array.isArray(ownRows)||!ownRows.length){g.lbRankText='score syncing...';return;}
+      const own=ownRows[0];
+      async function countWhere(q){
+        const res=await fetch(LB_URL+'/rest/v1/'+encodeURIComponent(LB_TABLE)+'?select=id&'+q,{
+          method:'HEAD',
+          headers:{apikey:LB_KEY,Authorization:'Bearer '+LB_KEY,Prefer:'count=exact'}
+        });
+        if(!res.ok)throw new Error('count failed');
+        return parseCount(res.headers.get('content-range'));
+      }
+      const a=await countWhere('kills=gt.'+own.kills);
+      const b=await countWhere('kills=eq.'+own.kills+'&time_seconds=lt.'+own.time_seconds);
+      const c=await countWhere('kills=eq.'+own.kills+'&time_seconds=eq.'+own.time_seconds+'&id=lt.'+own.id);
+      const rank=a+b+c+1;
+      g.lbRankText='your rank #'+rank+' ('+own.kills+' / '+Number(own.time_seconds).toFixed(1)+'s)';
+    }catch{
+      g.lbRankErr='rank unavailable';
+    }
   }
   async function submitLeaderboardScore(){
     if(g.lbSent)return;
@@ -170,6 +238,8 @@ canvas{display:block;width:100%;height:100%}
       if(!res.ok)return;
       const rows=await res.json(),row=Array.isArray(rows)?rows[0]:0;
       if(row&&row.id)lsSet(LB_ENTRY_KEY,JSON.stringify({id:row.id,name:row.name,kills:row.kills,time_seconds:row.time_seconds}));
+      void fetchLeaderboardPreview(1);
+      void fetchOwnRankPreview(1);
     }catch{}
   }
 
@@ -881,7 +951,7 @@ canvas{display:block;width:100%;height:100%}
   }
 
   function reset(full){
-    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.bossDownT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;
+    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.bossDownT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;g.lbTopErr='';g.lbRankErr='';g.lbRankText='';g.lbFetchT=0;g.lbRankFetchT=0;g.lbBtnX=0;g.lbBtnY=0;g.lbBtnW=0;g.lbBtnH=0;
     p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slFocus=0;p.slT=0;p.slRecallT=0;p.slLinkT=0;p.slRecallPulse=0;p.slCarryVx=0;p.slCarryVy=0;p.slPow=0;p.slWave=0;p.slComboFx=0;p.slHitMask=0;p.slPerfect=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
     p.slRopeRest=0;
     z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;
@@ -1118,6 +1188,8 @@ canvas{display:block;width:100%;height:100%}
       trauma(.42);
       beep(120,.22,'sawtooth',.05);
       burst(p.x,p.y,'#ff6f89',26,130);
+      void fetchLeaderboardPreview(1);
+      void fetchOwnRankPreview(1);
       void submitLeaderboardScore();
     }
   }
@@ -1150,7 +1222,12 @@ canvas{display:block;width:100%;height:100%}
     for(let i=react.length-1;i>=0;i--){const rc=react[i];rc.t-=dt;if(rc.pcd>0)rc.pcd=Math.max(0,rc.pcd-dt);if(rc.t<=0)react.splice(i,1);}
     for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.t-=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=480*dt;if(f.t<=0)fx.splice(i,1)}
 
-    if(!g.start||g.dead)return;
+    if(!g.start)return;
+    if(g.dead){
+      void fetchLeaderboardPreview(0);
+      void fetchOwnRankPreview(0);
+      return;
+    }
     if(zoomiesBusy())g.lvGrace=LEVEL_UI_ZOOMIES_GRACE;
     else if(g.lvGrace>0)g.lvGrace=Math.max(0,g.lvGrace-rdt);
     if(!g.lvup&&!g.pz&&g.lvPend>0&&!levelUiBlocked()){
@@ -2846,7 +2923,25 @@ canvas{display:block;width:100%;height:100%}
       x.fillStyle='#ff8298';x.font='700 33px Trebuchet MS,sans-serif';x.fillText('GAME OVER',W*.5-98,H*.38);
       x.fillStyle='#dce8ff';x.font='600 20px Trebuchet MS,sans-serif';x.fillText('Kills '+g.kills,W*.5-43,H*.47);
       x.fillText('Best '+g.best,W*.5-37,H*.53);
-      x.fillStyle='#69f0c9';x.font='700 24px Trebuchet MS,sans-serif';x.fillText('tap retry',W*.5-56,H*.65);
+      x.fillStyle='#9ec8ff';x.font='600 13px Trebuchet MS,sans-serif';x.fillText('Top '+LB_PREVIEW_LIMIT+' global',W*.5-40,H*.58);
+      x.fillStyle='#dce8ff';x.font='600 12px Trebuchet MS,sans-serif';
+      if(g.lbTop.length){
+        for(let i=0;i<g.lbTop.length&&i<LB_PREVIEW_LIMIT;i++){
+          const row=g.lbTop[i];
+          const yy=H*.605+i*16;
+          x.fillText((i+1)+'. '+row.name+'  '+row.kills+' / '+Number(row.time_seconds).toFixed(1)+'s',W*.5-88,yy);
+        }
+      }else{
+        x.fillText(g.lbTopErr||'loading leaderboard...',W*.5-70,H*.605);
+      }
+      x.fillStyle='#9de6ff';x.font='600 12px Trebuchet MS,sans-serif';
+      x.fillText(g.lbRankText||g.lbRankErr||'checking your rank...',W*.5-88,H*.655);
+      x.fillStyle='#69f0c9';x.font='700 20px Trebuchet MS,sans-serif';x.fillText('tap retry (anywhere)',W*.5-98,H*.695);
+      const bw=Math.min(210,W-90),bh=34,bx=(W-bw)*.5,by=H*.72;
+      g.lbBtnX=bx;g.lbBtnY=by;g.lbBtnW=bw;g.lbBtnH=bh;
+      x.fillStyle='rgba(19,38,58,.95)';rr(bx,by,bw,bh,10);x.fill();
+      x.strokeStyle='rgba(130,190,255,.9)';x.lineWidth=1.4;rr(bx+.5,by+.5,bw-1,bh-1,10);x.stroke();
+      x.fillStyle='#9de6ff';x.font='700 15px Trebuchet MS,sans-serif';x.fillText('open leaderboard',bx+40,by+22);
     }
   }
 
@@ -2858,7 +2953,11 @@ canvas{display:block;width:100%;height:100%}
     if(touchId>=0&&touchId!==e.pointerId)return;
     touchId=e.pointerId;c.setPointerCapture(touchId);
     maybeStart();
-    if(g.dead){reset(1);beep(360,.05,'triangle',.02);return}
+    if(g.dead){
+      const inLb=e.clientX>=g.lbBtnX&&e.clientX<=g.lbBtnX+g.lbBtnW&&e.clientY>=g.lbBtnY&&e.clientY<=g.lbBtnY+g.lbBtnH;
+      if(inLb){openLeaderboardPage();return}
+      reset(1);beep(360,.05,'triangle',.02);return
+    }
     if(g.lvup){pickByPos(e.clientX,e.clientY);return}
     if(g.pz){
       const l=puzzleLayout();
@@ -2888,6 +2987,7 @@ canvas{display:block;width:100%;height:100%}
     const k=e.code;
     if(k==='Space'||k==='ArrowUp'||k==='ArrowDown'||k==='ArrowLeft'||k==='ArrowRight')e.preventDefault();
     if(k==='Space'||k==='Enter')maybeStart();
+    if(g.dead&&k==='KeyL'){openLeaderboardPage();return}
     if(g.dead&&(k==='Space'||k==='Enter'||k==='KeyR')){reset(1);beep(360,.05,'triangle',.02);return}
     if(g.lvup){if(k==='Digit1')takeChoice(0);else if(k==='Digit2')takeChoice(1);else if(k==='Digit3')takeChoice(2);return}
     if(g.pz){
