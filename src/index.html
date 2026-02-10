@@ -28,6 +28,26 @@ canvas{display:block;width:100%;height:100%}
     {id:'nsh',n:'NSH',x:980,y:460,r:170,c:'#79d7ff'},
     {id:'mel',n:'Mellon Inst',x:1880,y:1260,r:185,c:'#ffd58f'}
   ];
+  function randomizeBuildings(){
+    // Cohon Centre stays fixed at HOME. Randomize NSH and Mellon Inst.
+    const pad=220,minSep=520,minFromHome=560;
+    const nsh=school('nsh'),mel=school('mel');
+    // pick NSH position: right half of map, anywhere vertically
+    for(let tries=0;tries<80;tries++){
+      const nx=rnd(pad+500,MAP_W-pad),ny=rnd(pad,MAP_H-pad);
+      const dh=Math.hypot(nx-HOME.x,ny-HOME.y);
+      if(dh<minFromHome)continue;
+      nsh.x=nx;nsh.y=ny;break;
+    }
+    // pick Mellon position: must be far from both Cohon and NSH
+    for(let tries=0;tries<80;tries++){
+      const mx=rnd(pad+400,MAP_W-pad),my=rnd(pad,MAP_H-pad);
+      const dh=Math.hypot(mx-HOME.x,my-HOME.y);
+      const dn=Math.hypot(mx-nsh.x,my-nsh.y);
+      if(dh<minFromHome||dn<minSep)continue;
+      mel.x=mx;mel.y=my;break;
+    }
+  }
   const WHO=['i need to go out','these things are scary','may lord help us','can we ever go out?'];
   const WHI=['a dog?','scotty??','what the dog doing?'];
   const JOY_CENTER_SNAP=10;
@@ -42,6 +62,11 @@ canvas{display:block;width:100%;height:100%}
   const FIRST_BOSS_TRIGGER_TIME=72;
   const LAB_REFRESH_KILLS=50;
   const NSH_THIRD_BOT_INTEL_COST=4;
+  const BOSS1_EAT_CD=.14;
+  const BOSS1_GROW_R=1.6;
+  const BOSS1_GROW_HP=35;
+  const BOSS1_GROW_DMG=2.0;
+  const BOSS1_GROW_SPD=2.4;
   const SLINGSHOT_CHARGE_TRIGGER=.25;
   const SLINGSHOT_DASH_MIN=.34;
   const SLINGSHOT_DASH_MAX=.72;
@@ -68,11 +93,11 @@ canvas{display:block;width:100%;height:100%}
   const APEX_ARRIVAL_DELAY=12;
   const APEX_WARN_ONE=8.5;
   const APEX_WARN_TWO=3.6;
-  const APEX_STORM_PULL_BASE=24;
-  const APEX_STORM_PULL_GROW=14;
-  const APEX_STORM_ZOOMIES_RESIST=.32;
-  const APEX_STORM_TICK_DMG=2.4;
-  const APEX_STORM_TICK_CD=.42;
+  const APEX_STORM_PULL_BASE=32;
+  const APEX_STORM_PULL_GROW=20;
+  const APEX_STORM_ZOOMIES_RESIST=.28;
+  const APEX_STORM_TICK_DMG=3.6;
+  const APEX_STORM_TICK_CD=.34;
 
   const imgs={};
   function load(n){const i=new Image();i.src='black_scottish_terrier_dog_with_red_scarf/rotations/'+n+'.png';return i}
@@ -490,7 +515,7 @@ canvas{display:block;width:100%;height:100%}
       const txt=rem<=APEX_WARN_TWO?'someone...':'something big is approaching...';
       return txt+' '+rem.toFixed(1)+'s';
     }
-    if(g.bs)return 'defeat boss';
+    if(g.bs)return 'defeat the dean — grab mints before he walks over them!';
     if(g.pz&&g.pz.id==='nsh')return 'solve nsh puzzle';
     if(g.pz&&g.pz.id==='mel')return 'solve mellon puzzle';
     if(g.sch.nsh===0)return 'find nsh';
@@ -796,12 +821,15 @@ canvas{display:block;width:100%;height:100%}
     if(m.k===3){
       g.bd=1;g.bs=0;g.b2At=g.t+APEX_ARRIVAL_DELAY;
       g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;
-      g.msg='something big is approaching...';g.msgT=2.4;
+      const eats=m.b1Eat||0;
+      g.msg=eats>8?'the dean falls... stuffed with '+eats+' mints':'the dean is defeated!';
+      g.msgT=2.4;
       g.bossDownT=2.4;
-      hitStop(.09);
-      trauma(.55);
-      burst(m.x,m.y,'#ffe38f',44,210);
-      burst(m.x,m.y,'#9de6ff',26,150);
+      hitStop(.12);
+      trauma(.6);
+      burst(m.x,m.y,'#ffe38f',48,240);
+      burst(m.x,m.y,'#a789ff',30,180);
+      if(eats>4)burst(m.x,m.y,'#69f0c9',20,160);
       beep(200,.12,'sawtooth',.038);
       beep(320,.12,'triangle',.024);
       beep(500,.14,'square',.02);
@@ -963,6 +991,7 @@ canvas{display:block;width:100%;height:100%}
     p.slRopeRest=0;
     z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;
     keys.l=keys.r=keys.u=keys.d=keys.gr=0;touchMove=0;joyReset(1);
+    randomizeBuildings();
     g.msg='home: unlock';
     g.msgT=1.6;
     if(full){
@@ -993,21 +1022,24 @@ canvas{display:block;width:100%;height:100%}
   }
   function spawnBoss(){
     if(g.bs||g.bd||g.bs2||g.bd2||z.length>=MAX_Z)return;
-    const a=Math.random()*Math.PI*2,d=520,m={x:clamp(p.x+Math.cos(a)*d,40,MAP_W-40),y:clamp(p.y+Math.sin(a)*d,40,MAP_H-40),r:35,hp:640+g.time*11,s:46,dmg:24,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:3};
-    pushOutsideSafe(m,28);z.push(m);g.bs=1;g.msg='boss!';g.msgT=1.2;beep(170,.15,'sawtooth',.03);trauma(.2);
+    const a=Math.random()*Math.PI*2,d=520;
+    const hp=880+g.time*14;
+    const m={x:clamp(p.x+Math.cos(a)*d,40,MAP_W-40),y:clamp(p.y+Math.sin(a)*d,40,MAP_H-40),r:38,hp,s:52,dmg:28,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:3,
+      b1Max:hp,b1Eat:0,b1Cd:0,b1BaseR:38,b1BaseS:52,b1BaseDmg:28,b1Pulse:0,b1Roar:0};
+    pushOutsideSafe(m,28);z.push(m);g.bs=1;g.msg='the dean hungers...';g.msgT=1.8;beep(170,.15,'sawtooth',.03);beep(85,.25,'sawtooth',.02);trauma(.24);
   }
   function spawnApexAdds(src,count,phase){
     if(z.length>=MAX_Z-1)return;
     const tier=Math.max(1,phase|0);
     for(let s=0;s<count&&z.length<MAX_Z;s++){
-      const aa=Math.random()*Math.PI*2,dd=rnd(30,82);
+      const aa=Math.random()*Math.PI*2,dd=rnd(30,90);
       const mx=clamp(src.x+Math.cos(aa)*dd,20,MAP_W-20);
       const my=clamp(src.y+Math.sin(aa)*dd,20,MAP_H-20);
-      const kind=(tier>=3&&Math.random()<.34)?2:1;
-      const hp=kind===2?(86+g.time*4.8+rnd(-8,10)):(54+g.time*3.4+rnd(-6,8));
-      const sp=kind===2?(70+rnd(-8,10)):(96+rnd(-10,18));
-      const dmg=kind===2?(18+g.time*.28):(13+g.time*.24);
-      const add={x:mx,y:my,r:kind===2?rnd(14,19):rnd(11,16),hp,s:sp,dmg,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:kind};
+      const kind=(tier>=2&&Math.random()<.38)?2:1;
+      const hp=kind===2?(110+g.time*5.6+rnd(-8,12)):(68+g.time*4.0+rnd(-6,10));
+      const sp=kind===2?(78+rnd(-8,12)):(108+rnd(-10,20));
+      const dmg=kind===2?(22+g.time*.34):(16+g.time*.28);
+      const add={x:mx,y:my,r:kind===2?rnd(15,20):rnd(12,17),hp,s:sp,dmg,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:kind};
       pushOutsideSafe(add,10);
       z.push(add);
     }
@@ -1038,9 +1070,9 @@ canvas{display:block;width:100%;height:100%}
   function spawnApexBoss(){
     if(g.bs2||g.bd2||z.length>=MAX_Z)return;
     const a=Math.random()*Math.PI*2,d=560;
-    const hp=2280+g.time*30;
-    const m={x:clamp(p.x+Math.cos(a)*d,44,MAP_W-44),y:clamp(p.y+Math.sin(a)*d,44,MAP_H-44),r:42,hp,s:62,dmg:42,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:4,apMax:hp,apBaseS:62,apCd:rnd(1.4,2.2),apTele:0,apTeleD:0,apAimX:0,apAimY:0,apBurstLeft:0,apBurstSpd:860,apPhase:1,apStormCd:rnd(3.4,5.2),apSummonCd:rnd(3.4,4.8),apEvadeCd:0,apImpactCd:0};
-    pushOutsideSafe(m,36);z.push(m);g.bs2=1;g.bd=0;g.msg='apex boss! phase omega';g.msgT=1.7;beep(120,.2,'sawtooth',.04);trauma(.34);
+    const hp=3200+g.time*42;
+    const m={x:clamp(p.x+Math.cos(a)*d,44,MAP_W-44),y:clamp(p.y+Math.sin(a)*d,44,MAP_H-44),r:46,hp,s:68,dmg:52,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:4,apMax:hp,apBaseS:68,apCd:rnd(1.1,1.8),apTele:0,apTeleD:0,apAimX:0,apAimY:0,apBurstLeft:0,apBurstSpd:920,apPhase:1,apStormCd:rnd(2.8,4.2),apSummonCd:rnd(2.6,3.8),apEvadeCd:0,apImpactCd:0,apSlamCd:0,apRegenCd:0,apShieldT:0};
+    pushOutsideSafe(m,36);z.push(m);g.bs2=1;g.bd=0;g.msg='APEX DEAN APPROACHES';g.msgT=2.0;beep(120,.2,'sawtooth',.04);beep(60,.3,'sawtooth',.03);trauma(.38);
   }
   function nearestZombie(){
     let best=0,bd=1e9;
@@ -1807,7 +1839,9 @@ canvas{display:block;width:100%;height:100%}
         const m=z[j],dx=m.x-q.x,dy=m.y-q.y;
         const br=q.r||3;
         if(dx*dx+dy*dy<(m.r+br)*(m.r+br)){
-          m.hp-=q.d;
+          let dmgMul=1;
+          if(m.k===4&&m.apShieldT>0)dmgMul=.45;
+          m.hp-=q.d*dmgMul;
           m.ht=q.pulse ? .12 : .09;
           m.vx+=q.vx*(q.pulse ? .11 : .07);
           m.vy+=q.vy*(q.pulse ? .11 : .07);
@@ -1846,121 +1880,199 @@ canvas{display:block;width:100%;height:100%}
       }else{
         m.bi='';m.bt=0;m.bm=0;
       }
+      // --- FIRST BOSS (k===3): tick timers (eating handled after player pickup) ---
+      if(m.k===3){
+        if(!m.b1Max)m.b1Max=m.hp;
+        if(!m.b1BaseR)m.b1BaseR=m.r;
+        if(!m.b1BaseS)m.b1BaseS=m.s;
+        if(!m.b1BaseDmg)m.b1BaseDmg=m.dmg;
+        if(m.b1Cd>0)m.b1Cd=Math.max(0,m.b1Cd-dt);
+        if(m.b1Pulse>0)m.b1Pulse=Math.max(0,m.b1Pulse-dt);
+        if(m.b1Roar>0)m.b1Roar=Math.max(0,m.b1Roar-dt);
+      }
       if(m.k===4){
         if(!m.apMax)m.apMax=m.hp;
         if(!m.apBaseS)m.apBaseS=m.s;
-        if(!m.apCd)m.apCd=rnd(1.4,2.2);
-        if(!m.apStormCd)m.apStormCd=rnd(3.4,5.2);
-        if(!m.apSummonCd)m.apSummonCd=rnd(3.4,4.8);
-        if(!m.apBurstSpd)m.apBurstSpd=860;
+        if(!m.apCd)m.apCd=rnd(1.1,1.8);
+        if(!m.apStormCd)m.apStormCd=rnd(2.8,4.2);
+        if(!m.apSummonCd)m.apSummonCd=rnd(2.6,3.8);
+        if(!m.apBurstSpd)m.apBurstSpd=920;
         if(!m.apTele)m.apTele=0;
         if(!m.apBurstLeft)m.apBurstLeft=0;
         if(!m.apEvadeCd)m.apEvadeCd=0;
         if(!m.apImpactCd)m.apImpactCd=0;
+        if(!m.apSlamCd)m.apSlamCd=0;
+        if(!m.apRegenCd)m.apRegenCd=0;
+        if(!m.apShieldT)m.apShieldT=0;
         const hpR=clamp(m.hp/(m.apMax||1),0,1);
         const phase=hpR>.66?1:(hpR>.33?2:3);
         const rage=phase-1;
         m.apPhase=phase;
-        m.s=(m.apBaseS||62)*(1+.14*rage+(p.zt>0?.18:0));
+        m.s=(m.apBaseS||68)*(1+.18*rage+(p.zt>0?.22:0));
         m.apCd-=dt;
         m.apStormCd-=dt;
         m.apSummonCd-=dt;
         if(m.apEvadeCd>0)m.apEvadeCd=Math.max(0,m.apEvadeCd-dt);
         if(m.apImpactCd>0)m.apImpactCd=Math.max(0,m.apImpactCd-dt);
+        if(m.apSlamCd>0)m.apSlamCd=Math.max(0,m.apSlamCd-dt);
+        if(m.apRegenCd>0)m.apRegenCd=Math.max(0,m.apRegenCd-dt);
+        if(m.apShieldT>0)m.apShieldT=Math.max(0,m.apShieldT-dt);
         const qx=p.x-m.x,qy=p.y-m.y,ql=Math.hypot(qx,qy)||1;
-        const pred=phase===1?.34:phase===2?.52:.72;
-        const aimX=clamp(p.x+p.vx*pred+(p.zx||0)*28,20,MAP_W-20);
-        const aimY=clamp(p.y+p.vy*pred+(p.zy||0)*28,20,MAP_H-20);
+        const pred=phase===1?.38:phase===2?.58:.78;
+        const aimX=clamp(p.x+p.vx*pred+(p.zx||0)*34,20,MAP_W-20);
+        const aimY=clamp(p.y+p.vy*pred+(p.zy||0)*34,20,MAP_H-20);
+        // GROUND SLAM: when close, slam the ground dealing AOE damage + knockback
+        if(!pSafeNow&&ql<140+phase*20&&m.apSlamCd<=0&&m.apTele<=0){
+          m.apSlamCd=Math.max(2.2,4.2-rage*1.1);
+          const slamDmg=14+phase*6+rage*4;
+          const slamR=120+phase*28;
+          if(ql<slamR)hitPlayer(slamDmg);
+          // knockback player away
+          const kbStr=320+phase*80;
+          p.vx+=(p.x-m.x)/ql*kbStr;
+          p.vy+=(p.y-m.y)/ql*kbStr;
+          trauma(.22+.08*rage);
+          hitStop(.04);
+          // slam visual: expanding ring + particles
+          burst(m.x,m.y,'#e0c8ff',22+phase*6,160+phase*30);
+          burst(m.x,m.y,'#ff8bd9',10+phase*3,100+phase*20);
+          addApexStorm(clamp(m.x+rnd(-18,18),24,MAP_W-24),clamp(m.y+rnd(-18,18),24,MAP_H-24),52+phase*14,1.6+phase*.4);
+          beep(90,.1,'sawtooth',.035);
+          beep(55,.14,'sawtooth',.025);
+          g.msg=phase===3?'APEX SLAM! OMEGA FURY!':'apex ground slam!';g.msgT=.9;
+          m.vx*=.1;m.vy*=.1; // brief pause after slam
+        }
+        // OMEGA PHASE HP REGEN: slowly regenerates HP in phase 3
+        if(phase>=3&&m.apRegenCd<=0){
+          const regenAmt=Math.min(m.apMax*.008,m.apMax-m.hp);
+          if(regenAmt>0){
+            m.hp+=regenAmt;
+            if(Math.random()<.35)pushFx({x:m.x+rnd(-14,14),y:m.y+rnd(-14,14),vx:rnd(-10,10),vy:rnd(-30,-10),t:rnd(.15,.3),c:'#d8b4ff'});
+          }
+          m.apRegenCd=.35;
+        }
+        // DAMAGE SHIELD: brief damage reduction after phase transitions
+        if(m.apShieldT>0){
+          // reduce incoming damage handled in bullet section implicitly via ht extension
+          if(Math.random()<.5)pushFx({x:m.x+rnd(-m.r,m.r),y:m.y+rnd(-m.r,m.r),vx:rnd(-16,16),vy:rnd(-16,16),t:rnd(.08,.16),c:'#c8b6ff'});
+        }
+        // trigger shield on phase transition
+        if(phase>1&&!m.apLastPhase)m.apLastPhase=1;
+        if(m.apLastPhase&&phase!==m.apLastPhase){
+          m.apShieldT=1.8;
+          m.apLastPhase=phase;
+          burst(m.x,m.y,'#c8b6ff',18,140);
+          beep(180,.08,'triangle',.022);
+          g.msg=phase===2?'APEX RAGE MODE':'APEX OMEGA FRENZY';
+          g.msgT=1.2;
+          // summon a wave on transition
+          spawnApexAdds(m,phase+1,phase);
+        }
+        // evade: smarter, more frequent, sometimes dodges into flanking position
         if(!pSafeNow&&p.zt>0&&m.apEvadeCd<=0){
           const side=Math.random()<.5?-1:1;
-          const evade=260+rage*70;
+          const evade=300+rage*90;
           m.vx+=(-p.zy)*side*evade;
           m.vy+=(p.zx)*side*evade;
-          m.apEvadeCd=.65-rage*.08;
-          if(phase>=3&&Math.random()<.45){
+          // sometimes dash behind the player
+          if(phase>=2&&Math.random()<.35){
+            m.vx+=qx/ql*180;
+            m.vy+=qy/ql*180;
+          }
+          m.apEvadeCd=Math.max(.35,.55-rage*.1);
+          if(phase>=2&&Math.random()<.55+rage*.15){
             addApexStorm(
-              clamp(m.x+(-p.zy)*side*54,24,MAP_W-24),
-              clamp(m.y+(p.zx)*side*54,24,MAP_H-24),
-              58+rage*10,
-              1.8+rage*.35
+              clamp(m.x+(-p.zy)*side*60,24,MAP_W-24),
+              clamp(m.y+(p.zx)*side*60,24,MAP_H-24),
+              62+rage*14,
+              2.0+rage*.45
             );
           }
-          burst(m.x,m.y,'#d7c1ff',10,70);
-          beep(176,.05,'sawtooth',.02);
+          burst(m.x,m.y,'#d7c1ff',12+phase*2,80+phase*10);
+          beep(176-.05*rage,.05,'sawtooth',.02);
         }
         if(m.apTele>0){
           m.apTele=Math.max(0,m.apTele-dt);
           m.vx*=Math.max(0,1-dt*13);
           m.vy*=Math.max(0,1-dt*13);
-          if(Math.random()<.6){
+          if(Math.random()<.65){
             pushFx({x:m.x+rnd(-8,8),y:m.y+rnd(-8,8),vx:rnd(-26,26),vy:rnd(-26,26),t:rnd(.1,.2),c:'#dab9ff'});
           }
-          if(Math.random()<.55){
+          if(Math.random()<.6){
             pushFx({x:m.apAimX+rnd(-10,10),y:m.apAimY+rnd(-10,10),vx:rnd(-20,20),vy:rnd(-20,20),t:rnd(.08,.18),c:'#f4dcff'});
           }
           if(m.apTele<=0){
             const lx=m.apAimX-m.x,ly=m.apAimY-m.y,ll=Math.hypot(lx,ly)||1;
-            const burstSp=(m.apBurstSpd||860)+rage*140+rnd(-45,60);
+            const burstSp=(m.apBurstSpd||920)+rage*180+rnd(-45,70);
             m.vx+=lx/ll*burstSp;
             m.vy+=ly/ll*burstSp;
             m.ht=Math.max(m.ht,.18);
-            trauma(.2+.05*rage);
-            hitStop(.03);
-            burst(m.x,m.y,'#c7a9ff',20,140);
-            addApexStorm(clamp(m.apAimX+rnd(-22,22),24,MAP_W-24),clamp(m.apAimY+rnd(-22,22),24,MAP_H-24),68+rage*12,2.2+rage*.5);
-            if(phase>=2&&Math.random()<.7)spawnApexAdds(m,phase===3?3:2,phase);
+            trauma(.22+.06*rage);
+            hitStop(.035);
+            burst(m.x,m.y,'#c7a9ff',24,160);
+            addApexStorm(clamp(m.apAimX+rnd(-22,22),24,MAP_W-24),clamp(m.apAimY+rnd(-22,22),24,MAP_H-24),72+rage*16,2.4+rage*.6);
+            // always spawn adds on burst from phase 2+, sometimes in phase 1 too
+            if(phase>=2)spawnApexAdds(m,phase===3?4:2,phase);
+            else if(Math.random()<.3)spawnApexAdds(m,1,phase);
             m.apBurstLeft=(m.apBurstLeft|0)-1;
             if(m.apBurstLeft>0){
-              m.apTeleD=Math.max(.18,.34-rage*.04);
+              m.apTeleD=Math.max(.16,.30-rage*.04);
               m.apTele=m.apTeleD;
-              m.apAimX=clamp(p.x+p.vx*(pred*.7)+rnd(-30,30),20,MAP_W-20);
-              m.apAimY=clamp(p.y+p.vy*(pred*.7)+rnd(-30,30),20,MAP_H-20);
+              m.apAimX=clamp(p.x+p.vx*(pred*.7)+rnd(-36,36),20,MAP_W-20);
+              m.apAimY=clamp(p.y+p.vy*(pred*.7)+rnd(-36,36),20,MAP_H-20);
             }else{
-              m.apCd=rnd(Math.max(.44,1.25-rage*.26),Math.max(.8,1.95-rage*.3));
+              m.apCd=rnd(Math.max(.36,1.0-rage*.28),Math.max(.65,1.6-rage*.34));
             }
-            beep(145-rage*8,.07,'sawtooth',.032);
+            beep(140-rage*10,.07,'sawtooth',.035);
           }
         }else if(m.apCd<=0){
           const close=ql<180,far=ql>360;
-          let bursts=phase===1?1:(phase===2?2:3);
+          let bursts=phase===1?2:(phase===2?3:4);
           if(close&&phase>=2)bursts++;
-          if(far&&phase===1)bursts=2;
+          if(far)bursts=Math.max(bursts,3);
           m.apBurstLeft=bursts;
-          m.apTeleD=Math.max(.24,.52-rage*.08-(close?.08:0));
+          m.apTeleD=Math.max(.20,.46-rage*.09-(close?.08:0));
           m.apTele=m.apTeleD;
           m.apAimX=aimX;
           m.apAimY=aimY;
-          m.apBurstSpd=820+rage*150+(far?90:0);
-          if(Math.random()<.4+rage*.2){
+          m.apBurstSpd=880+rage*190+(far?110:0);
+          if(Math.random()<.45+rage*.25){
             const side=Math.random()<.5?-1:1;
-            m.apAimX=clamp(m.apAimX+(-qy/ql)*side*(70+rage*40),20,MAP_W-20);
-            m.apAimY=clamp(m.apAimY+(qx/ql)*side*(70+rage*40),20,MAP_H-20);
+            m.apAimX=clamp(m.apAimX+(-qy/ql)*side*(80+rage*50),20,MAP_W-20);
+            m.apAimY=clamp(m.apAimY+(qx/ql)*side*(80+rage*50),20,MAP_H-20);
           }
-          g.msg=phase===3?'apex frenzy':'apex charging';
-          g.msgT=.5;
-          burst(m.x,m.y,'#b59bff',12+phase*4,90+phase*18);
-          beep(190-rage*10,.05,'square',.02);
-          if(phase>=2&&m.apSummonCd<=0){
-            spawnApexAdds(m,phase,phase);
-            m.apSummonCd=rnd(Math.max(1.2,3-rage*.6),Math.max(1.8,4.1-rage*.7));
+          g.msg=phase===3?'APEX FRENZY!':'apex charging';
+          g.msgT=.6;
+          burst(m.x,m.y,'#b59bff',14+phase*5,100+phase*22);
+          beep(185-rage*12,.06,'square',.022);
+          if(m.apSummonCd<=0){
+            spawnApexAdds(m,phase+1,phase);
+            m.apSummonCd=rnd(Math.max(.9,2.4-rage*.7),Math.max(1.4,3.4-rage*.8));
           }
         }
+        // storms: more frequent, bigger, double-storm in omega
         if(m.apStormCd<=0&&!pSafeNow){
-          addApexStorm(clamp(p.x+p.vx*.32+rnd(-36,36),24,MAP_W-24),clamp(p.y+p.vy*.32+rnd(-36,36),24,MAP_H-24),62+phase*10,2.0+phase*.45);
-          if(phase>=3&&Math.random()<.16){
-            addApexStorm(clamp(m.x+rnd(-120,120),24,MAP_W-24),clamp(m.y+rnd(-120,120),24,MAP_H-24),56+phase*8,1.8+phase*.35);
+          addApexStorm(clamp(p.x+p.vx*.36+rnd(-40,40),24,MAP_W-24),clamp(p.y+p.vy*.36+rnd(-40,40),24,MAP_H-24),68+phase*14,2.2+phase*.55);
+          if(phase>=2&&Math.random()<.35+rage*.15){
+            addApexStorm(clamp(m.x+rnd(-140,140),24,MAP_W-24),clamp(m.y+rnd(-140,140),24,MAP_H-24),60+phase*12,2.0+phase*.45);
           }
-          m.apStormCd=rnd(Math.max(2.8,4.9-rage*.4),Math.max(3.6,6.1-rage*.45));
+          if(phase>=3&&Math.random()<.28){
+            // triple storm in omega
+            const sa=Math.random()*Math.PI*2;
+            addApexStorm(clamp(p.x+Math.cos(sa)*130+rnd(-30,30),24,MAP_W-24),clamp(p.y+Math.sin(sa)*130+rnd(-30,30),24,MAP_H-24),56+rage*10,1.8+rage*.4);
+          }
+          m.apStormCd=rnd(Math.max(2.0,3.8-rage*.55),Math.max(2.8,5.0-rage*.55));
         }
+        // gravity pull: stronger, wider
         if(!pSafeNow){
           const px=m.x-p.x,py=m.y-p.y,pl=Math.hypot(px,py)||1;
-          const pullR=300+phase*40;
+          const pullR=340+phase*50;
           if(pl<pullR){
-            const pull=(1-pl/pullR)*(110+phase*38);
+            const pull=(1-pl/pullR)*(130+phase*48);
             p.x=clamp(p.x+px/pl*pull*dt,12,MAP_W-12);
             p.y=clamp(p.y+py/pl*pull*dt,12,MAP_H-12);
-            p.rx-=px/pl*(1.5+phase*.35);
-            p.ry-=py/pl*(1.3+phase*.3);
+            p.rx-=px/pl*(1.8+phase*.42);
+            p.ry-=py/pl*(1.5+phase*.36);
           }
         }
       }
@@ -2289,6 +2401,44 @@ canvas{display:block;width:100%;height:100%}
     if((keys.gr||touchMove)&&Math.random()<.04&&g.time>2){
       pushFood({x:clamp(p.x+rnd(-20,20),12,MAP_W-12),y:clamp(p.y+rnd(-20,20),12,MAP_H-12),v:4,m:1,t:0});
     }
+
+    // --- FIRST BOSS mint eating (runs AFTER player pickup so Scotty always has priority) ---
+    if(g.bs){
+      for(let i=0;i<z.length;i++){
+        const m=z[i];
+        if(m.k!==3||m.b1Cd>0)continue;
+        // boss only eats mints that overlap its body
+        for(let fi=food.length-1;fi>=0;fi--){
+          const f=food[fi],fdx=f.x-m.x,fdy=f.y-m.y,fd=Math.hypot(fdx,fdy);
+          if(fd<m.r){
+            // skip if mint is also in Scotty's magnet range (player priority)
+            const pdist=Math.hypot(f.x-p.x,f.y-p.y);
+            if(pdist<p.magnet)continue;
+            food.splice(fi,1);
+            m.b1Eat=(m.b1Eat||0)+1;
+            m.b1Cd=BOSS1_EAT_CD;
+            m.b1Pulse=.35;
+            const e=m.b1Eat;
+            // diminishing growth: each eat is slightly less effective
+            const dim=1/(1+e*.035);
+            m.r=(m.b1BaseR)+e*BOSS1_GROW_R*dim;
+            m.hp=Math.min(m.hp+BOSS1_GROW_HP*dim,m.b1Max+BOSS1_GROW_HP*dim);
+            m.b1Max+=BOSS1_GROW_HP*dim;
+            m.dmg=(m.b1BaseDmg)+e*BOSS1_GROW_DMG*dim;
+            m.s=(m.b1BaseS)+e*BOSS1_GROW_SPD*dim;
+            burst(m.x,m.y,'#69f0c9',6,m.r+18);
+            beep(120+e*6,.06,'sawtooth',.018);
+            if(e%5===0){
+              m.b1Roar=.6;
+              trauma(.14);
+              burst(m.x,m.y,'#a789ff',14,m.r+50);
+              beep(80,.12,'sawtooth',.028);
+              g.msg='the dean grows stronger!';g.msgT=1.4;
+            }
+          }
+        }
+      }
+    }
   }
 
   function cam(){return {x:clamp(p.x-W*.5,0,MAP_W-W),y:clamp(p.y-H*.5,0,MAP_H-H)}}
@@ -2436,6 +2586,60 @@ canvas{display:block;width:100%;height:100%}
       const mc=m.k===4?'#713ce8':m.k===3?'#a789ff':m.k===2?'#665a78':m.k===1?'#5687a1':(m.sl?'#70805a':'#4b667f');
       x.fillStyle=m.ht>0?'#9db4d1':mc;x.beginPath();x.arc(sx,sy,m.r,0,Math.PI*2);x.fill();
       x.fillStyle='#f0627c';x.fillRect((sx-4)|0,(sy-2)|0,3,3);x.fillRect((sx+1)|0,(sy-2)|0,3,3);
+      if(m.k===3){
+        // first boss visuals: glow + eat count
+        const eats=m.b1Eat||0;
+        const hpR1=clamp(m.hp/((m.b1Max||m.hp)||1),0,1);
+        const pulseFx=(m.b1Pulse||0)>.01?(m.b1Pulse/.35):0;
+        const roarFx=(m.b1Roar||0)>.01?(m.b1Roar/.6):0;
+        // inner glow grows with eats
+        const eatFrac=Math.min(1,eats/20);
+        const glowR=m.r+10+eats*2.2+Math.sin(g.t*4)*3;
+        x.globalAlpha=.08+.08*eatFrac+.14*pulseFx;
+        x.fillStyle=eats>15?'#ff8f8f':eats>8?'#ffd58f':'#a789ff';
+        x.beginPath();x.arc(sx,sy,glowR,0,Math.PI*2);x.fill();
+        // animated ring
+        const ringHue=eats>15?'#ff6b6b':eats>8?'#ffaa44':'#c8a0ff';
+        x.globalAlpha=.28+.12*Math.sin(g.t*5+i)+.08*roarFx;
+        x.strokeStyle=ringHue;x.lineWidth=2.2+eats*.08;
+        x.beginPath();x.arc(sx,sy,m.r+8+Math.sin(g.t*5.5+i)*2.5,0,Math.PI*2);x.stroke();
+        // roar shockwave
+        if(roarFx>.01){
+          x.globalAlpha=.22*roarFx;
+          x.strokeStyle='#c8a0ff';x.lineWidth=3;
+          x.beginPath();x.arc(sx,sy,m.r+20+(1-roarFx)*50,0,Math.PI*2);x.stroke();
+        }
+        // eat absorption particles orbiting
+        if(eats>0){
+          for(let n=0;n<Math.min(eats,8);n++){
+            const oa=g.t*(3.2+n*.4)+n*(.78+eats*.04),od=m.r+8+n*2.5+Math.sin(g.t*6+n)*3;
+            const ox=sx+Math.cos(oa)*od,oy=sy+Math.sin(oa)*od;
+            x.globalAlpha=.35+.2*Math.sin(g.t*8+n);
+            x.fillStyle='#69f0c9';
+            x.beginPath();x.arc(ox,oy,2.2+eats*.06,0,Math.PI*2);x.fill();
+          }
+        }
+        // eat-pulse flash
+        if(pulseFx>.01){
+          x.globalAlpha=.3*pulseFx;
+          x.fillStyle='#69f0c9';
+          x.beginPath();x.arc(sx,sy,m.r+8+(1-pulseFx)*24,0,Math.PI*2);x.fill();
+        }
+        // boss HP bar above head
+        const bhpW=Math.max(44,m.r*2.2),bhpH=5;
+        const bhpX=sx-bhpW*.5,bhpY=sy-m.r-16;
+        x.globalAlpha=.85;
+        x.fillStyle='rgba(10,14,22,.9)';x.fillRect(bhpX-2,bhpY-2,bhpW+4,bhpH+4);
+        x.fillStyle='#3a2255';x.fillRect(bhpX,bhpY,bhpW,bhpH);
+        x.fillStyle=hpR1>.5?'#a789ff':hpR1>.25?'#d88fff':'#ff6b9a';
+        x.fillRect(bhpX,bhpY,bhpW*hpR1,bhpH);
+        // eat count indicator
+        if(eats>0){
+          x.fillStyle='#69f0c9';x.font='700 9px Trebuchet MS,sans-serif';
+          x.fillText('\u00d7'+eats,bhpX+bhpW+5,bhpY+5);
+        }
+        x.globalAlpha=1;
+      }
       if(m.k===4){
         const hpR=clamp(m.hp/((m.apMax||m.hp)||1),0,1);
         const ringCol=hpR>.66?'#bfa1ff':hpR>.33?'#d8b4ff':'#ffb6f2';
@@ -2479,6 +2683,38 @@ canvas{display:block;width:100%;height:100%}
           x.beginPath();
           x.arc(tx2,ty2,3.2,0,Math.PI*2);
           x.fill();
+        }
+        // damage shield glow
+        if(m.apShieldT>0){
+          const sq=clamp(m.apShieldT/1.8,0,1);
+          x.globalAlpha=.12+.22*sq;
+          x.fillStyle='rgba(200,182,255,.8)';
+          x.beginPath();x.arc(sx,sy,m.r+16+Math.sin(g.t*14)*3,0,Math.PI*2);x.fill();
+          x.globalAlpha=.35+.4*sq;
+          x.strokeStyle='rgba(220,200,255,.9)';
+          x.lineWidth=2.5+sq*2;
+          x.beginPath();x.arc(sx,sy,m.r+14+Math.sin(g.t*10)*2,0,Math.PI*2);x.stroke();
+        }
+        // slam warning ring (shows when slam is nearly ready)
+        if((m.apSlamCd||0)<.8&&(m.apSlamCd||0)>0){
+          const slamQ=1-clamp((m.apSlamCd||0)/.8,0,1);
+          x.globalAlpha=.08+.18*slamQ;
+          x.strokeStyle='#ff8bd9';
+          x.lineWidth=1.5+slamQ*2;
+          x.setLineDash([6,4]);
+          x.lineDashOffset=-g.t*60;
+          const slamR=120+((m.apPhase||1))*28;
+          x.beginPath();x.arc(sx,sy,slamR,0,Math.PI*2);x.stroke();
+          x.setLineDash([]);
+        }
+        // omega regen particles
+        if((m.apPhase||1)>=3){
+          if(Math.random()<.12){
+            const ra=Math.random()*Math.PI*2,rd=m.r*.6;
+            x.globalAlpha=.25+.15*Math.sin(g.t*12+i);
+            x.fillStyle='#d8b4ff';
+            x.beginPath();x.arc(sx+Math.cos(ra)*rd,sy+Math.sin(ra)*rd,1.8,0,Math.PI*2);x.fill();
+          }
         }
         x.globalAlpha=1;
       }
@@ -2698,9 +2934,36 @@ canvas{display:block;width:100%;height:100%}
     // xp
     x.fillStyle='#24374d';x.fillRect(20,xpY,barsW,8);
     x.fillStyle='#69f0c9';x.fillRect(20,xpY,barsW*(g.xp/g.nextXp),8);
+    let boss1=0;
+    for(let i=0;i<z.length;i++)if(z[i].k===3){boss1=z[i];break;}
     let apex=0;
     for(let i=0;i<z.length;i++)if(z[i].k===4){apex=z[i];break;}
     let objectiveY=hudBottom+4;
+    if(boss1&&g.bs){
+      const hpR1=clamp(boss1.hp/((boss1.b1Max||boss1.hp)||1),0,1);
+      const eats=boss1.b1Eat||0;
+      const title=eats>20?'THE DEAN // BLOATED':eats>12?'THE DEAN // GORGED':eats>5?'THE DEAN // HUNGRY':'THE DEAN';
+      const bw=clamp(W*.54,200,560),bh=11,bx=(W-bw)*.5,by=objectiveY+2;
+      x.fillStyle='rgba(10,14,22,.88)';
+      rr(bx-10,by-18,bw+20,36,11);
+      x.fill();
+      x.fillStyle='rgba(40,28,62,.95)';x.fillRect(bx,by,bw,bh);
+      const fg1=x.createLinearGradient(bx,0,bx+bw,0);
+      if(eats>20){fg1.addColorStop(0,'#ff3333');fg1.addColorStop(1,'#ff7755');}
+      else if(eats>12){fg1.addColorStop(0,'#ff5656');fg1.addColorStop(1,'#ff9a7a');}
+      else if(eats>5){fg1.addColorStop(0,'#ffaa44');fg1.addColorStop(1,'#ffd58f');}
+      else{fg1.addColorStop(0,'#9a7dff');fg1.addColorStop(1,'#c8a0ff');}
+      x.fillStyle=fg1;
+      x.fillRect(bx,by,bw*hpR1,bh);
+      x.strokeStyle='rgba(200,190,240,.55)';x.lineWidth=1.2;
+      x.strokeRect(bx+.5,by+.5,bw-1,bh-1);
+      x.fillStyle=eats>20?'#ffaaaa':eats>12?'#ffc4c4':eats>5?'#ffe0b3':'#e4d8ff';
+      x.font='700 11px Trebuchet MS,sans-serif';
+      x.textAlign='center';
+      x.fillText(title+(eats>0?' ['+eats+' mints]':''),bx+bw*.5,by-7);
+      x.textAlign='left';
+      objectiveY+=32;
+    }
     if(apex){
       const hpR=clamp(apex.hp/((apex.apMax||apex.hp)||1),0,1);
       const phase=(apex.apPhase||1);
@@ -2736,6 +2999,62 @@ canvas{display:block;width:100%;height:100%}
     x.fillStyle='#d7ffe8';
     x.font='600 12px Trebuchet MS,sans-serif';
     x.fillText(ot,22,objectiveY+17);
+
+    // --- direction arrow pointing toward next objective building ---
+    if(g.start&&!g.dead){
+      let navTarget=0;
+      if(!p.mkOn){navTarget=school('home');}
+      else if(g.sch.nsh===0){navTarget=school('nsh');}
+      else if(g.sch.nsh===1){navTarget=school('nsh');}
+      else if(g.sch.mel===0){navTarget=school('mel');}
+      else if(g.sch.mel===1){navTarget=school('mel');}
+      else if(g.labNsh>0){navTarget=school('nsh');}
+      else if(g.labMel>0){navTarget=school('mel');}
+      if(navTarget){
+        const tx=navTarget.x-cm.x,ty=navTarget.y-cm.y;
+        const onScreen=tx>-navTarget.r&&tx<W+navTarget.r&&ty>-navTarget.r&&ty<H+navTarget.r;
+        if(!onScreen){
+          // draw edge-of-screen arrow
+          const dx=navTarget.x-p.x,dy=navTarget.y-p.y;
+          const ang=Math.atan2(dy,dx);
+          const edgePad=28;
+          const cx=W*.5,cy=H*.5;
+          // project to screen edge
+          let ax=cx+Math.cos(ang)*400,ay=cy+Math.sin(ang)*400;
+          // clamp to viewport edges with padding
+          if(ax<edgePad){const t2=(edgePad-cx)/(ax-cx);ay=cy+(ay-cy)*t2;ax=edgePad;}
+          else if(ax>W-edgePad){const t2=(W-edgePad-cx)/(ax-cx);ay=cy+(ay-cy)*t2;ax=W-edgePad;}
+          if(ay<edgePad){const t2=(edgePad-cy)/(ay-cy);ax=cx+(ax-cx)*t2;ay=edgePad;}
+          else if(ay>H-edgePad){const t2=(H-edgePad-cy)/(ay-cy);ax=cx+(ax-cx)*t2;ay=H-edgePad;}
+          const dist=Math.hypot(dx,dy);
+          const pulse=.6+.4*Math.sin(g.t*3.6);
+          const arrowSize=9+2*pulse;
+          const col=navTarget.c;
+          // outer glow
+          x.globalAlpha=.18*pulse;
+          x.fillStyle=col;
+          x.beginPath();x.arc(ax,ay,arrowSize+6,0,Math.PI*2);x.fill();
+          // arrow triangle
+          x.globalAlpha=.65+.25*pulse;
+          x.fillStyle=col;
+          x.beginPath();
+          x.moveTo(ax+Math.cos(ang)*arrowSize,ay+Math.sin(ang)*arrowSize);
+          x.lineTo(ax+Math.cos(ang+2.5)*arrowSize*.7,ay+Math.sin(ang+2.5)*arrowSize*.7);
+          x.lineTo(ax+Math.cos(ang-2.5)*arrowSize*.7,ay+Math.sin(ang-2.5)*arrowSize*.7);
+          x.closePath();x.fill();
+          // distance label
+          x.globalAlpha=.7;
+          x.fillStyle='#dce8ff';x.font='600 9px Trebuchet MS,sans-serif';
+          x.textAlign='center';
+          x.fillText(navTarget.n,ax,ay-arrowSize-4);
+          const dm=dist<1000?(dist|0)+'':((dist/1000).toFixed(1)+'k');
+          x.fillText(dm,ax,ay+arrowSize+11);
+          x.textAlign='left';
+          x.globalAlpha=1;
+        }
+      }
+    }
+
     if(p.bot&&bots.length>=3){
       const slY=objectiveY+30;
       const bw2=W-44;
@@ -2820,7 +3139,7 @@ canvas{display:block;width:100%;height:100%}
       x.textAlign='center';
       x.fillStyle='rgba(255,227,143,'+(0.44+0.4*q)+')';
       x.font=(W<520?'700 30px':'700 40px')+' Trebuchet MS,sans-serif';
-      x.fillText('BOSS DOWN',cx,cy-8);
+      x.fillText('THE DEAN IS DOWN',cx,cy-8);
       x.fillStyle='rgba(209,231,255,'+(0.58+0.32*q)+')';
       x.font=(W<520?'600 13px':'600 15px')+' Trebuchet MS,sans-serif';
       x.fillText('something big is approaching...',cx,cy+20);
