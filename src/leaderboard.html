@@ -36,18 +36,12 @@ p{margin:0;color:var(--muted)}
   border-radius:14px;
   padding:14px;
 }
-.row{display:grid;grid-template-columns:1fr 120px 120px;gap:8px}
-input,button{
+button{
   width:100%;
   min-height:42px;
   border-radius:10px;
   border:1px solid var(--line);
   font:inherit;
-}
-input{
-  background:#0a141f;
-  color:var(--text);
-  padding:10px 12px;
 }
 button{
   border:none;
@@ -94,9 +88,6 @@ td:nth-child(1),td:nth-child(3),td:nth-child(4){font-variant-numeric:tabular-num
   color:var(--muted);
 }
 a{color:var(--accent2)}
-@media (max-width:640px){
-  .row{grid-template-columns:1fr}
-}
 </style>
 </head>
 <body>
@@ -105,12 +96,7 @@ a{color:var(--accent2)}
   <p>Showing global top 10, sorted by kills then time.</p>
 
   <section class="card">
-    <form id="entryForm" class="row">
-      <input id="name" name="name" maxlength="24" placeholder="Name" required>
-      <input id="kills" name="kills" type="number" min="0" max="1000000" value="0" required>
-      <input id="timeSeconds" name="timeSeconds" type="number" step="0.1" min="0" max="86400" value="0" required>
-      <button id="submitBtn" type="submit">Submit score</button>
-    </form>
+    <p>This page is read-only. Scores are submitted from in-game runs.</p>
     <div class="meta">
       <span id="status">Ready.</span>
       <button id="refreshBtn" class="refresh" type="button">Refresh</button>
@@ -119,7 +105,7 @@ a{color:var(--accent2)}
   </section>
 
   <section class="card">
-    <p id="rankText" class="rank">Submit a score to see your rank.</p>
+    <p id="rankText" class="rank">Finish a run in-game to see your latest rank.</p>
   </section>
 
   <section class="card">
@@ -142,8 +128,6 @@ a{color:var(--accent2)}
 <script src="./leaderboard-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const form = document.getElementById("entryForm");
-const submitBtn = document.getElementById("submitBtn");
 const statusEl = document.getElementById("status");
 const rowsEl = document.getElementById("leaderRows");
 const refreshBtn = document.getElementById("refreshBtn");
@@ -155,10 +139,8 @@ const supabaseUrl = config.supabaseUrl || "";
 const supabaseAnonKey = config.supabaseAnonKey || "";
 const TOP_LIMIT = 10;
 const LAST_ENTRY_STORAGE_KEY = "zoomies_last_entry";
-const NAME_STORAGE_KEY = "zoomies_lb_name";
 
 let supabaseClient = null;
-let nextSubmitAt = 0;
 
 function setStatus(text, isError) {
   statusEl.textContent = text;
@@ -195,12 +177,6 @@ function setRankText(text, isError) {
   rankTextEl.style.color = isError ? "#ff9fa2" : "";
 }
 
-function saveLastEntry(entry) {
-  try {
-    localStorage.setItem(LAST_ENTRY_STORAGE_KEY, JSON.stringify(entry));
-  } catch {}
-}
-
 function getLastEntry() {
   try {
     const raw = localStorage.getItem(LAST_ENTRY_STORAGE_KEY);
@@ -212,22 +188,6 @@ function getLastEntry() {
 
 function parseCount(result) {
   return Number((result && result.count) || 0);
-}
-
-function validateInput(name, kills, timeSeconds) {
-  if (!name || name.length > 24) {
-    return "Name must be 1-24 characters.";
-  }
-  if (!/^[A-Za-z0-9 _.-]+$/.test(name)) {
-    return "Name can only contain letters, numbers, spaces, _, ., and -.";
-  }
-  if (!Number.isInteger(kills) || kills < 0 || kills > 1000000) {
-    return "Kills must be an integer between 0 and 1,000,000.";
-  }
-  if (!Number.isFinite(timeSeconds) || timeSeconds < 0 || timeSeconds > 86400) {
-    return "Time must be between 0 and 86,400 seconds.";
-  }
-  return "";
 }
 
 async function loadTopLeaderboard() {
@@ -250,7 +210,7 @@ async function loadTopLeaderboard() {
 async function loadUserRank() {
   const lastEntry = getLastEntry();
   if (!lastEntry || !lastEntry.id) {
-    setRankText("Submit a score to see your rank.");
+    setRankText("Finish a run in-game to see your latest rank.");
     return;
   }
 
@@ -263,7 +223,7 @@ async function loadUserRank() {
 
     if (ownError) throw ownError;
     if (!ownRows || !ownRows.length) {
-      setRankText("Your previous score was not found. Submit again to track your rank.");
+      setRankText("Your previous score was not found. Finish another run to update rank tracking.");
       return;
     }
 
@@ -314,68 +274,17 @@ async function refreshLeaderboardView() {
   }
 }
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (!supabaseClient) return;
-
-  const now = Date.now();
-  if (now < nextSubmitAt) {
-    const sec = Math.ceil((nextSubmitAt - now) / 1000);
-    setStatus(`Please wait ${sec}s before submitting again.`, true);
-    return;
-  }
-
-  const name = form.name.value.trim();
-  const kills = Number(form.kills.value);
-  const timeSeconds = Number(form.timeSeconds.value);
-  const errorMsg = validateInput(name, kills, timeSeconds);
-  if (errorMsg) {
-    setStatus(errorMsg, true);
-    return;
-  }
-
-  submitBtn.disabled = true;
-  setStatus("Submitting...");
-
-  try {
-    const { data, error } = await supabaseClient
-      .from(tableName)
-      .insert([{ name, kills, time_seconds: timeSeconds }])
-      .select("id,name,kills,time_seconds")
-      .single();
-
-    if (error) throw error;
-    try {
-      localStorage.setItem(NAME_STORAGE_KEY, name);
-    } catch {}
-    saveLastEntry(data);
-
-    nextSubmitAt = Date.now() + 5000;
-    setStatus("Score submitted.");
-    await refreshLeaderboardView();
-  } catch (error) {
-    setStatus(error.message || "Failed to submit score.", true);
-  } finally {
-    submitBtn.disabled = false;
-  }
-});
-
 refreshBtn.addEventListener("click", () => {
   setStatus("Refreshing...");
   refreshLeaderboardView();
 });
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  submitBtn.disabled = true;
   refreshBtn.disabled = true;
   setStatus("Missing Supabase config. Set values in src/leaderboard-config.js.", true);
   renderRows([]);
   setRankText("Rank tracking unavailable until Supabase config is set.", true);
 } else {
-  try {
-    const savedName = localStorage.getItem(NAME_STORAGE_KEY);
-    if (savedName) form.name.value = savedName;
-  } catch {}
   supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
   refreshLeaderboardView();
 }

@@ -11,7 +11,7 @@ https://floaredor.github.io/what-the-dog-doing/
 The leaderboard now uses Supabase directly from the browser (works with GitHub Pages).
 
 - Page: `/leaderboard.html`
-- UI: global top 10 + your latest rank
+- UI: read-only global top 10 + your latest rank
 - Sort order: `kills DESC`, then `time_seconds ASC`
 - Game flow: on game over, players can opt in and auto-submit score (name + kills + time)
 - In-game game-over card shows top 3 preview + your rank + `open leaderboard` button
@@ -70,7 +70,7 @@ to anon
 with check (true);
 ```
 
-The page also has a small 5-second client submit cooldown. For strict rate limiting, use a Supabase Edge Function in front of inserts.
+The leaderboard page is read-only (no manual score entry). For strict rate limiting on score writes, use a Supabase Edge Function in front of inserts.
 
 You can also apply the same migration from this repo:
 
