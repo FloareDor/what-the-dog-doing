@@ -75,6 +75,15 @@ canvas{display:block;width:100%;height:100%}
   const NSH_THIRD_BOT_INTEL_COST=4;
   const MEL_SECOND_PUDDLE_INTEL_COST=2;
   const MEL_THIRD_PUDDLE_INTEL_COST=3;
+  const BAK_SECOND_BARK_KILLS=320;
+  const BAK_THIRD_BARK_KILLS=760;
+  const PSY_AUTO_INTERVAL=.32;
+  const PSY_MARK_TIME=1.55;
+  const PSY_COMBO_CD=.9;
+  const PSY_DECOY_TIME=2.2;
+  const PSY_DECOY_RADIUS=160;
+  const PSY_DECOY_POP_RADIUS=132;
+  const MAX_PSYFX=8;
   const SHELTER_GRACE=9;
   const SHELTER_WARN=6;
   const SHELTER_PULSE=.9;
@@ -158,9 +167,9 @@ canvas{display:block;width:100%;height:100%}
     bossDownT:0,won:0,
     endWave:0,endT:0,endSpawnT:0,
     apWarn1:0,apWarn2:0,apStormHitCd:0,
-    botMask:0,chemMask:0,
+    botMask:0,chemMask:0,psyMask:0,
     labStep:0,labBank:0,labFlip:0,
-    labNsh:0,labMel:0,
+    labNsh:0,labMel:0,labBak:0,
     labNshRuns:0,labMelRuns:0,
     stormCd:0,
     labCd:0,
@@ -299,7 +308,7 @@ canvas{display:block;width:100%;height:100%}
     }catch{}
   }
 
-  const p={x:260,y:MAP_H*.5,vx:0,vy:0,r:15,hp:100,maxHp:100,speed:185,fireCd:0,fireRate:.46,dmg:12,range:400,shots:1,magnet:88,face:1,rx:0,ry:0,flash:0,gx:1,gy:0,zc:0,zr:0,zt:0,zx:1,zy:0,zcd:0,zDur:1,zSpd:2.1,zLoad:1.5,zCool:5.5,zDmg:24,zDr:.55,zb:0,zp:0,mkOn:0,mkT:0,mkI:8.8,mkS:0,mkD:14,mkR:54,mkSl:.54,chDo:14,chBurst:10,chHeal:8,chHealCd:0,chHealI:.85,cat:0,catM:0,catType:0,fb:0,fbT:0,fbI:8.6,fbR:210,fbFear:2.3,fbKn:320,fbFx:0,bot:0,botCount:0,botSlots:0,bType:0,bAtk:1,bAuraR:0,bAuraSl:0,bHealCd:0,bHealI:10,bHealAmt:10,bHealFx:0,triA:0,triFx:0,slCharge:0,slFocus:0,slT:0,slRecallT:0,slLinkT:0,slRecallPulse:0,slCarryVx:0,slCarryVy:0,slPow:0,slWave:0,slComboFx:0,slHitMask:0,slPerfect:0,slDx:1,slDy:0,bx:0,by:0,ba:0,bcd:0,bRate:1.9,bDmg:1.15,bRange:480,bFetch:95,bPull:195,bCarry:0,bCarryMax:2,bGrabCd:0,bGrabI:.38,bPier:4,bSize:6};
+  const p={x:260,y:MAP_H*.5,vx:0,vy:0,r:15,hp:100,maxHp:100,speed:185,fireCd:0,fireRate:.46,dmg:12,range:400,shots:1,magnet:88,face:1,rx:0,ry:0,flash:0,gx:1,gy:0,zc:0,zr:0,zt:0,zx:1,zy:0,zcd:0,zDur:1,zSpd:2.1,zLoad:1.5,zCool:5.5,zDmg:24,zDr:.55,zb:0,zp:0,mkOn:0,mkT:0,mkI:8.8,mkS:0,mkD:14,mkR:54,mkSl:.54,chDo:14,chBurst:10,chHeal:8,chHealCd:0,chHealI:.85,cat:0,catM:0,catType:0,fb:0,fbT:0,fbI:8.6,fbR:210,fbFear:2.3,fbKn:320,fbFx:0,fbTier:0,fbMode:1,fbAiT:0,bot:0,botCount:0,botSlots:0,bType:0,bAtk:1,bAuraR:0,bAuraSl:0,bHealCd:0,bHealI:10,bHealAmt:10,bHealFx:0,triA:0,triFx:0,slCharge:0,slFocus:0,slT:0,slRecallT:0,slLinkT:0,slRecallPulse:0,slCarryVx:0,slCarryVy:0,slPow:0,slWave:0,slComboFx:0,slHitMask:0,slPerfect:0,slDx:1,slDy:0,bx:0,by:0,ba:0,bcd:0,bRate:1.9,bDmg:1.15,bRange:480,bFetch:95,bPull:195,bCarry:0,bCarryMax:2,bGrabCd:0,bGrabI:.38,bPier:4,bSize:6};
   const keys={l:0,r:0,u:0,d:0,gr:0};
   let touchId=-1,touchMove=0;
   const joy={x:78,y:0,r:42,kr:16,tx:0,ty:0,ax:0,ay:0,ttx:0,tty:0,tax:0,tay:0,show:0,act:0};
@@ -311,6 +320,8 @@ canvas{display:block;width:100%;height:100%}
   const fx=[];     // particles/text dots
   const bots=[];   // companion bot states
   const react=[];  // fused reaction puddles
+  const psyFx=[];  // psych combo effects
+  const decoy={on:0,x:0,y:0,t:0,d:0,pop:0};
 
   function rnd(a,b){return a+Math.random()*(b-a)}
   function clamp(v,a,b){return v<a?a:v>b?b:v}
@@ -583,8 +594,17 @@ canvas{display:block;width:100%;height:100%}
     }else if(id==='bak'&&g.sch.bak!==2){
       g.sch.bak=2;queueUnlock('bak');
       g.msg='baker';g.msgT=2.1;trauma(.14);burst(p.x,p.y,'#9ec8ff',18,106);beep(780,.07,'square',.024);
+    }else if(id==='bak'&&g.labBak>0){
+      g.labBak--;
+      queueUnlock('bak');
+      g.msg='baker psych prototype ready';
+      g.msgT=1.8;
+      trauma(.12);
+      burst(p.x,p.y,'#b7d6ff',12,76);
+      beep(760,.06,'triangle',.022);
     }
     queueLabMilestoneRewards();
+    queueBakerPsychUnlocks();
     g.labCd=3;
   }
   function chemLabel(){
@@ -605,53 +625,217 @@ canvas{display:block;width:100%;height:100%}
     if(g.chemMask&4)return '#8fb6ff';
     return '#f4d96e';
   }
-  function toggleCatalyst(){
-    if(!p.cat)return;
-    g.msg='brew: '+chemLabel();
-    g.msgT=1.1;
-    beep(520,.04,'triangle',.016);
-  }
   function unlockFocusBark(){
     p.fb=1;
     p.fbT=0;
     p.fbFx=0;
+    p.fbMode=1;
+    p.fbAiT=0;
+    decoy.on=0;
+    decoy.t=0;
+    decoy.pop=0;
   }
-  function castFocusBark(){
+  function isBossType(k){
+    return k===3||k===4||k===5||k===9||k===11;
+  }
+  function psychName(t){
+    return t===3?'cognitive freeze':t===2?'mirror scotty':'command bark';
+  }
+  function psychHudTag(t){
+    return t===3?'freeze':t===2?'mirror':'bark';
+  }
+  function psychVariantCap(){
+    if(g.sch.bak!==2)return 0;
+    let cap=1;
+    if(g.kills>=BAK_SECOND_BARK_KILLS||g.mbd||g.bs||g.bd||g.bs2||g.bd2)cap=2;
+    if(g.kills>=BAK_THIRD_BARK_KILLS||g.bs2||g.bd2)cap=3;
+    return cap;
+  }
+  function queueBakerPsychUnlocks(){
+    if(g.sch.bak!==2)return;
+    const cap=psychVariantCap();
+    if(cap<=0)return;
+    const queued=g.uq.indexOf('bak')>=0?1:0;
+    const known=knownVariants(g.psyMask);
+    let prog=known+queued+g.labBak;
+    while(prog<cap){
+      g.labBak++;
+      prog++;
+      g.msg='baker: psych bench ready';
+      g.msgT=1.4;
+      beep(700,.045,'triangle',.019);
+    }
+  }
+  function psychComboName(k){
+    return k===1?'snaplane':k===2?'whiplash rail':'trance pool';
+  }
+  function pushPsychFx(v){
+    if(psyFx.length>=MAX_PSYFX)psyFx.shift();
+    psyFx.push(v);
+  }
+  function addPsychCombo(k,px,py,dx,dy){
+    const ln=Math.hypot(dx,dy)||1,ux=dx/ln,uy=dy/ln;
+    if(k===3){
+      pushPsychFx({k,x:px,y:py,r:136,t:2.9,d:2.9});
+      burst(px,py,'#a0ffd7',12,88);
+    }else if(k===2){
+      pushPsychFx({k,x:px,y:py,dx:ux,dy:uy,len:220,w:44,t:2.2,d:2.2});
+      burst(px,py,'#bde8ff',14,96);
+    }else{
+      pushPsychFx({k,x:px,y:py,dx:ux,dy:uy,len:250,w:56,t:2.4,d:2.4});
+      burst(px,py,'#9ed9ff',12,84);
+    }
+    g.msg=psychComboName(k);
+    g.msgT=.9;
+    beep(k===2?860:k===3?680:760,.05,'triangle',.02);
+  }
+  function applyPsychMark(m,bit,dur){
+    const before=((m.psJ||0)>0?1:0)|((m.psF||0)>0?2:0)|((m.psD||0)>0?4:0);
+    if(bit===1)m.psJ=Math.max(m.psJ||0,dur);
+    else if(bit===2)m.psF=Math.max(m.psF||0,dur);
+    else m.psD=Math.max(m.psD||0,dur);
+    m.fb=Math.max(m.fb||0,dur*.9);
+    const after=((m.psJ||0)>0?1:0)|((m.psF||0)>0?2:0)|((m.psD||0)>0?4:0);
+    if(after===before||isBossType(m.k)||(m.psComboCd||0)>0)return;
+    let combo=0;
+    if((after&1)&&(after&2))combo=1;
+    else if((after&1)&&(after&4))combo=2;
+    else if((after&2)&&(after&4))combo=3;
+    if(combo){
+      const dx=m.x-p.x,dy=m.y-p.y;
+      addPsychCombo(combo,m.x,m.y,dx,dy);
+      m.psComboCd=PSY_COMBO_CD;
+    }
+  }
+  function autoFocusBark(dt){
     if(!p.fb||p.fbT>0||!g.start||g.dead||g.lvup||g.pz)return 0;
+    if(p.fbAiT>0){p.fbAiT=Math.max(0,p.fbAiT-dt);return 0;}
+    p.fbAiT=PSY_AUTO_INTERVAL;
+    const mask=g.psyMask||1;
+    const rr=Math.max(90,p.fbR*1.06),rr2=rr*rr;
+    const midR=rr*1.5,midR2=midR*midR;
+    let near=0,close=0,mid=0,bossNear=0;
+    let q1=0,q2=0,q3=0,q4=0;
+    for(let i=0;i<z.length;i++){
+      const m=z[i],dx=m.x-p.x,dy=m.y-p.y,d2=dx*dx+dy*dy;
+      if(d2<rr2){
+        near++;
+        if(isBossType(m.k))bossNear++;
+        if(dx>=0&&dy>=0)q1=1;
+        else if(dx<0&&dy>=0)q2=1;
+        else if(dx<0&&dy<0)q3=1;
+        else q4=1;
+      }
+      const cr=m.r+p.r+22;
+      if(d2<cr*cr)close++;
+      if(d2<midR2)mid++;
+    }
+    if(!near&&mid<4)return 0;
+    const surround=q1+q2+q3+q4;
+    let mode=0;
+    if((mask&2)&&(surround>=3||close>=4||(bossNear>0&&close>=1)))mode=2;
+    else if((mask&1)&&(close>=2||near>=5))mode=1;
+    else if((mask&4)&&(mid>=6||near>=8))mode=3;
+    else if(mask&1)mode=1;
+    else if(mask&2)mode=2;
+    else mode=3;
+    if(!(mask&(1<<(mode-1))))mode=(mask&1)?1:((mask&2)?2:3);
+    return castFocusBark(mode,1);
+  }
+  function castFocusBark(mode,auto){
+    if(!p.fb||p.fbT>0||!g.start||g.dead||g.lvup||g.pz)return 0;
+    const mask=g.psyMask||1;
+    let barkMode=mode||1;
+    if(!(mask&(1<<(barkMode-1))))barkMode=(mask&1)?1:((mask&2)?2:3);
+    p.fbMode=barkMode;
     p.fbT=p.fbI;
-    p.fbFx=.55;
-    const rr=Math.max(80,p.fbR),rr2=rr*rr;
-    let hit=0,feared=0;
+    p.fbFx=.62;
+    const markMul=clamp(p.fbFear/2.3,.7,2.2);
+    if(barkMode===2){
+      decoy.on=1;
+      decoy.x=clamp(p.x+p.gx*62,24,MAP_W-24);
+      decoy.y=clamp(p.y+p.gy*62,24,MAP_H-24);
+      decoy.t=PSY_DECOY_TIME;
+      decoy.d=PSY_DECOY_TIME;
+      decoy.pop=0;
+    }
+    const rr=Math.max(82,p.fbR*(barkMode===1?1.02:barkMode===2?.9:.95)),rr2=rr*rr;
+    let hit=0;
     for(let i=z.length-1;i>=0;i--){
       const m=z[i],dx=m.x-p.x,dy=m.y-p.y,d2=dx*dx+dy*dy;
       if(d2>rr2)continue;
-      const d=Math.sqrt(d2)||1,q=1-d/rr;
-      const boss=m.k===3||m.k===4||m.k===5||m.k===9||m.k===11;
-      const push=(boss?160:240)+q*(boss?130:250)+p.fbKn*.2;
+      const d=Math.sqrt(d2)||1,q=1-d/rr,boss=isBossType(m.k);
+      let push=0,dmg=0;
+      if(barkMode===1){
+        const closeHit=d<rr*.38;
+        push=(boss?135:220)+q*(boss?90:240)+p.fbKn*.18;
+        m.fbSt=Math.max(m.fbSt||0,closeHit?(boss?.22:.45+.26*q):(boss?.14:.24+.14*q));
+        dmg=boss?(2+q*3):(8+q*12);
+        applyPsychMark(m,1,PSY_MARK_TIME*(.68+.32*q)*markMul);
+      }else if(barkMode===2){
+        const tx=decoy.x-m.x,ty=decoy.y-m.y,tl=Math.hypot(tx,ty)||1;
+        push=(boss?85:155)+q*(boss?55:140)+p.fbKn*.1;
+        m.vx+=tx/tl*push;
+        m.vy+=ty/tl*push;
+        m.fbSt=Math.max(m.fbSt||0,boss?.16:.28+.18*q);
+        dmg=boss?(1+q*2):(4+q*6);
+        applyPsychMark(m,2,PSY_MARK_TIME*(.72+.28*q)*markMul);
+        m.ht=Math.max(m.ht,.11);
+        hit++;
+        if(m.hp<=0){killZombie(i,'#9ed9ff',8,62,1);continue;}
+        m.hp-=dmg;
+        if(m.hp<=0){killZombie(i,'#9ed9ff',8,62,1);continue;}
+        continue;
+      }else{
+        push=(boss?75:120)+q*(boss?45:90)+p.fbKn*.08;
+        m.fbSt=Math.max(m.fbSt||0,boss?.28:.62+.28*q);
+        dmg=boss?(3+q*4):(6+q*9);
+        applyPsychMark(m,4,PSY_MARK_TIME*(.74+.26*q)*markMul);
+      }
       m.vx+=dx/d*push;
       m.vy+=dy/d*push;
+      m.hp-=dmg;
       m.ht=Math.max(m.ht,.12);
-      if(!boss){
-        m.fb=Math.max(m.fb,p.fbFear*(.6+.4*q));
-        feared++;
-        m.hp-=6+q*10;
-        if(m.hp<=0){
-          killZombie(i,'#9ed9ff',8,66,1);
-          continue;
-        }
-      }else{
-        m.fb=Math.max(m.fb,.45+.35*q);
-      }
       hit++;
+      if(m.hp<=0){
+        killZombie(i,'#9ed9ff',8,66,1);
+        continue;
+      }
     }
-    trauma(.14);
+    trauma(.13);
     hitStop(.03);
-    burst(p.x,p.y,'#9ed9ff',18,rr*.55);
-    beep(510,.05,'square',.022);
+    burst(p.x,p.y,barkMode===3?'#c8d9ff':(barkMode===2?'#9fe9ff':'#9ed9ff'),18,rr*.56);
+    beep(barkMode===2?560:barkMode===3?470:520,.05,'square',.022);
     beep(760,.04,'triangle',.017);
-    g.msg=feared>0?'focus bark: '+feared+' panicked':'focus bark';
+    g.msg=auto?(psychName(barkMode)+(hit>0?' '+hit:'')):psychName(barkMode);
     g.msgT=1;
     return hit;
+  }
+  function tickPsychDecoy(dt){
+    if(decoy.pop>0)decoy.pop=Math.max(0,decoy.pop-dt);
+    if(!decoy.on)return;
+    decoy.t-=dt;
+    if(decoy.t>0)return;
+    decoy.on=0;
+    decoy.t=0;
+    decoy.pop=.55;
+    const rr=PSY_DECOY_POP_RADIUS,rr2=rr*rr;
+    for(let i=z.length-1;i>=0;i--){
+      const m=z[i],dx=m.x-decoy.x,dy=m.y-decoy.y,d2=dx*dx+dy*dy;
+      if(d2>rr2)continue;
+      const d=Math.sqrt(d2)||1,q=1-d/rr,boss=isBossType(m.k);
+      const markMul=clamp(p.fbFear/2.3,.7,2.2);
+      const push=(boss?90:160)+q*(boss?60:170);
+      m.vx+=dx/d*push;
+      m.vy+=dy/d*push;
+      m.fbSt=Math.max(m.fbSt||0,boss?.18:.34+.2*q);
+      applyPsychMark(m,2,PSY_MARK_TIME*(.58+.28*q)*markMul);
+      m.hp-=boss?(1+q*2):(3+q*4);
+      m.ht=Math.max(m.ht,.12);
+      if(m.hp<=0)killZombie(i,'#9fe9ff',8,62,1);
+    }
+    burst(decoy.x,decoy.y,'#9fe9ff',14,96);
+    beep(700,.045,'triangle',.018);
   }
   function botVariantCap(){
     if(g.sch.nsh!==2)return 0;
@@ -694,6 +878,7 @@ canvas{display:block;width:100%;height:100%}
     if(g.mb)return 'defeat the provost!';
     const botKnown=knownVariants(g.botMask);
     const chemKnown=knownVariants(g.chemMask);
+    const psyKnown=knownVariants(g.psyMask);
     if(g.sch.nsh===2&&botKnown<botVariantCap()){
       if(botVariantCap()===2&&!g.mbd)return 'push midgame pressure to unlock buddy prototype tier 2';
       if(botVariantCap()===3&&!g.bs2&&!g.bd2)return 'reach apex phase to unlock final buddy prototype';
@@ -704,10 +889,18 @@ canvas{display:block;width:100%;height:100%}
       if(chemVariantCap()===3&&!g.bs2&&!g.bd2)return 'reach apex phase to unlock final catalyst';
       return 'visit mellon institute for catalyst prototype trial';
     }
-    if(g.labNsh>0&&g.labMel>0)return 'visit nsh / mellon for prototype upgrades';
+    if(g.sch.bak===2&&psyKnown<psychVariantCap()){
+      if(psychVariantCap()===2&&g.kills<BAK_SECOND_BARK_KILLS&&!g.mbd)return 'stabilize pressure to unlock psych prototype tier 2';
+      if(psychVariantCap()===3&&g.kills<BAK_THIRD_BARK_KILLS&&!g.bs2&&!g.bd2)return 'reach apex phase to unlock final psych prototype';
+      if(g.labBak>0)return 'visit baker hall for psych prototype trial';
+      return 'baker psych prototypes calibrating';
+    }
+    const labReady=(g.labNsh>0?1:0)+(g.labMel>0?1:0)+(g.labBak>0?1:0);
+    if(labReady>1)return 'visit schools for prototype upgrades';
     if(g.labNsh>0)return 'visit nsh for buddy prototype';
     if(g.labMel>0)return 'visit mellon institute for catalyst prototype';
-    if(g.sch.bak===2&&g.kills<FIRST_BOSS_MIN_KILLS)return 'stabilize evacuation lanes - '+g.kills+'/'+FIRST_BOSS_MIN_KILLS+' threat cleared';
+    if(g.labBak>0)return 'visit baker hall for psych prototype trial';
+    if(g.sch.bak===2&&psyKnown>0)return 'auto '+psychName(p.fbMode)+' - combos ready';
     if(g.bd&&!g.bs2&&!g.bd2){
       const eta=Math.max(0,g.b2At-g.t);
       return 'hold campus perimeter - apex eta '+eta.toFixed(1)+'s';
@@ -766,10 +959,10 @@ canvas{display:block;width:100%;height:100%}
     for(let i=1;i<=3;i++)if(g.botMask&(1<<(i-1)))out.push(i);
     return out;
   }
-  const BOT_REF={rate:1.9,dmg:1.15,range:480,fetch:95,pull:195,carry:2,grab:.38,pier:4,size:6};
+  const BOT_REF={rate:1.9,dmg:1.15,range:480,fetch:95,pull:195,carry:2,grab:.38,pier:4,size:6,healI:10,healAmt:10};
   const BOT_BASE={
     1:{rate:1.15,dmg:1.6,range:620,fetch:72,pull:150,carry:1,grab:.42,pier:5,size:7.2,auraR:0,auraSl:0,healI:0,healAmt:0,pulse:1,col:'#9de6ff',body:'#93d8ff',ring:'#d0efff'},
-    2:{rate:1.72,dmg:.95,range:520,fetch:118,pull:198,carry:2,grab:.34,pier:0,size:3.8,auraR:0,auraSl:0,healI:18,healAmt:10,pulse:0,col:'#7ae8a3',body:'#74de95',ring:'#d9ffe5'},
+    2:{rate:1.72,dmg:.95,range:520,fetch:118,pull:198,carry:2,grab:.34,pier:0,size:3.8,auraR:0,auraSl:0,healI:12,healAmt:18,pulse:0,col:'#7ae8a3',body:'#74de95',ring:'#d9ffe5'},
     3:{rate:2.45,dmg:.95,range:390,fetch:110,pull:205,carry:2,grab:.34,pier:2,size:8.5,auraR:124,auraSl:.46,healI:0,healAmt:0,pulse:1,col:'#ffd48c',body:'#ffd48c',ring:'#fff0c7'}
   };
   function botStats(t){
@@ -787,8 +980,8 @@ canvas{display:block;width:100%;height:100%}
       size:Math.max(2.8,b.size*(p.bSize/BOT_REF.size)),
       auraR:b.auraR,
       auraSl:b.auraSl,
-      healI:b.healI,
-      healAmt:b.healAmt,
+      healI:b.healI>0?Math.max(1.9,b.healI*(p.bHealI/BOT_REF.healI)):0,
+      healAmt:b.healAmt>0?b.healAmt*(p.bHealAmt/BOT_REF.healAmt):0,
       pulse:b.pulse,
       col:b.col,
       body:b.body,
@@ -808,13 +1001,18 @@ canvas{display:block;width:100%;height:100%}
   }
   function botChoiceCard(t){
     if(t===1)return {n:'Volt Buddy',d:'striker bot: rapid shock pulses, low cargo',f:()=>setBotVariant(1),bg:'rgba(29,53,79,.96)',st:'rgba(147,216,255,.88)',tx:'#f1f9ff',sub:'#b3d4ee'};
-    if(t===2)return {n:'Medic Buddy',d:'green rounds + heals Scotty every 18s',f:()=>setBotVariant(2),bg:'rgba(24,72,44,.96)',st:'rgba(148,232,171,.9)',tx:'#e9ffef',sub:'#b9e5c6'};
+    if(t===2)return {n:'Medic Buddy',d:'green rounds + heals Scotty every 12s',f:()=>setBotVariant(2),bg:'rgba(24,72,44,.96)',st:'rgba(148,232,171,.9)',tx:'#e9ffef',sub:'#b9e5c6'};
     return {n:'Guard Buddy',d:'warden bot: slowing aura + sturdy pulse',f:()=>setBotVariant(3),bg:'rgba(73,50,27,.96)',st:'rgba(255,205,138,.9)',tx:'#fff4df',sub:'#e6cda5'};
   }
   function chemChoiceCard(t){
     if(t===1)return {n:'Acidic Puddle',d:'corrosive zone: burst + damage over time',f:()=>setChemVariant(1),bg:'rgba(33,75,34,.96)',st:'rgba(160,236,146,.88)',tx:'#edffe9',sub:'#bce2b3'};
     if(t===2)return {n:'Heal Puddle',d:'restorative zone: heals Scotty while inside',f:()=>setChemVariant(2),bg:'rgba(22,79,72,.96)',st:'rgba(151,242,228,.9)',tx:'#e8fffb',sub:'#b6e7df'};
     return {n:'Gravity Puddle',d:'black hole zone: drags enemies from far outside',f:()=>setChemVariant(3),bg:'rgba(30,45,86,.96)',st:'rgba(156,190,255,.9)',tx:'#edf3ff',sub:'#bfd1f0'};
+  }
+  function psychChoiceCard(t){
+    if(t===1)return {n:'Command Bark',d:'push + close stun, applies jolt mark',f:()=>setPsychVariant(1),bg:'rgba(34,67,94,.96)',st:'rgba(158,214,255,.88)',tx:'#eef8ff',sub:'#c7def2'};
+    if(t===2)return {n:'Mirror Scotty',d:'spawns decoy taunt, applies fixate mark',f:()=>setPsychVariant(2),bg:'rgba(33,71,86,.96)',st:'rgba(143,234,255,.88)',tx:'#ecfcff',sub:'#c0e8f2'};
+    return {n:'Cognitive Freeze',d:'mind-wave slow lock, applies daze mark',f:()=>setPsychVariant(3),bg:'rgba(56,63,102,.96)',st:'rgba(185,191,255,.88)',tx:'#f0f2ff',sub:'#ccd0f1'};
   }
   function queueLabMilestoneRewards(){
     while(g.kills>=(g.labStep+1)*LAB_REFRESH_KILLS){
@@ -857,6 +1055,7 @@ canvas{display:block;width:100%;height:100%}
         g.labBank-=melCost;
       }
     }
+    queueBakerPsychUnlocks();
   }
   function claimLabVisit(id){
     if(g.lvup||g.pz||g.uq.length||g.labCd>0)return;
@@ -870,6 +1069,11 @@ canvas{display:block;width:100%;height:100%}
       g.msg='mellon: run prototype trial';
       g.msgT=1.35;
       beep(680,.05,'triangle',.02);
+    }else if(id==='bak'&&g.labBak>0){
+      startPuzzle('bak','lab');
+      g.msg='baker: run psych trial';
+      g.msgT=1.35;
+      beep(720,.05,'triangle',.02);
     }
   }
   function syncBots(){
@@ -909,7 +1113,7 @@ canvas{display:block;width:100%;height:100%}
     if(first){
       p.bcd=.45;p.bRate=BOT_REF.rate;p.bDmg=BOT_REF.dmg;p.bRange=BOT_REF.range;p.bFetch=BOT_REF.fetch;p.bPull=BOT_REF.pull;
       p.bCarry=0;p.bCarryMax=BOT_REF.carry;p.bGrabCd=0;p.bGrabI=BOT_REF.grab;p.bPier=BOT_REF.pier;p.bSize=BOT_REF.size;
-      p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;
+      p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=BOT_REF.healI;p.bHealAmt=BOT_REF.healAmt;p.bHealFx=0;
     }
     g.botMask|=(1<<(t-1));
     p.botCount=Math.max(1,knownVariants(g.botMask));
@@ -928,6 +1132,19 @@ canvas{display:block;width:100%;height:100%}
     }
     g.chemMask|=(1<<(t-1));
     queueLabMilestoneRewards();
+  }
+  function setPsychVariant(t){
+    const first=!p.fb;
+    unlockFocusBark();
+    if(first){
+      p.fbI=Math.min(p.fbI,7.4);
+      p.fbR=Math.max(p.fbR,230);
+      p.fbFear=Math.max(p.fbFear,2.8);
+      p.fbKn=Math.max(p.fbKn,420);
+    }
+    g.psyMask|=(1<<(t-1));
+    p.fbMode=t;
+    queueBakerPsychUnlocks();
   }
   function popUnlockBook(){
     if(g.lvup||g.dead||g.pz||!g.uq.length||levelUiBlocked())return;
@@ -974,12 +1191,25 @@ canvas{display:block;width:100%;height:100%}
         g.choices=[chemChoiceCard(1),chemChoiceCard(2),chemChoiceCard(3)];
       }
     }else if(id==='bak'){
-      unlockFocusBark();
-      g.msg='baker: focus bark online';
-      g.msgT=1.8;
-      burst(p.x,p.y,'#9ec8ff',16,92);
-      beep(690,.06,'triangle',.024);
-      return;
+      const rem=remainingVariants(g.psyMask);
+      if(rem.length===1){
+        const t=rem[0];
+        setPsychVariant(t);
+        g.msg='baker: '+psychName(t)+' online';
+        g.msgT=1.6;
+        burst(p.x,p.y,'#b7d6ff',14,88);
+        beep(760,.06,'triangle',.025);
+        return;
+      }
+      if(rem.length===2){
+        g.choices=[
+          psychChoiceCard(rem[0]),
+          psychChoiceCard(rem[1]),
+          {n:'Wildcard Psyche',d:'installs one of the remaining psych prototypes',f:()=>setPsychVariant(rem[(Math.random()*rem.length)|0]),bg:'rgba(46,64,98,.96)',st:'rgba(174,199,255,.86)',tx:'#edf3ff',sub:'#c8d6ef'}
+        ];
+      }else if(rem.length===3){
+        g.choices=[psychChoiceCard(1),psychChoiceCard(2),psychChoiceCard(3)];
+      }
     }
     if(!g.choices.length)return;
     g.lvup=1;
@@ -987,14 +1217,6 @@ canvas{display:block;width:100%;height:100%}
     g.msg='up';
     g.msgT=1.4;
     beep(760,.07,'triangle',.028);
-  }
-  function territoryBoxHit(sx,sy){
-    const ab=44,abGap=8,abX=W-18-ab,tY=14+ab+abGap;
-    return sx>=abX&&sx<=abX+ab&&sy>=tY&&sy<=tY+ab;
-  }
-  function focusBarkBoxHit(sx,sy){
-    const ab=44,abGap=8,abX=W-18-ab,rY=14+(ab+abGap)*2;
-    return sx>=abX&&sx<=abX+ab&&sy>=rY&&sy<=rY+ab;
   }
   function trauma(v){g.shake=clamp(g.shake+v,0,1.3)}
   function hitStop(v){g.stop=Math.max(g.stop,v)}
@@ -1295,10 +1517,11 @@ canvas{display:block;width:100%;height:100%}
   }
 
   function reset(full){
-    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.sch.bak=0;g.pz=0;g.uq.length=0;g.inB='';g.mb=0;g.mbd=0;g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.pred=0;g.predDead=0;g.moth=0;g.mothDead=0;g.bossDownT=0;g.won=0;g.endWave=0;g.endT=0;g.endSpawnT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.safeCampT=0;g.safeBreachCd=0;g.safeThreat=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;g.lbTopErr='';g.lbRankErr='';g.lbRankText='';g.lbFetchT=0;g.lbRankFetchT=0;g.lbBtnX=0;g.lbBtnY=0;g.lbBtnW=0;g.lbBtnH=0;
-    p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.fb=0;p.fbT=0;p.fbI=8.6;p.fbR=210;p.fbFear=2.3;p.fbKn=320;p.fbFx=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slFocus=0;p.slT=0;p.slRecallT=0;p.slLinkT=0;p.slRecallPulse=0;p.slCarryVx=0;p.slCarryVy=0;p.slPow=0;p.slWave=0;p.slComboFx=0;p.slHitMask=0;p.slPerfect=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
+    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.sch.bak=0;g.pz=0;g.uq.length=0;g.inB='';g.mb=0;g.mbd=0;g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.pred=0;g.predDead=0;g.moth=0;g.mothDead=0;g.bossDownT=0;g.won=0;g.endWave=0;g.endT=0;g.endSpawnT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.psyMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labBak=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.safeCampT=0;g.safeBreachCd=0;g.safeThreat=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;g.lbTopErr='';g.lbRankErr='';g.lbRankText='';g.lbFetchT=0;g.lbRankFetchT=0;g.lbBtnX=0;g.lbBtnY=0;g.lbBtnW=0;g.lbBtnH=0;
+    p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.fb=0;p.fbT=0;p.fbI=8.6;p.fbR=210;p.fbFear=2.3;p.fbKn=320;p.fbFx=0;p.fbTier=0;p.fbMode=1;p.fbAiT=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slFocus=0;p.slT=0;p.slRecallT=0;p.slLinkT=0;p.slRecallPulse=0;p.slCarryVx=0;p.slCarryVy=0;p.slPow=0;p.slWave=0;p.slComboFx=0;p.slHitMask=0;p.slPerfect=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
     p.slRopeRest=0;
-    z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;
+    z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;psyFx.length=0;
+    decoy.on=0;decoy.t=0;decoy.pop=0;
     keys.l=keys.r=keys.u=keys.d=keys.gr=0;touchMove=0;joyReset(1);
     randomizeBuildings();
     g.msg='home: unlock';
@@ -1577,17 +1800,17 @@ canvas{display:block;width:100%;height:100%}
     {n:'Chemical Puddle',d:'chem damage up',f:()=>{const s=upScale();p.chDo=Math.min(200,p.chDo+12*s);p.chBurst=Math.min(120,p.chBurst+10*s)},req:()=>p.cat},
     {n:'Chemical Radius',d:'chem area bigger',f:()=>p.mkR=Math.min(280,p.mkR+15*upScale()),req:()=>p.cat},
     {n:'Chemical Tempo',d:'chem cooldown down',f:()=>p.mkI=Math.max(.8,p.mkI-.65*upScale()),req:()=>p.cat},
-    {n:'Chemical Heal',d:'puddles heal scotty',f:()=>{p.chHeal=Math.min(30,p.chHeal+4*upScale());p.chHealI=Math.max(.3,p.chHealI-.08*upScale())},req:()=>p.cat},
-    // --- FOCUS BARK ---
-    {n:'Focus Bark CD',d:'focus bark cooldown down',f:()=>p.fbI=Math.max(2.4,p.fbI-.65*upScale()),req:()=>p.fb},
-    {n:'Focus Bark Radius',d:'focus bark radius up',f:()=>p.fbR=Math.min(360,p.fbR+22*upScale()),req:()=>p.fb},
-    {n:'Focus Bark Calm',d:'panic lasts longer',f:()=>p.fbFear=Math.min(8,p.fbFear+.35*upScale()),req:()=>p.fb},
-    {n:'Focus Bark Force',d:'stronger bark knockback',f:()=>p.fbKn=Math.min(1200,p.fbKn+90*upScale()),req:()=>p.fb},
+    {n:'Sanctuary Boost',d:'heal puddles restore more + faster',f:()=>{p.chHeal=Math.min(30,p.chHeal+4*upScale());p.chHealI=Math.max(.3,p.chHealI-.08*upScale())},req:()=>p.cat&&(g.chemMask&2)},
+    // --- PSYCH ---
+    {n:'Psych Tempo',d:'psych cooldown down',f:()=>p.fbI=Math.max(2.4,p.fbI-.65*upScale()),req:()=>p.fb},
+    {n:'Psych Radius',d:'psych effect radius up',f:()=>p.fbR=Math.min(360,p.fbR+22*upScale()),req:()=>p.fb},
+    {n:'Psych Control',d:'control marks last longer',f:()=>p.fbFear=Math.min(8,p.fbFear+.35*upScale()),req:()=>p.fb},
+    {n:'Psych Force',d:'stronger psych knockback',f:()=>p.fbKn=Math.min(1200,p.fbKn+90*upScale()),req:()=>p.fb},
     // --- BOTS ---
     {n:'Bot Fetch',d:'bot grabs mints farther',f:()=>p.bFetch=Math.min(500,p.bFetch+40*upScale()),req:()=>p.bot},
     {n:'Bot Cargo',d:'bot carries more mints',f:()=>p.bCarryMax=Math.min(12,p.bCarryMax+1+Math.floor(upScale()/3)),req:()=>p.bot},
     {n:'Bot Speed',d:'bots move faster',f:()=>p.bPull=Math.min(600,p.bPull+35*upScale()),req:()=>p.bot},
-    {n:'Bot Heal',d:'bots heal scotty',f:()=>{p.bHealAmt=Math.min(60,p.bHealAmt+5*upScale());p.bHealI=Math.max(3,p.bHealI-1)},req:()=>p.bot},
+    {n:'Medic Protocol',d:'medic buddy heals stronger + faster',f:()=>{const s=Math.min(upScale(),3.4);p.bHealAmt=Math.min(90,p.bHealAmt+6*s);p.bHealI=Math.max(1.9,p.bHealI-.9)},req:()=>p.bot&&(g.botMask&2)},
     // --- SHOCK (bot attack) ---
     {n:'Shock Tempo',d:'shock pulse cooldown down',f:()=>p.bRate=Math.max(.2,p.bRate*(1-.2*Math.min(upScale(),4))),req:()=>p.bot&&p.bAtk},
     {n:'Shock Pierce',d:'pulse pierces more + wider',f:()=>{p.bPier=Math.min(20,p.bPier+Math.ceil(upScale()*1.2));p.bSize=Math.min(36,p.bSize+1.6*upScale())},req:()=>p.bot&&p.bAtk},
@@ -1667,6 +1890,7 @@ canvas{display:block;width:100%;height:100%}
     if(p.slLinkT>0)p.slLinkT=Math.max(0,p.slLinkT-rdt);
     for(let i=pudd.length-1;i>=0;i--){const pd=pudd[i];pd.t-=dt;if(pd.t<=0)pudd.splice(i,1);}
     for(let i=react.length-1;i>=0;i--){const rc=react[i];rc.t-=dt;if(rc.pcd>0)rc.pcd=Math.max(0,rc.pcd-dt);if(rc.t<=0)react.splice(i,1);}
+    for(let i=psyFx.length-1;i>=0;i--){const q=psyFx[i];q.t-=dt;if(q.t<=0)psyFx.splice(i,1);}
     for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.t-=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=480*dt;if(f.t<=0)fx.splice(i,1)}
 
     if(!g.start)return;
@@ -1675,6 +1899,7 @@ canvas{display:block;width:100%;height:100%}
       void fetchOwnRankPreview(0);
       return;
     }
+    tickPsychDecoy(dt);
     if(g.won){
       // victory: keep particles/fx ticking but no combat
       g.bossDownT=Math.max(g.bossDownT,3);
@@ -1715,6 +1940,7 @@ canvas{display:block;width:100%;height:100%}
     if(g.sch.mel===2&&g.sch.bak===0&&Math.hypot(p.x-bak.x,p.y-bak.y)<bak.r)beginSchool('bak');
     if(g.sch.nsh===2&&g.sch.bak===2&&g.labNsh>0&&Math.hypot(p.x-nsh.x,p.y-nsh.y)<nsh.r)claimLabVisit('nsh');
     if(g.sch.mel===2&&g.sch.bak===2&&g.labMel>0&&Math.hypot(p.x-mel.x,p.y-mel.y)<mel.r)claimLabVisit('mel');
+    if(g.sch.bak===2&&g.labBak>0&&Math.hypot(p.x-bak.x,p.y-bak.y)<bak.r)claimLabVisit('bak');
     popUnlockBook();
 
     // movement (keyboard + touch)
@@ -1888,6 +2114,8 @@ canvas{display:block;width:100%;height:100%}
     const bid=pSafeNow?pSafeNow.id:'';
     g.inB=bid;
     applyShelterPressure(pSafeNow,dt);
+    queueBakerPsychUnlocks();
+    if(!pSafeNow||g.safeThreat>=SHELTER_MIN_THREAT)autoFocusBark(dt);
     if(p.cat){
       if(p.chHealCd>0)p.chHealCd=Math.max(0,p.chHealCd-dt);
       let healPad=0;
@@ -2170,14 +2398,14 @@ canvas{display:block;width:100%;height:100%}
       }
       p.bx=bots[0].x;
       p.by=bots[0].y;
-      let medic=0,medicI=18,medicAmt=10;
+      let medic=0,medicI=12,medicAmt=18;
       for(let bi=0;bi<bots.length;bi++){
         const bt=bots[bi];
         if((bt.t|0)===2){
           const bs=botStats(2);
           medic=1;
-          medicI=Math.min(medicI,bs.healI||18);
-          medicAmt=Math.max(medicAmt,bs.healAmt||10);
+          medicI=Math.min(medicI,bs.healI||12);
+          medicAmt=Math.max(medicAmt,bs.healAmt||18);
         }
       }
       if(medic){
@@ -2336,6 +2564,11 @@ canvas{display:block;width:100%;height:100%}
     for(let i=z.length-1;i>=0;i--){
       const m=z[i];
       if(m.fb>0)m.fb=Math.max(0,m.fb-dt);
+      if(m.fbSt>0)m.fbSt=Math.max(0,m.fbSt-dt);
+      if(m.psJ>0)m.psJ=Math.max(0,m.psJ-dt);
+      if(m.psF>0)m.psF=Math.max(0,m.psF-dt);
+      if(m.psD>0)m.psD=Math.max(0,m.psD-dt);
+      if(m.psComboCd>0)m.psComboCd=Math.max(0,m.psComboCd-dt);
       let tx=p.x,ty=p.y;
       if(pSafe){
         if(m.bi!==pSafe.id){m.bi=pSafe.id;m.bm=0;m.bt=rnd(.9,1.7);}
@@ -2355,6 +2588,14 @@ canvas{display:block;width:100%;height:100%}
         }
       }else{
         m.bi='';m.bt=0;m.bm=0;
+      }
+      if(decoy.on&&!isBossType(m.k)){
+        const ddx=decoy.x-m.x,ddy=decoy.y-m.y;
+        if(ddx*ddx+ddy*ddy<PSY_DECOY_RADIUS*PSY_DECOY_RADIUS){
+          tx=decoy.x;
+          ty=decoy.y;
+          m.psF=Math.max(m.psF||0,.8);
+        }
       }
       if(m.fb>0){
         const fearable=m.k!==3&&m.k!==4&&m.k!==5&&m.k!==9&&m.k!==11;
@@ -2777,6 +3018,63 @@ canvas{display:block;width:100%;height:100%}
         }
       }
       if(m.sc>0)m.sc=Math.max(0,m.sc-dt);
+      for(let pi=0;pi<psyFx.length;pi++){
+        const q=psyFx[pi];
+        if(q.k===3){
+          const dxp=m.x-q.x,dyp=m.y-q.y,d2=dxp*dxp+dyp*dyp;
+          if(d2<q.r*q.r){
+            let best=0,bd=1e18;
+            for(let pk=0;pk<pudd.length;pk++){
+              const pd=pudd[pk];
+              if(pd.t<=.08)continue;
+              const pdx=pd.x-m.x,pdy=pd.y-m.y,dd=pdx*pdx+pdy*pdy;
+              if(dd<bd){bd=dd;best=pd;}
+            }
+            if(best){
+              const pdx=best.x-m.x,pdy=best.y-m.y,pl=Math.hypot(pdx,pdy)||1;
+              const edge=Math.max(16,best.r*.84);
+              const tx=best.x-pdx/pl*edge,ty=best.y-pdy/pl*edge;
+              const ex=tx-m.x,ey=ty-m.y,el=Math.hypot(ex,ey)||1;
+              const pull=120+220*(1-Math.min(1,Math.sqrt(d2)/Math.max(1,q.r)));
+              m.vx+=ex/el*pull*dt;
+              m.vy+=ey/el*pull*dt;
+              sf=Math.min(sf,.64);
+            }else{
+              const dl=Math.hypot(dxp,dyp)||1;
+              m.vx+=(-dxp/dl)*(90*dt);
+              m.vy+=(-dyp/dl)*(90*dt);
+              sf=Math.min(sf,.7);
+            }
+          }
+          continue;
+        }
+        const qx=m.x-q.x,qy=m.y-q.y;
+        const along=qx*q.dx+qy*q.dy;
+        if(Math.abs(along)>q.len)continue;
+        const px=qx-q.dx*along,py=qy-q.dy*along;
+        const pd=Math.hypot(px,py)||1;
+        const laneW=q.w*(q.k===2?1.35:1.55);
+        if(pd>laneW)continue;
+        const pull=1-pd/laneW;
+        const side=(q.k===2?180:140)+pull*(q.k===2?280:230);
+        m.vx+=(-px/pd)*side*dt;
+        m.vy+=(-py/pd)*side*dt;
+        if(q.k===2){
+          const pulse=.55+.45*Math.sin((1-q.t/Math.max(.001,q.d))*Math.PI*8);
+          const rail=120+pulse*340;
+          m.vx+=q.dx*rail*dt;
+          m.vy+=q.dy*rail*dt;
+          sf=Math.min(sf,.58);
+        }else{
+          sf=Math.min(sf,.66);
+        }
+        if(p.zt>0){
+          const zBoost=(q.k===2?340:260)+pull*220;
+          m.vx+=q.dx*zBoost*dt;
+          m.vy+=q.dy*zBoost*dt;
+          m.hp-=(q.k===2?(p.zDmg*.75+8):(p.zDmg*.45+4))*dt;
+        }
+      }
       for(let k=0;k<pudd.length;k++){
         const pd=pudd[k],px=m.x-pd.x,py=m.y-pd.y;
         const d2=px*px+py*py;
@@ -2902,6 +3200,10 @@ canvas{display:block;width:100%;height:100%}
         }
       }
       if(m.fb>0&&(m.k!==3&&m.k!==4&&m.k!==5&&m.k!==9&&m.k!==11))sf=Math.max(sf,1.08);
+      if(m.fbSt>0){
+        sf=Math.min(sf,isBossType(m.k) ? .78 : .56);
+        m.ht=Math.max(m.ht,.1);
+      }
       m.sl=inPad;
       if(inPad){
         const dot=(p.cat&&padMode===1)?p.chDo:0;
@@ -3243,6 +3545,39 @@ canvas{display:block;width:100%;height:100%}
       }
       x.globalAlpha=1;
     }
+    // psych combo fields
+    for(let i=0;i<psyFx.length;i++){
+      const q=psyFx[i],qq=clamp(q.t/Math.max(.001,q.d),0,1);
+      if(q.k===3){
+        const sx=q.x-cm.x,sy=q.y-cm.y,rr=q.r*(.92+.08*Math.sin(g.t*4+i));
+        x.globalAlpha=.12+.16*qq;
+        x.fillStyle='#9af5c8';
+        x.beginPath();x.arc(sx,sy,rr,0,Math.PI*2);x.fill();
+        x.globalAlpha=.34+.24*qq;
+        x.strokeStyle='#d7ffe9';x.lineWidth=2;
+        x.beginPath();x.arc(sx,sy,rr*.72,0,Math.PI*2);x.stroke();
+        x.globalAlpha=1;
+        continue;
+      }
+      const ax=q.x-q.dx*q.len-cm.x,ay=q.y-q.dy*q.len-cm.y;
+      const bx=q.x+q.dx*q.len-cm.x,by=q.y+q.dy*q.len-cm.y;
+      x.globalAlpha=.1+.16*qq;
+      x.strokeStyle=q.k===2?'#bedfff':'#a9d9ff';
+      x.lineWidth=q.w*(q.k===2?1.7:1.45);
+      x.beginPath();x.moveTo(ax,ay);x.lineTo(bx,by);x.stroke();
+      x.globalAlpha=.38+.24*qq;
+      x.strokeStyle=q.k===2?'#e4f3ff':'#d1ecff';
+      x.lineWidth=2;
+      x.beginPath();x.moveTo(ax,ay);x.lineTo(bx,by);x.stroke();
+      if(q.k===2){
+        const pulse=.5+.5*Math.sin((1-qq)*Math.PI*8);
+        const cx=ax+(bx-ax)*(.2+.6*pulse),cy=ay+(by-ay)*(.2+.6*pulse);
+        x.globalAlpha=.6+.24*qq;
+        x.fillStyle='#eef8ff';
+        x.beginPath();x.arc(cx,cy,3.2,0,Math.PI*2);x.fill();
+      }
+      x.globalAlpha=1;
+    }
 
     // zombies
     for(let i=0;i<z.length;i++){
@@ -3278,6 +3613,12 @@ canvas{display:block;width:100%;height:100%}
         x.lineWidth=1.6;
         x.beginPath();x.arc(sx,sy,m.r+4+Math.sin(g.t*12+i)*1.6,0,Math.PI*2);x.stroke();
         x.globalAlpha=1;
+      }
+      if((m.psJ||0)>0||(m.psF||0)>0||(m.psD||0)>0){
+        let cx=sx-8;
+        if((m.psJ||0)>0){x.fillStyle='#9ed9ff';x.beginPath();x.arc(cx,sy-m.r-8,2.1,0,Math.PI*2);x.fill();cx+=8;}
+        if((m.psF||0)>0){x.fillStyle='#9fe9ff';x.beginPath();x.arc(cx,sy-m.r-8,2.1,0,Math.PI*2);x.fill();cx+=8;}
+        if((m.psD||0)>0){x.fillStyle='#c8d4ff';x.beginPath();x.arc(cx,sy-m.r-8,2.1,0,Math.PI*2);x.fill();}
       }
       // --- NEW ENEMY TYPE VISUALS ---
       if(m.k===5){
@@ -3564,6 +3905,23 @@ canvas{display:block;width:100%;height:100%}
       }
     }
 
+    if(decoy.on||decoy.pop>0){
+      const sx=decoy.x-cm.x,sy=decoy.y-cm.y;
+      const q=decoy.on?clamp(decoy.t/Math.max(.001,decoy.d),0,1):0;
+      const pop=decoy.pop>0?clamp(decoy.pop/.55,0,1):0;
+      const rr=18+Math.sin(g.t*8)*1.4+pop*16;
+      x.globalAlpha=.14+.18*(q+pop);
+      x.fillStyle='#9fe9ff';
+      x.beginPath();x.arc(sx,sy,rr+8,0,Math.PI*2);x.fill();
+      x.globalAlpha=.55+.25*(q+pop);
+      x.strokeStyle='#d9f7ff';x.lineWidth=2;
+      x.beginPath();x.arc(sx,sy,rr,0,Math.PI*2);x.stroke();
+      x.globalAlpha=1;
+      x.fillStyle='rgba(220,246,255,.85)';
+      x.fillRect((sx-5)|0,(sy-7)|0,3,3);
+      x.fillRect((sx+2)|0,(sy-7)|0,3,3);
+    }
+
     // player
     const psx=p.x-cm.x+p.rx,psy=p.y-cm.y+p.ry;
     const spr = Math.abs(p.vx)>=Math.abs(p.vy) ? (p.face>0?imgs.e:imgs.w) : (p.vy<0?(p.face>0?imgs.ne:imgs.nw):(p.face>0?imgs.se:imgs.sw));
@@ -3581,14 +3939,17 @@ canvas{display:block;width:100%;height:100%}
     }
     if(p.fbFx>0){
       const q=clamp(p.fbFx/.55,0,1),rr=42+(1-q)*Math.max(88,p.fbR*.78);
+      const fillCol=p.fbMode===3?'rgba(188,200,255,.96)':(p.fbMode===2?'rgba(150,236,255,.96)':'rgba(150,214,255,.96)');
+      const strokeA=p.fbMode===3?'rgba(226,231,255,.98)':(p.fbMode===2?'rgba(208,247,255,.98)':'rgba(201,237,255,.98)');
+      const strokeB=p.fbMode===3?'rgba(184,198,255,.9)':(p.fbMode===2?'rgba(176,236,255,.9)':'rgba(168,223,255,.9)');
       x.globalAlpha=.08+.18*q;
-      x.fillStyle='rgba(150,214,255,.96)';
+      x.fillStyle=fillCol;
       x.beginPath();x.arc(psx,psy,rr*1.08,0,Math.PI*2);x.fill();
       x.globalAlpha=.56+.34*q;
-      x.strokeStyle='rgba(201,237,255,.98)';
+      x.strokeStyle=strokeA;
       x.lineWidth=2.4+q*1.6;
       x.beginPath();x.arc(psx,psy,rr,0,Math.PI*2);x.stroke();
-      x.strokeStyle='rgba(168,223,255,.9)';
+      x.strokeStyle=strokeB;
       x.lineWidth=1.8+q*1.2;
       x.beginPath();x.arc(psx,psy,rr*.64,0,Math.PI*2);x.stroke();
       x.globalAlpha=1;
@@ -4030,7 +4391,8 @@ canvas{display:block;width:100%;height:100%}
       const tp=p.mkOn?(p.mkT>0?1-p.mkT/p.mkI:1):0;
       drawAb(tY,p.cat?chemColor():'#f4d96e',tp,p.mkS>0,p.mkOn&&p.mkT>0?p.mkT:0,1);
       const bp=p.fb?(p.fbT>0?1-p.fbT/p.fbI:1):0;
-      if(p.fb)drawAb(rY,'#9ed9ff',bp,p.fbFx>0,p.fbT>0?p.fbT:0,2);
+      const fbCol=p.fbMode===3?'#c4ccff':(p.fbMode===2?'#95ebff':'#9ed9ff');
+      if(p.fb)drawAb(rY,fbCol,bp,p.fbFx>0,p.fbT>0?p.fbT:0,2);
       if(p.cat){
         x.fillStyle='rgba(7,10,16,.75)';
         x.fillRect(abX-56,tY+12,50,20);
@@ -4039,9 +4401,9 @@ canvas{display:block;width:100%;height:100%}
       }
       if(p.fb){
         x.fillStyle='rgba(7,10,16,.75)';
-        x.fillRect(abX-64,rY+12,58,20);
+        x.fillRect(abX-72,rY+12,66,20);
         x.fillStyle='#dce8ff';x.font='600 10px Trebuchet MS,sans-serif';
-        x.fillText('focus',abX-58,rY+25);
+        x.fillText(psychHudTag(p.fbMode),abX-66,rY+25);
       }
     }
 
@@ -4091,7 +4453,7 @@ canvas{display:block;width:100%;height:100%}
       x.fillStyle='#9ec8ff';x.font='600 13px Trebuchet MS,sans-serif';
       drawWrap('Collaborate with school labs (NSH, Mellon, Baker) to keep evacuation routes open and push back the goop across campus in escalating phases.',tx,iy+200,iw-32,17,3);
       x.fillStyle='#dce8ff';x.font='600 12px Trebuchet MS,sans-serif';
-      drawWrap('Controls: drag to move. Remove finger to charge Zoomies, then move to dash. Tap ability icons (Q/F on keyboard) for catalyst/focus bark. Buildings are temporary shelters, not permanent safety.',tx,iy+250,iw-32,16,4);
+      drawWrap('Controls: drag to move. Remove finger to charge Zoomies, then move to dash. Catalyst and psych abilities auto-trigger from threat patterns. Buildings are temporary shelters, not permanent safety.',tx,iy+250,iw-32,16,4);
       x.fillStyle='#69f0c9';x.font='700 23px Trebuchet MS,sans-serif';x.fillText('tap start',tx,iy+ih-22);
     }
 
@@ -4267,8 +4629,6 @@ canvas{display:block;width:100%;height:100%}
       }
       return;
     }
-    if(g.start&&!g.dead&&p.cat&&territoryBoxHit(e.clientX,e.clientY)){toggleCatalyst();return}
-    if(g.start&&!g.dead&&p.fb&&focusBarkBoxHit(e.clientX,e.clientY)){castFocusBark();return}
     if(e.pointerType==='mouse')return;
     touchMove=1;joyStart(e.clientX,e.clientY);joySet(e.clientX,e.clientY);
   }
@@ -4298,8 +4658,6 @@ canvas{display:block;width:100%;height:100%}
       return;
     }
     if(!g.start||g.dead)return;
-    if(k==='KeyQ'){toggleCatalyst();return}
-    if(k==='KeyF'){castFocusBark();return}
     if(k==='KeyA'||k==='ArrowLeft')keys.l=1;
     else if(k==='KeyD'||k==='ArrowRight')keys.r=1;
     else if(k==='KeyW'||k==='ArrowUp')keys.u=1;
