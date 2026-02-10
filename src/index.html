@@ -62,14 +62,11 @@ canvas{display:block;width:100%;height:100%}
   const FIRST_BOSS_TRIGGER_TIME=72;
   const LAB_REFRESH_KILLS=50;
   const NSH_THIRD_BOT_INTEL_COST=4;
-  const BOSS1_MINT_PULL=220;
-  const BOSS1_MINT_EAT_R=38;
-  const BOSS1_EAT_CD=.18;
-  const BOSS1_GROW_R=2.2;
-  const BOSS1_GROW_HP=45;
-  const BOSS1_GROW_DMG=2.8;
-  const BOSS1_GROW_SPD=3.5;
-  const BOSS1_MAX_EATS=18;
+  const BOSS1_EAT_CD=.14;
+  const BOSS1_GROW_R=1.6;
+  const BOSS1_GROW_HP=35;
+  const BOSS1_GROW_DMG=2.0;
+  const BOSS1_GROW_SPD=2.4;
   const SLINGSHOT_CHARGE_TRIGGER=.25;
   const SLINGSHOT_DASH_MIN=.34;
   const SLINGSHOT_DASH_MAX=.72;
@@ -518,7 +515,7 @@ canvas{display:block;width:100%;height:100%}
       const txt=rem<=APEX_WARN_TWO?'someone...':'something big is approaching...';
       return txt+' '+rem.toFixed(1)+'s';
     }
-    if(g.bs)return 'defeat the dean — don\u0027t let him eat your mints!';
+    if(g.bs)return 'defeat the dean — grab mints before he walks over them!';
     if(g.pz&&g.pz.id==='nsh')return 'solve nsh puzzle';
     if(g.pz&&g.pz.id==='mel')return 'solve mellon puzzle';
     if(g.sch.nsh===0)return 'find nsh';
@@ -1028,7 +1025,7 @@ canvas{display:block;width:100%;height:100%}
     const a=Math.random()*Math.PI*2,d=520;
     const hp=880+g.time*14;
     const m={x:clamp(p.x+Math.cos(a)*d,40,MAP_W-40),y:clamp(p.y+Math.sin(a)*d,40,MAP_H-40),r:38,hp,s:52,dmg:28,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:3,
-      b1Max:hp,b1Eat:0,b1Cd:0,b1Pull:BOSS1_MINT_PULL,b1BaseR:38,b1BaseS:52,b1BaseDmg:28,b1Pulse:0,b1Roar:0};
+      b1Max:hp,b1Eat:0,b1Cd:0,b1BaseR:38,b1BaseS:52,b1BaseDmg:28,b1Pulse:0,b1Roar:0};
     pushOutsideSafe(m,28);z.push(m);g.bs=1;g.msg='the dean hungers...';g.msgT=1.8;beep(170,.15,'sawtooth',.03);beep(85,.25,'sawtooth',.02);trauma(.24);
   }
   function spawnApexAdds(src,count,phase){
@@ -1883,7 +1880,7 @@ canvas{display:block;width:100%;height:100%}
       }else{
         m.bi='';m.bt=0;m.bm=0;
       }
-      // --- FIRST BOSS (k===3): mint absorption ---
+      // --- FIRST BOSS (k===3): tick timers (eating handled after player pickup) ---
       if(m.k===3){
         if(!m.b1Max)m.b1Max=m.hp;
         if(!m.b1BaseR)m.b1BaseR=m.r;
@@ -1892,59 +1889,6 @@ canvas{display:block;width:100%;height:100%}
         if(m.b1Cd>0)m.b1Cd=Math.max(0,m.b1Cd-dt);
         if(m.b1Pulse>0)m.b1Pulse=Math.max(0,m.b1Pulse-dt);
         if(m.b1Roar>0)m.b1Roar=Math.max(0,m.b1Roar-dt);
-        // pull & eat nearby mints
-        const pullR=m.b1Pull||(BOSS1_MINT_PULL);
-        const eatR=m.r+BOSS1_MINT_EAT_R;
-        for(let fi=food.length-1;fi>=0;fi--){
-          const f=food[fi],fdx=f.x-m.x,fdy=f.y-m.y,fd=Math.hypot(fdx,fdy)||1;
-          if(fd<pullR){
-            // pull mint toward boss
-            const pull=180+120*(1-fd/pullR);
-            f.x-=fdx/fd*pull*dt;
-            f.y-=fdy/fd*pull*dt;
-            // eat it if close enough
-            if(fd<eatR&&m.b1Cd<=0&&(m.b1Eat||0)<BOSS1_MAX_EATS){
-              food.splice(fi,1);
-              m.b1Eat=(m.b1Eat||0)+1;
-              m.b1Cd=BOSS1_EAT_CD;
-              m.b1Pulse=.35;
-              // grow stats
-              const e=m.b1Eat;
-              m.r=(m.b1BaseR)+e*BOSS1_GROW_R;
-              m.hp=Math.min(m.hp+BOSS1_GROW_HP,m.b1Max+e*BOSS1_GROW_HP);
-              m.b1Max=m.b1Max+BOSS1_GROW_HP;
-              m.dmg=(m.b1BaseDmg)+e*BOSS1_GROW_DMG;
-              m.s=(m.b1BaseS)+e*BOSS1_GROW_SPD;
-              m.b1Pull=BOSS1_MINT_PULL+e*12;
-              // visual feedback
-              burst(m.x,m.y,'#69f0c9',6,m.r+18);
-              beep(120+e*8,.06,'sawtooth',.018);
-              // roar every 4 eats
-              if(e%4===0){
-                m.b1Roar=.6;
-                trauma(.14);
-                burst(m.x,m.y,'#a789ff',14,m.r+50);
-                beep(80,.12,'sawtooth',.028);
-                g.msg='the dean grows stronger!';g.msgT=1.4;
-              }
-            }
-          }
-        }
-        // occasionally lunge toward nearest food cluster if hungry
-        const hpR1=clamp(m.hp/(m.b1Max||1),0,1);
-        if(hpR1>.5&&(m.b1Eat||0)<BOSS1_MAX_EATS&&food.length>0&&Math.random()<.008){
-          // find nearest food
-          let nearF=0,nearD=1e9;
-          for(let fi=0;fi<food.length;fi++){
-            const f=food[fi],dd=Math.hypot(f.x-m.x,f.y-m.y);
-            if(dd<nearD){nearD=dd;nearF=f;}
-          }
-          if(nearF&&nearD>pullR&&nearD<600){
-            const ldx=nearF.x-m.x,ldy=nearF.y-m.y,ll=Math.hypot(ldx,ldy)||1;
-            m.vx+=ldx/ll*260;
-            m.vy+=ldy/ll*260;
-          }
-        }
       }
       if(m.k===4){
         if(!m.apMax)m.apMax=m.hp;
@@ -2457,6 +2401,44 @@ canvas{display:block;width:100%;height:100%}
     if((keys.gr||touchMove)&&Math.random()<.04&&g.time>2){
       pushFood({x:clamp(p.x+rnd(-20,20),12,MAP_W-12),y:clamp(p.y+rnd(-20,20),12,MAP_H-12),v:4,m:1,t:0});
     }
+
+    // --- FIRST BOSS mint eating (runs AFTER player pickup so Scotty always has priority) ---
+    if(g.bs){
+      for(let i=0;i<z.length;i++){
+        const m=z[i];
+        if(m.k!==3||m.b1Cd>0)continue;
+        // boss only eats mints that overlap its body
+        for(let fi=food.length-1;fi>=0;fi--){
+          const f=food[fi],fdx=f.x-m.x,fdy=f.y-m.y,fd=Math.hypot(fdx,fdy);
+          if(fd<m.r){
+            // skip if mint is also in Scotty's magnet range (player priority)
+            const pdist=Math.hypot(f.x-p.x,f.y-p.y);
+            if(pdist<p.magnet)continue;
+            food.splice(fi,1);
+            m.b1Eat=(m.b1Eat||0)+1;
+            m.b1Cd=BOSS1_EAT_CD;
+            m.b1Pulse=.35;
+            const e=m.b1Eat;
+            // diminishing growth: each eat is slightly less effective
+            const dim=1/(1+e*.035);
+            m.r=(m.b1BaseR)+e*BOSS1_GROW_R*dim;
+            m.hp=Math.min(m.hp+BOSS1_GROW_HP*dim,m.b1Max+BOSS1_GROW_HP*dim);
+            m.b1Max+=BOSS1_GROW_HP*dim;
+            m.dmg=(m.b1BaseDmg)+e*BOSS1_GROW_DMG*dim;
+            m.s=(m.b1BaseS)+e*BOSS1_GROW_SPD*dim;
+            burst(m.x,m.y,'#69f0c9',6,m.r+18);
+            beep(120+e*6,.06,'sawtooth',.018);
+            if(e%5===0){
+              m.b1Roar=.6;
+              trauma(.14);
+              burst(m.x,m.y,'#a789ff',14,m.r+50);
+              beep(80,.12,'sawtooth',.028);
+              g.msg='the dean grows stronger!';g.msgT=1.4;
+            }
+          }
+        }
+      }
+    }
   }
 
   function cam(){return {x:clamp(p.x-W*.5,0,MAP_W-W),y:clamp(p.y-H*.5,0,MAP_H-H)}}
@@ -2605,28 +2587,21 @@ canvas{display:block;width:100%;height:100%}
       x.fillStyle=m.ht>0?'#9db4d1':mc;x.beginPath();x.arc(sx,sy,m.r,0,Math.PI*2);x.fill();
       x.fillStyle='#f0627c';x.fillRect((sx-4)|0,(sy-2)|0,3,3);x.fillRect((sx+1)|0,(sy-2)|0,3,3);
       if(m.k===3){
-        // first boss visuals: absorption aura + glow + eat count
+        // first boss visuals: glow + eat count
         const eats=m.b1Eat||0;
         const hpR1=clamp(m.hp/((m.b1Max||m.hp)||1),0,1);
         const pulseFx=(m.b1Pulse||0)>.01?(m.b1Pulse/.35):0;
         const roarFx=(m.b1Roar||0)>.01?(m.b1Roar/.6):0;
-        // outer absorption aura ring (mint pull radius)
-        const pullR=m.b1Pull||BOSS1_MINT_PULL;
-        x.globalAlpha=.06+.04*Math.sin(g.t*2.8+i)+.02*eats/BOSS1_MAX_EATS;
-        x.strokeStyle='#69f0c9';x.lineWidth=1.2;
-        x.setLineDash([8,6]);
-        x.lineDashOffset=-g.t*40;
-        x.beginPath();x.arc(sx,sy,pullR,0,Math.PI*2);x.stroke();
-        x.setLineDash([]);
         // inner glow grows with eats
-        const glowR=m.r+14+eats*3.5+Math.sin(g.t*4)*3;
-        x.globalAlpha=.10+.06*eats/BOSS1_MAX_EATS+.14*pulseFx;
-        x.fillStyle=eats>12?'#ff8f8f':eats>6?'#ffd58f':'#a789ff';
+        const eatFrac=Math.min(1,eats/20);
+        const glowR=m.r+10+eats*2.2+Math.sin(g.t*4)*3;
+        x.globalAlpha=.08+.08*eatFrac+.14*pulseFx;
+        x.fillStyle=eats>15?'#ff8f8f':eats>8?'#ffd58f':'#a789ff';
         x.beginPath();x.arc(sx,sy,glowR,0,Math.PI*2);x.fill();
         // animated ring
-        const ringHue=eats>12?'#ff6b6b':eats>6?'#ffaa44':'#c8a0ff';
+        const ringHue=eats>15?'#ff6b6b':eats>8?'#ffaa44':'#c8a0ff';
         x.globalAlpha=.28+.12*Math.sin(g.t*5+i)+.08*roarFx;
-        x.strokeStyle=ringHue;x.lineWidth=2.2+eats*.12;
+        x.strokeStyle=ringHue;x.lineWidth=2.2+eats*.08;
         x.beginPath();x.arc(sx,sy,m.r+8+Math.sin(g.t*5.5+i)*2.5,0,Math.PI*2);x.stroke();
         // roar shockwave
         if(roarFx>.01){
@@ -2967,21 +2942,22 @@ canvas{display:block;width:100%;height:100%}
     if(boss1&&g.bs){
       const hpR1=clamp(boss1.hp/((boss1.b1Max||boss1.hp)||1),0,1);
       const eats=boss1.b1Eat||0;
-      const title=eats>12?'THE DEAN // GORGED':eats>6?'THE DEAN // HUNGRY':'THE DEAN';
+      const title=eats>20?'THE DEAN // BLOATED':eats>12?'THE DEAN // GORGED':eats>5?'THE DEAN // HUNGRY':'THE DEAN';
       const bw=clamp(W*.54,200,560),bh=11,bx=(W-bw)*.5,by=objectiveY+2;
       x.fillStyle='rgba(10,14,22,.88)';
       rr(bx-10,by-18,bw+20,36,11);
       x.fill();
       x.fillStyle='rgba(40,28,62,.95)';x.fillRect(bx,by,bw,bh);
       const fg1=x.createLinearGradient(bx,0,bx+bw,0);
-      if(eats>12){fg1.addColorStop(0,'#ff5656');fg1.addColorStop(1,'#ff9a7a');}
-      else if(eats>6){fg1.addColorStop(0,'#ffaa44');fg1.addColorStop(1,'#ffd58f');}
+      if(eats>20){fg1.addColorStop(0,'#ff3333');fg1.addColorStop(1,'#ff7755');}
+      else if(eats>12){fg1.addColorStop(0,'#ff5656');fg1.addColorStop(1,'#ff9a7a');}
+      else if(eats>5){fg1.addColorStop(0,'#ffaa44');fg1.addColorStop(1,'#ffd58f');}
       else{fg1.addColorStop(0,'#9a7dff');fg1.addColorStop(1,'#c8a0ff');}
       x.fillStyle=fg1;
       x.fillRect(bx,by,bw*hpR1,bh);
       x.strokeStyle='rgba(200,190,240,.55)';x.lineWidth=1.2;
       x.strokeRect(bx+.5,by+.5,bw-1,bh-1);
-      x.fillStyle=eats>12?'#ffc4c4':eats>6?'#ffe0b3':'#e4d8ff';
+      x.fillStyle=eats>20?'#ffaaaa':eats>12?'#ffc4c4':eats>5?'#ffe0b3':'#e4d8ff';
       x.font='700 11px Trebuchet MS,sans-serif';
       x.textAlign='center';
       x.fillText(title+(eats>0?' ['+eats+' mints]':''),bx+bw*.5,by-7);
