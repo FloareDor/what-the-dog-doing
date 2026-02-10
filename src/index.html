@@ -310,6 +310,13 @@ canvas{display:block;width:100%;height:100%}
     }
     if(row<maxLines&&line)x.fillText(line,px,py+row*lineH);
   }
+  function fitText(txt,maxW){
+    let out=String(txt??'');
+    if(maxW<=0)return '';
+    if(x.measureText(out).width<=maxW)return out;
+    while(out.length>1&&x.measureText(out+'...').width>maxW)out=out.slice(0,-1);
+    return out+'...';
+  }
   function upIcon(n){
     if(n.includes('Buddy')||n.includes('Bot'))return '🤖';
     if(n.includes('Catalyst')||n.includes('Chemical')||n.includes('Acidic'))return '🧪';
@@ -2919,29 +2926,59 @@ canvas{display:block;width:100%;height:100%}
     }
 
     if(g.dead){
-      x.fillStyle='rgba(5,8,13,.86)';x.fillRect(24,H*.24,W-48,H*.5);
-      x.fillStyle='#ff8298';x.font='700 33px Trebuchet MS,sans-serif';x.fillText('GAME OVER',W*.5-98,H*.38);
-      x.fillStyle='#dce8ff';x.font='600 20px Trebuchet MS,sans-serif';x.fillText('Kills '+g.kills,W*.5-43,H*.47);
-      x.fillText('Best '+g.best,W*.5-37,H*.53);
-      x.fillStyle='#9ec8ff';x.font='600 13px Trebuchet MS,sans-serif';x.fillText('Top '+LB_PREVIEW_LIMIT+' global',W*.5-40,H*.58);
-      x.fillStyle='#dce8ff';x.font='600 12px Trebuchet MS,sans-serif';
+      let cardX=24,cardY=H*.2,cardW=W-48,cardH=Math.min(H*.62,430);
+      if(cardY+cardH>H-14){cardY=14;cardH=H-28}
+      x.fillStyle='rgba(5,8,13,.88)';x.fillRect(cardX,cardY,cardW,cardH);
+
+      const small=W<420||H<760;
+      const rowStep=small?14:16;
+      const btnW=Math.min(210,W-90),btnH=34,btnX=(W-btnW)*.5,btnY=cardY+cardH-btnH-12;
+      g.lbBtnX=btnX;g.lbBtnY=btnY;g.lbBtnW=btnW;g.lbBtnH=btnH;
+
+      let y=cardY+44;
+      x.fillStyle='#ff8298';x.font=(small?'700 29px':'700 33px')+' Trebuchet MS,sans-serif';
+      x.fillText('GAME OVER',cardX+Math.max(10,(cardW-196)*.5),y);
+
+      y+=30;
+      x.fillStyle='#dce8ff';x.font='600 20px Trebuchet MS,sans-serif';
+      x.fillText('Kills '+g.kills,cardX+Math.max(12,(cardW-86)*.5),y);
+
+      y+=26;
+      x.fillText('Best '+g.best,cardX+Math.max(12,(cardW-74)*.5),y);
+
+      y+=26;
+      x.fillStyle='#9ec8ff';x.font='600 13px Trebuchet MS,sans-serif';
+      x.fillText('Top '+LB_PREVIEW_LIMIT+' global',cardX+16,y);
+
+      y+=18;
+      x.font='600 12px Trebuchet MS,sans-serif';
       if(g.lbTop.length){
         for(let i=0;i<g.lbTop.length&&i<LB_PREVIEW_LIMIT;i++){
           const row=g.lbTop[i];
-          const yy=H*.605+i*16;
-          x.fillText((i+1)+'. '+row.name+'  '+row.kills+' / '+Number(row.time_seconds).toFixed(1)+'s',W*.5-88,yy);
+          const yy=y+i*rowStep;
+          const leftTxt=(i+1)+'. '+fitText(row.name,Math.max(40,cardW-170));
+          x.fillStyle='#dce8ff';x.textAlign='left';x.fillText(leftTxt,cardX+16,yy);
+          x.fillStyle='#bdd8ff';x.textAlign='right';x.fillText(row.kills+' / '+Number(row.time_seconds).toFixed(1)+'s',cardX+cardW-16,yy);
         }
+        x.textAlign='left';
       }else{
-        x.fillText(g.lbTopErr||'loading leaderboard...',W*.5-70,H*.605);
+        x.fillStyle='#dce8ff';
+        x.fillText(g.lbTopErr||'loading leaderboard...',cardX+16,y);
       }
+
+      const rankY=y+rowStep*LB_PREVIEW_LIMIT+6;
       x.fillStyle='#9de6ff';x.font='600 12px Trebuchet MS,sans-serif';
-      x.fillText(g.lbRankText||g.lbRankErr||'checking your rank...',W*.5-88,H*.655);
-      x.fillStyle='#69f0c9';x.font='700 20px Trebuchet MS,sans-serif';x.fillText('tap retry (anywhere)',W*.5-98,H*.695);
-      const bw=Math.min(210,W-90),bh=34,bx=(W-bw)*.5,by=H*.72;
-      g.lbBtnX=bx;g.lbBtnY=by;g.lbBtnW=bw;g.lbBtnH=bh;
-      x.fillStyle='rgba(19,38,58,.95)';rr(bx,by,bw,bh,10);x.fill();
-      x.strokeStyle='rgba(130,190,255,.9)';x.lineWidth=1.4;rr(bx+.5,by+.5,bw-1,bh-1,10);x.stroke();
-      x.fillStyle='#9de6ff';x.font='700 15px Trebuchet MS,sans-serif';x.fillText('open leaderboard',bx+40,by+22);
+      x.fillText(fitText(g.lbRankText||g.lbRankErr||'checking your rank...',cardW-32),cardX+16,rankY);
+
+      const retryY=Math.min(btnY-8,rankY+24);
+      x.fillStyle='#69f0c9';x.font=(small?'700 18px':'700 20px')+' Trebuchet MS,sans-serif';
+      x.fillText('tap retry (anywhere)',cardX+16,retryY);
+
+      x.fillStyle='rgba(19,38,58,.95)';rr(btnX,btnY,btnW,btnH,10);x.fill();
+      x.strokeStyle='rgba(130,190,255,.9)';x.lineWidth=1.4;rr(btnX+.5,btnY+.5,btnW-1,btnH-1,10);x.stroke();
+      x.fillStyle='#9de6ff';x.font='700 15px Trebuchet MS,sans-serif';x.textAlign='center';
+      x.fillText('open leaderboard',btnX+btnW*.5,btnY+22);
+      x.textAlign='left';
     }
   }
 
