@@ -3486,6 +3486,12 @@
       y+=26;
       x.fillText('Best '+g.best,cardX+Math.max(12,(cardW-74)*.5),y);
 
+      if(g.endWave>0){
+        y+=26;
+        x.fillStyle='#ff9a7a';
+        x.fillText('Wave '+g.endWave,cardX+Math.max(12,(cardW-74)*.5),y);
+      }
+
       y+=26;
       x.fillStyle='#9ec8ff';x.font='600 13px Trebuchet MS,sans-serif';
       x.fillText('Top '+LB_PREVIEW_LIMIT+' global',cardX+16,y);
