@@ -57,9 +57,9 @@ canvas{display:block;width:100%;height:100%}
   const JOY_VIS_SMOOTH=16;
   const LEVEL_UI_ZOOMIES_GRACE=1;
   const MAX_Z=180,MAX_FOOD=260,MAX_FX=420,MAX_PUDD=18,MAX_B=260,MAX_REACT=14;
-  const FIRST_BOSS_MIN_KILLS=35;
-  const FIRST_BOSS_TRIGGER_KILLS=45;
-  const FIRST_BOSS_TRIGGER_TIME=72;
+  const FIRST_BOSS_MIN_KILLS=600;
+  const FIRST_BOSS_TRIGGER_KILLS=800;
+  const FIRST_BOSS_TRIGGER_TIME=999;
   const LAB_REFRESH_KILLS=50;
   const NSH_THIRD_BOT_INTEL_COST=4;
   const BOSS1_EAT_CD=.14;
@@ -92,10 +92,10 @@ canvas{display:block;width:100%;height:100%}
   const SLINGSHOT_ROPE_SHRINK=142;
   const KILL_CAP=9999;
   const PREDATOR_TRIGGER=9000;
-  const MINI_BOSS_MIN_KILLS=18;
-  const EXPLODER_INTRO_DELAY=12;
-  const SHIELDED_INTRO_DELAY=28;
-  const HEALER_INTRO_DELAY=44;
+  const MINI_BOSS_MIN_KILLS=200;
+  const EXPLODER_INTRO_KILLS=100;
+  const SHIELDED_INTRO_KILLS=400;
+  const HEALER_INTRO_KILLS=800;
   const ENDLESS_SPAWN_ACCEL=.014;
   const APEX_ARRIVAL_DELAY=12;
   const APEX_WARN_ONE=8.5;
@@ -542,8 +542,8 @@ canvas{display:block;width:100%;height:100%}
     if(g.labNsh>0&&g.labMel>0)return 'visit nsh / mellon for prototype upgrades';
     if(g.labNsh>0)return 'visit nsh for buddy prototype';
     if(g.labMel>0)return 'visit mellon institute for catalyst prototype';
-    if(g.sch.mel===2&&g.kills<FIRST_BOSS_MIN_KILLS)return 'defeat '+FIRST_BOSS_MIN_KILLS+' enemies to summon boss';
-    return 'survive phase 2';
+    if(g.sch.mel===2&&g.kills<FIRST_BOSS_MIN_KILLS)return 'survive \u2014 '+g.kills+'/'+FIRST_BOSS_MIN_KILLS+' kills';
+    return 'survive \u2014 '+g.kills+' kills';
   }
   function queueUnlock(id){
     if(g.uq.indexOf(id)<0)g.uq.push(id);
@@ -1086,18 +1086,15 @@ canvas{display:block;width:100%;height:100%}
     let hp=22+base*8+rnd(-4,8),sp=56+base*6+rnd(-6,10),r=rnd(12,18),dmg=8+base*.9,k=0;
     if(g.time>8&&Math.random()<.24){k=1;sp*=1.65;hp*=.66;r*=.82;dmg*=.82;}
     if(g.time>18&&Math.random()<.18){k=2;sp*=.74;hp*=2.15;r*=1.35;dmg*=1.28;}
-    // post-Dean new enemy types (introduced progressively)
-    const pdt=g.postDeanT;
-    if(pdt>0){
+    // post-Dean new enemy types (introduced progressively by kills since Dean)
+    const deanKills=g.bd?(g.kills-(FIRST_BOSS_TRIGGER_KILLS||800)):0;
+    if(deanKills>0){
       const roll=Math.random();
-      if(pdt>HEALER_INTRO_DELAY&&roll<.10){
-        // healer: medium HP, slow, heals nearby zombies
+      if(deanKills>HEALER_INTRO_KILLS&&roll<.10){
         k=8;hp*=1.1;sp*=.62;r=rnd(13,17);dmg*=.6;
-      }else if(pdt>SHIELDED_INTRO_DELAY&&roll<.20){
-        // shielded: tanky when facing player, normal otherwise
+      }else if(deanKills>SHIELDED_INTRO_KILLS&&roll<.20){
         k=7;hp*=1.6;sp*=.82;r=rnd(14,19);dmg*=1.1;
-      }else if(pdt>EXPLODER_INTRO_DELAY&&roll<.28){
-        // exploder: medium-low HP, fast, bursts on death
+      }else if(deanKills>EXPLODER_INTRO_KILLS&&roll<.28){
         k=6;hp*=.72;sp*=1.35;r=rnd(10,15);dmg*=.7;
       }
     }
@@ -1294,33 +1291,47 @@ canvas{display:block;width:100%;height:100%}
     }
   }
 
-  // progressive upgrade scaling: upgrades get stronger as kills increase
-  function upScale(){return 1+g.kills/2400;}
+  // progressive upgrade scaling: upgrades get much stronger as kills increase
+  // 1x at 0 kills, ~2x at 1200, ~4.5x at 4200, ~8.5x at 9000
+  function upScale(){return 1+g.kills/1200;}
 
   const UPS=[
-    {n:'Rapid Fire',d:'shoot faster',f:()=>p.fireRate=Math.max(.12,p.fireRate*(1-.2*Math.min(upScale(),2.5))),req:()=>1},
-    {n:'Big Bites',d:'more damage',f:()=>p.dmg+=8*upScale(),req:()=>1},
-    {n:'Speed Paws',d:'move faster',f:()=>p.speed+=30*upScale(),req:()=>1},
-    {n:'Extra Shot',d:'+1 projectile',f:()=>p.shots=Math.min(8,p.shots+1),req:()=>1},
-    {n:'Snack Magnet',d:'pickup range up',f:()=>p.magnet+=40*upScale(),req:()=>1},
-    {n:'Tough Fur',d:'+max hp +heal',f:()=>{const v=32*upScale();p.maxHp+=v;p.hp=Math.min(p.maxHp,p.hp+v)},req:()=>1},
-    {n:'Quick Heal',d:'heal now',f:()=>p.hp=Math.min(p.maxHp,p.hp+45*upScale()),req:()=>1},
-    {n:'Zoomies Time',d:'zoomies lasts longer',f:()=>p.zDur=Math.min(4.2,p.zDur+.32*upScale()),req:()=>1},
-    {n:'Zoomies CD',d:'zoomies cooldown down',f:()=>p.zCool=Math.max(.8,p.zCool-.85*upScale()),req:()=>1},
-    {n:'Zoomies Speed',d:'zoomies speed up',f:()=>p.zSpd=Math.min(6,p.zSpd+.45*upScale()),req:()=>1},
-    {n:'Zoomies Charge',d:'zoomies charge faster',f:()=>p.zLoad=Math.max(.3,p.zLoad-.24*upScale()),req:()=>1},
-    {n:'Territory CD',d:'territory cooldown down',f:()=>p.mkI=Math.max(1.8,p.mkI-.68*upScale()),req:()=>p.mkOn},
-    {n:'Territory Radius',d:'territory area bigger',f:()=>p.mkR=Math.min(180,p.mkR+16*upScale()),req:()=>p.mkOn},
-    {n:'Territory Duration',d:'territory lasts longer',f:()=>p.mkD=Math.min(60,p.mkD+5*upScale()),req:()=>p.mkOn},
-    {n:'Territory Slow',d:'territory slows more',f:()=>p.mkSl=Math.min(.94,p.mkSl+.12*Math.min(upScale(),2)),req:()=>p.mkOn},
-    {n:'Chemical Puddle',d:'chem damage up',f:()=>{const s=upScale();p.chDo=Math.min(120,p.chDo+10*s);p.chBurst=Math.min(80,p.chBurst+8*s)},req:()=>p.cat},
-    {n:'Chemical Radius',d:'chem area bigger',f:()=>p.mkR=Math.min(190,p.mkR+13*upScale()),req:()=>p.cat},
-    {n:'Chemical Tempo',d:'chem cooldown down',f:()=>p.mkI=Math.max(1.4,p.mkI-.58*upScale()),req:()=>p.cat},
-    {n:'Bot Fetch',d:'bot grabs mints farther away',f:()=>p.bFetch=Math.min(360,p.bFetch+34*upScale()),req:()=>p.bot},
-    {n:'Bot Cargo',d:'bot carries more mints',f:()=>p.bCarryMax=Math.min(8,p.bCarryMax+1),req:()=>p.bot},
-    {n:'Shock Tempo',d:'shock pulse cooldown down',f:()=>p.bRate=Math.max(.32,p.bRate*(1-.18*Math.min(upScale(),2.5))),req:()=>p.bot&&p.bAtk},
-    {n:'Shock Pierce',d:'pulse pierces more + wider',f:()=>{p.bPier=Math.min(14,p.bPier+Math.ceil(upScale()));p.bSize=Math.min(26,p.bSize+1.4*upScale())},req:()=>p.bot&&p.bAtk},
-    {n:'Shock Power',d:'shock pulse damage up',f:()=>p.bDmg=Math.min(5,p.bDmg+.33*upScale()),req:()=>p.bot&&p.bAtk},
+    // --- CORE ---
+    {n:'Rapid Fire',d:'shoot faster',f:()=>p.fireRate=Math.max(.06,p.fireRate*(1-.22*Math.min(upScale(),4))),req:()=>1},
+    {n:'Big Bites',d:'more damage',f:()=>p.dmg+=10*upScale(),req:()=>1},
+    {n:'Speed Paws',d:'move faster',f:()=>p.speed+=35*upScale(),req:()=>1},
+    {n:'Extra Shot',d:'+projectiles',f:()=>{const add=1+Math.floor(upScale()/3);p.shots=Math.min(12,p.shots+add)},req:()=>1},
+    {n:'Snack Magnet',d:'pickup range up',f:()=>p.magnet+=45*upScale(),req:()=>1},
+    {n:'Tough Fur',d:'+max hp +heal',f:()=>{const v=40*upScale();p.maxHp+=v;p.hp=Math.min(p.maxHp,p.hp+v)},req:()=>1},
+    {n:'Quick Heal',d:'heal now',f:()=>p.hp=Math.min(p.maxHp,p.hp+55*upScale()),req:()=>1},
+    {n:'Range Up',d:'bullets fly farther',f:()=>p.range=Math.min(1200,p.range+60*upScale()),req:()=>1},
+    // --- ZOOMIES ---
+    {n:'Zoomies Time',d:'zoomies lasts longer',f:()=>p.zDur=Math.min(6,p.zDur+.38*upScale()),req:()=>1},
+    {n:'Zoomies CD',d:'zoomies cooldown down',f:()=>p.zCool=Math.max(.4,p.zCool-.9*upScale()),req:()=>1},
+    {n:'Zoomies Speed',d:'zoomies speed up',f:()=>p.zSpd=Math.min(8,p.zSpd+.5*upScale()),req:()=>1},
+    {n:'Zoomies Charge',d:'zoomies charge faster',f:()=>p.zLoad=Math.max(.2,p.zLoad-.26*upScale()),req:()=>1},
+    {n:'Zoomies Damage',d:'zoomies hit harder',f:()=>p.zDmg+=6*upScale(),req:()=>1},
+    // --- TERRITORY / PUDDLES ---
+    {n:'Territory CD',d:'territory cooldown down',f:()=>p.mkI=Math.max(1.2,p.mkI-.75*upScale()),req:()=>p.mkOn},
+    {n:'Territory Radius',d:'territory area bigger',f:()=>p.mkR=Math.min(260,p.mkR+18*upScale()),req:()=>p.mkOn},
+    {n:'Territory Duration',d:'territory lasts longer',f:()=>p.mkD=Math.min(90,p.mkD+6*upScale()),req:()=>p.mkOn},
+    {n:'Territory Slow',d:'territory slows more',f:()=>p.mkSl=Math.min(.96,p.mkSl+.14*Math.min(upScale(),3)),req:()=>p.mkOn},
+    {n:'Territory Burst',d:'mark drops extra puddle',f:()=>{p.mkBurst=1;p.mkR=Math.min(260,p.mkR+8)},req:()=>p.mkOn&&!p.mkBurst},
+    // --- CHEMICAL / CATALYST ---
+    {n:'Chemical Puddle',d:'chem damage up',f:()=>{const s=upScale();p.chDo=Math.min(200,p.chDo+12*s);p.chBurst=Math.min(120,p.chBurst+10*s)},req:()=>p.cat},
+    {n:'Chemical Radius',d:'chem area bigger',f:()=>p.mkR=Math.min(280,p.mkR+15*upScale()),req:()=>p.cat},
+    {n:'Chemical Tempo',d:'chem cooldown down',f:()=>p.mkI=Math.max(.8,p.mkI-.65*upScale()),req:()=>p.cat},
+    {n:'Chemical Heal',d:'puddles heal scotty',f:()=>{p.chHeal=Math.min(30,p.chHeal+4*upScale());p.chHealI=Math.max(.3,p.chHealI-.08*upScale())},req:()=>p.cat},
+    // --- BOTS ---
+    {n:'Bot Fetch',d:'bot grabs mints farther',f:()=>p.bFetch=Math.min(500,p.bFetch+40*upScale()),req:()=>p.bot},
+    {n:'Bot Cargo',d:'bot carries more mints',f:()=>p.bCarryMax=Math.min(12,p.bCarryMax+1+Math.floor(upScale()/3)),req:()=>p.bot},
+    {n:'Bot Speed',d:'bots move faster',f:()=>p.bPull=Math.min(600,p.bPull+35*upScale()),req:()=>p.bot},
+    {n:'Bot Heal',d:'bots heal scotty',f:()=>{p.bHealAmt=Math.min(60,p.bHealAmt+5*upScale());p.bHealI=Math.max(3,p.bHealI-1)},req:()=>p.bot},
+    // --- SHOCK (bot attack) ---
+    {n:'Shock Tempo',d:'shock pulse cooldown down',f:()=>p.bRate=Math.max(.2,p.bRate*(1-.2*Math.min(upScale(),4))),req:()=>p.bot&&p.bAtk},
+    {n:'Shock Pierce',d:'pulse pierces more + wider',f:()=>{p.bPier=Math.min(20,p.bPier+Math.ceil(upScale()*1.2));p.bSize=Math.min(36,p.bSize+1.6*upScale())},req:()=>p.bot&&p.bAtk},
+    {n:'Shock Power',d:'shock pulse damage up',f:()=>p.bDmg=Math.min(8,p.bDmg+.4*upScale()),req:()=>p.bot&&p.bAtk},
+    {n:'Shock Range',d:'shock pulse range up',f:()=>p.bRange=Math.min(900,p.bRange+55*upScale()),req:()=>p.bot&&p.bAtk},
   ];
 
   function rollChoices(){
@@ -1957,8 +1968,6 @@ canvas{display:block;width:100%;height:100%}
     p.fireCd-=dt;
     if(!pSafeNow&&p.fireCd<=0){p.fireCd=p.fireRate;shoot()}
 
-    // post-Dean timer (tracks time since Dean died for progressive enemy intro)
-    if(g.bd&&!g.bs2)g.postDeanT+=dt;
     // endless mode timer
     if(g.bd2)g.endT+=dt;
 
@@ -1986,7 +1995,7 @@ canvas{display:block;width:100%;height:100%}
     if(canSpawn&&g.sch.nsh===2&&!g.mb&&!g.mbd&&!g.bs&&!g.bd&&g.kills>=MINI_BOSS_MIN_KILLS)spawnMiniBoss();
     const firstBossReadyByProgress=g.kills>FIRST_BOSS_TRIGGER_KILLS||g.time>FIRST_BOSS_TRIGGER_TIME;
     if(canSpawn&&g.sch.mel===2&&!g.bs&&!g.bd&&!g.bs2&&!g.bd2&&g.kills>=FIRST_BOSS_MIN_KILLS&&firstBossReadyByProgress)spawnBoss();
-    if(canSpawn&&g.bd&&!g.bs2&&!g.bd2&&g.t>=g.b2At)spawnApexBoss();
+    if(canSpawn&&g.bd&&!g.bs2&&!g.bd2&&(g.t>=g.b2At||g.kills>=2500))spawnApexBoss();
     if(canSpawn&&g.spawnT<=0){
       g.spawnT=g.nextSpawn;
       const baseRate=.78-g.time*.018;
