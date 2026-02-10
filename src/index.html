@@ -64,6 +64,14 @@ canvas{display:block;width:100%;height:100%}
   const SLINGSHOT_ROPE_START=176;
   const SLINGSHOT_ROPE_DEFAULT=44;
   const SLINGSHOT_ROPE_SHRINK=142;
+  const APEX_ARRIVAL_DELAY=12;
+  const APEX_WARN_ONE=8.5;
+  const APEX_WARN_TWO=3.6;
+  const APEX_STORM_PULL_BASE=24;
+  const APEX_STORM_PULL_GROW=14;
+  const APEX_STORM_ZOOMIES_RESIST=.32;
+  const APEX_STORM_TICK_DMG=2.4;
+  const APEX_STORM_TICK_CD=.42;
 
   const imgs={};
   function load(n){const i=new Image();i.src='black_scottish_terrier_dog_with_red_scarf/rotations/'+n+'.png';return i}
@@ -95,6 +103,7 @@ canvas{display:block;width:100%;height:100%}
     uq:[],
     inB:'',bs:0,bd:0,bs2:0,bd2:0,b2At:0,
     bossDownT:0,
+    apWarn1:0,apWarn2:0,apStormHitCd:0,
     botMask:0,chemMask:0,
     labStep:0,labBank:0,labFlip:0,
     labNsh:0,labMel:0,
@@ -340,7 +349,11 @@ canvas{display:block;width:100%;height:100%}
     if(g.bd2)return 'campus secured';
     if(g.bs2&&knownVariants(g.chemMask)>=3)return 'triple burst! overlap all 3 puddles to storm apex!';
     if(g.bs2)return 'defeat apex boss';
-    if(g.bd)return 'apex signal rising';
+    if(g.bd){
+      const rem=Math.max(0,g.b2At-g.t);
+      const txt=rem<=APEX_WARN_TWO?'someone...':'something big is approaching...';
+      return txt+' '+rem.toFixed(1)+'s';
+    }
     if(g.bs)return 'defeat boss';
     if(g.pz&&g.pz.id==='nsh')return 'solve nsh puzzle';
     if(g.pz&&g.pz.id==='mel')return 'solve mellon puzzle';
@@ -645,8 +658,9 @@ canvas{display:block;width:100%;height:100%}
     const m=z[i];
     const light=!!mode;
     if(m.k===3){
-      g.bd=1;g.bs=0;g.b2At=g.t+10;
-      g.msg='boss down: apex incoming';g.msgT=2.6;
+      g.bd=1;g.bs=0;g.b2At=g.t+APEX_ARRIVAL_DELAY;
+      g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;
+      g.msg='something big is approaching...';g.msgT=2.4;
       g.bossDownT=2.4;
       hitStop(.09);
       trauma(.55);
@@ -808,7 +822,7 @@ canvas{display:block;width:100%;height:100%}
   }
 
   function reset(full){
-    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.bossDownT=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.lvPend=0;g.lvGrace=0;
+    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.bossDownT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.lvPend=0;g.lvGrace=0;
     p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slFocus=0;p.slT=0;p.slRecallT=0;p.slLinkT=0;p.slRecallPulse=0;p.slCarryVx=0;p.slCarryVy=0;p.slPow=0;p.slWave=0;p.slComboFx=0;p.slHitMask=0;p.slPerfect=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
     p.slRopeRest=0;
     z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;
@@ -863,17 +877,34 @@ canvas{display:block;width:100%;height:100%}
     }
   }
   function addApexStorm(px,py,r,dur){
+    const rr=clamp(r*.78,44,86);
+    const dd=Math.max(1.15,dur*.72);
+    for(let i=0;i<react.length;i++){
+      const rc=react[i];
+      if(rc.k!==5)continue;
+      const dx=rc.x-px,dy=rc.y-py;
+      const link=(rc.r+rr)*.4;
+      if(dx*dx+dy*dy<link*link){
+        rc.x=(rc.x+px)*.5;
+        rc.y=(rc.y+py)*.5;
+        rc.r=Math.max(rc.r,rr);
+        rc.t=Math.max(rc.t,dd);
+        rc.d=Math.max(rc.d,dd);
+        rc.pcd=0;
+        return;
+      }
+    }
     if(react.length>=MAX_REACT)react.shift();
-    react.push({k:5,x:px,y:py,r,t:dur,d:dur,pcd:0,ap:1});
-    burst(px,py,'#d4b8ff',10,64);
-    beep(260,.04,'sawtooth',.014);
+    react.push({k:5,x:px,y:py,r:rr,t:dd,d:dd,pcd:0,ap:1});
+    burst(px,py,'#d4b8ff',8,52);
+    beep(250,.035,'sawtooth',.011);
   }
   function spawnApexBoss(){
     if(g.bs2||g.bd2||z.length>=MAX_Z)return;
     const a=Math.random()*Math.PI*2,d=560;
     const hp=2280+g.time*30;
-    const m={x:clamp(p.x+Math.cos(a)*d,44,MAP_W-44),y:clamp(p.y+Math.sin(a)*d,44,MAP_H-44),r:42,hp,s:62,dmg:42,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:4,apMax:hp,apBaseS:62,apCd:rnd(1.4,2.2),apTele:0,apTeleD:0,apAimX:0,apAimY:0,apBurstLeft:0,apBurstSpd:860,apPhase:1,apStormCd:rnd(2.6,3.8),apSummonCd:rnd(3.4,4.8),apEvadeCd:0,apImpactCd:0};
-    pushOutsideSafe(m,36);z.push(m);g.bs2=1;g.msg='apex boss! phase omega';g.msgT=1.7;beep(120,.2,'sawtooth',.04);trauma(.34);
+    const m={x:clamp(p.x+Math.cos(a)*d,44,MAP_W-44),y:clamp(p.y+Math.sin(a)*d,44,MAP_H-44),r:42,hp,s:62,dmg:42,vx:0,vy:0,ht:0,sl:0,ce:0,bm:0,bt:0,bi:'',k:4,apMax:hp,apBaseS:62,apCd:rnd(1.4,2.2),apTele:0,apTeleD:0,apAimX:0,apAimY:0,apBurstLeft:0,apBurstSpd:860,apPhase:1,apStormCd:rnd(3.4,5.2),apSummonCd:rnd(3.4,4.8),apEvadeCd:0,apImpactCd:0};
+    pushOutsideSafe(m,36);z.push(m);g.bs2=1;g.bd=0;g.msg='apex boss! phase omega';g.msgT=1.7;beep(120,.2,'sawtooth',.04);trauma(.34);
   }
   function nearestZombie(){
     let best=0,bd=1e9;
@@ -1036,6 +1067,7 @@ canvas{display:block;width:100%;height:100%}
     joyTick(rdt);
     if(g.msgT>0)g.msgT-=rdt;
     if(g.bossDownT>0)g.bossDownT=Math.max(0,g.bossDownT-rdt);
+    if(g.apStormHitCd>0)g.apStormHitCd=Math.max(0,g.apStormHitCd-rdt);
     if(g.stormCd>0)g.stormCd=Math.max(0,g.stormCd-rdt);
     if(g.labCd>0)g.labCd=Math.max(0,g.labCd-rdt);
     if(g.stop>0){g.stop=Math.max(0,g.stop-rdt);dt*=.06;}
@@ -1068,6 +1100,21 @@ canvas{display:block;width:100%;height:100%}
     if(g.lvup){g.cardT=Math.min(.9,g.cardT+rdt);return;}
     if(g.pz){g.t+=dt;return;}
     g.t+=dt;
+    if(g.bd&&!g.bs2&&!g.bd2){
+      const rem=g.b2At-g.t;
+      if(rem<=APEX_WARN_ONE&&!g.apWarn1){
+        g.apWarn1=1;
+        g.msg='something big is approaching...';
+        g.msgT=1.5;
+        beep(190,.055,'triangle',.016);
+      }
+      if(rem<=APEX_WARN_TWO&&!g.apWarn2){
+        g.apWarn2=1;
+        g.msg='someone...';
+        g.msgT=1.2;
+        beep(170,.06,'sawtooth',.02);
+      }
+    }
 
     const nsh=school('nsh'),mel=school('mel');
     if(p.mkOn&&g.sch.nsh===0&&Math.hypot(p.x-nsh.x,p.y-nsh.y)<nsh.r)beginSchool('nsh');
@@ -1293,11 +1340,17 @@ canvas{display:block;width:100%;height:100%}
     }
     if(apexZone&&!pSafeNow){
       const adx=apexZone.x-p.x,ady=apexZone.y-p.y,adl=Math.hypot(adx,ady)||1;
-      const pull=55+((apexZone.d-apexZone.t)/apexZone.d)*25;
+      const age=(apexZone.d-apexZone.t)/Math.max(.001,apexZone.d);
+      const edge=clamp(adl/Math.max(1,apexZone.r),0,1);
+      let pull=(APEX_STORM_PULL_BASE+age*APEX_STORM_PULL_GROW)*(.35+.65*edge);
+      if(p.zt>0)pull*=APEX_STORM_ZOOMIES_RESIST;
       p.x=clamp(p.x+adx/adl*pull*dt,12,MAP_W-12);
       p.y=clamp(p.y+ady/adl*pull*dt,12,MAP_H-12);
-      hitPlayer(11*dt);
-      if(Math.random()<.35)pushFx({x:p.x+rnd(-8,8),y:p.y+rnd(-8,8),vx:rnd(-18,18),vy:rnd(-30,10),t:rnd(.08,.18),c:'#d4b8ff'});
+      if(g.apStormHitCd<=0&&adl<apexZone.r*.82){
+        hitPlayer(p.zt>0?APEX_STORM_TICK_DMG*.45:APEX_STORM_TICK_DMG);
+        g.apStormHitCd=APEX_STORM_TICK_CD;
+      }
+      if(Math.random()<.28)pushFx({x:p.x+rnd(-8,8),y:p.y+rnd(-8,8),vx:rnd(-18,18),vy:rnd(-30,10),t:rnd(.08,.18),c:'#d4b8ff'});
     }
 
     let triMode=0;
@@ -1653,7 +1706,7 @@ canvas{display:block;width:100%;height:100%}
         if(!m.apMax)m.apMax=m.hp;
         if(!m.apBaseS)m.apBaseS=m.s;
         if(!m.apCd)m.apCd=rnd(1.4,2.2);
-        if(!m.apStormCd)m.apStormCd=rnd(2.6,3.8);
+        if(!m.apStormCd)m.apStormCd=rnd(3.4,5.2);
         if(!m.apSummonCd)m.apSummonCd=rnd(3.4,4.8);
         if(!m.apBurstSpd)m.apBurstSpd=860;
         if(!m.apTele)m.apTele=0;
@@ -1750,10 +1803,10 @@ canvas{display:block;width:100%;height:100%}
         }
         if(m.apStormCd<=0&&!pSafeNow){
           addApexStorm(clamp(p.x+p.vx*.32+rnd(-36,36),24,MAP_W-24),clamp(p.y+p.vy*.32+rnd(-36,36),24,MAP_H-24),62+phase*10,2.0+phase*.45);
-          if(phase>=3&&Math.random()<.3){
+          if(phase>=3&&Math.random()<.16){
             addApexStorm(clamp(m.x+rnd(-120,120),24,MAP_W-24),clamp(m.y+rnd(-120,120),24,MAP_H-24),56+phase*8,1.8+phase*.35);
           }
-          m.apStormCd=rnd(Math.max(1.8,3.8-rage*.5),Math.max(2.6,4.8-rage*.55));
+          m.apStormCd=rnd(Math.max(2.8,4.9-rage*.4),Math.max(3.6,6.1-rage*.45));
         }
         if(!pSafeNow){
           const px=m.x-p.x,py=m.y-p.y,pl=Math.hypot(px,py)||1;
@@ -1973,7 +2026,7 @@ canvas{display:block;width:100%;height:100%}
           continue;
         }
         if(m.k===4&&m.apImpactCd<=0&&!pSafeNow){
-          m.apImpactCd=.55;
+          m.apImpactCd=.9;
           addApexStorm(clamp(p.x+rnd(-16,16),24,MAP_W-24),clamp(p.y+rnd(-16,16),24,MAP_H-24),68+(m.apPhase||1)*10,2.2+(m.apPhase||1)*.35);
           burst(p.x,p.y,'#e1c6ff',10,84);
           trauma(.15);
@@ -2626,7 +2679,7 @@ canvas{display:block;width:100%;height:100%}
       x.fillText('BOSS DOWN',cx,cy-8);
       x.fillStyle='rgba(209,231,255,'+(0.58+0.32*q)+')';
       x.font=(W<520?'600 13px':'600 15px')+' Trebuchet MS,sans-serif';
-      x.fillText('Apex signal detected',cx,cy+20);
+      x.fillText('something big is approaching...',cx,cy+20);
       x.restore();
       x.textAlign='left';
     }
