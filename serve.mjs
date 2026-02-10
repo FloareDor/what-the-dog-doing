@@ -5,24 +5,29 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "build");
-const port = 8000;
+const resolvedRoot = path.resolve(root);
+const port = Number(process.env.PORT || 8000);
 
 const mime = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
   ".json": "application/json; charset=utf-8",
 };
 
 const server = http.createServer(async (req, res) => {
   try {
-    let reqPath = (req.url || "/").split("?")[0];
-    if (reqPath === "/") reqPath = "/index.html";
-    const safePath = path.normalize(reqPath).replace(/^([\\/])+/g, "");
-    const diskPath = path.join(root, safePath);
+    const requestUrl = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
 
-    if (!diskPath.startsWith(root)) {
+    let staticPath = requestUrl.pathname;
+    if (staticPath === "/") staticPath = "/index.html";
+    const safePath = path.normalize(staticPath).replace(/^([\\/])+/g, "");
+    const diskPath = path.resolve(root, safePath);
+
+    if (diskPath !== resolvedRoot && !diskPath.startsWith(`${resolvedRoot}${path.sep}`)) {
       res.writeHead(403);
       res.end("Forbidden");
       return;

@@ -16,6 +16,7 @@ const spriteFiles = [
   "rotations/south-east.png",
   "rotations/south-west.png",
 ];
+const extraStaticFiles = ["leaderboard.html", "leaderboard-config.js"];
 
 const raw = await fs.readFile(srcPath, "utf8");
 
@@ -77,7 +78,14 @@ for (const rel of spriteFiles) {
   await fs.copyFile(src, dst);
 }
 
+for (const fileName of extraStaticFiles) {
+  const src = path.join(__dirname, "src", fileName);
+  const dst = path.join(__dirname, "build", fileName);
+  await fs.copyFile(src, dst);
+}
+
 const srcBytes = Buffer.byteLength(raw);
 const outBytes = Buffer.byteLength(out);
 console.log(`build done: ${srcBytes} -> ${outBytes} bytes`);
 console.log(`copied sprites: ${spriteFiles.length} files`);
+console.log(`copied static files: ${extraStaticFiles.length}`);

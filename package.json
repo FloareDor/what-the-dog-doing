@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
+    "migrate:init": "node scripts/apply-supabase-migration.mjs",
     "pack": "node package.mjs",
     "start": "node serve.mjs"
   }

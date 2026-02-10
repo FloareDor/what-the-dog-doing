@@ -1,1 +1,4 @@
 agent-context/
+node_modules/
+.env
+data/
