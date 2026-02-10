@@ -73,6 +73,7 @@
   const SLINGSHOT_ROPE_START=176;
   const SLINGSHOT_ROPE_DEFAULT=44;
   const SLINGSHOT_ROPE_SHRINK=142;
+  const KILL_CAP=9999;
   const MINI_BOSS_MIN_KILLS=18;
   const EXPLODER_INTRO_DELAY=12;
   const SHIELDED_INTRO_DELAY=28;
@@ -116,7 +117,7 @@
     pz:0,
     uq:[],
     inB:'',mb:0,mbd:0,bs:0,bd:0,bs2:0,bd2:0,b2At:0,
-    bossDownT:0,
+    bossDownT:0,won:0,
     postDeanT:0,endWave:0,endT:0,endSpawnT:0,
     apWarn1:0,apWarn2:0,apStormHitCd:0,
     botMask:0,chemMask:0,
@@ -496,9 +497,11 @@
   }
   function objectiveText(){
     if(!p.mkOn)return 'collect mints '+g.homeGot+'/'+g.homeNeed;
+    if(g.won)return 'CAMPUS SECURED \u2014 you did it!';
+    if(g.kills>=KILL_CAP)return 'clear remaining enemies! '+z.length+' left';
     if(g.bd2){
-      if(g.endWave>0)return 'ENDLESS WAVE '+g.endWave+' — survive!';
-      return 'endless mode — brace yourself';
+      if(g.endWave>0)return 'WAVE '+g.endWave+' \u2014 '+g.kills+'/'+KILL_CAP+' kills';
+      return 'endless mode \u2014 '+g.kills+'/'+KILL_CAP+' kills to secure campus';
     }
     if(g.bs2&&knownVariants(g.chemMask)>=3)return 'triple burst! overlap all 3 puddles to storm apex!';
     if(g.bs2)return 'defeat apex dean';
@@ -1015,7 +1018,7 @@
   }
 
   function reset(full){
-    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.mb=0;g.mbd=0;g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.bossDownT=0;g.postDeanT=0;g.endWave=0;g.endT=0;g.endSpawnT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;g.lbTopErr='';g.lbRankErr='';g.lbRankText='';g.lbFetchT=0;g.lbRankFetchT=0;g.lbBtnX=0;g.lbBtnY=0;g.lbBtnW=0;g.lbBtnH=0;
+    g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.pz=0;g.uq.length=0;g.inB='';g.mb=0;g.mbd=0;g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.bossDownT=0;g.won=0;g.postDeanT=0;g.endWave=0;g.endT=0;g.endSpawnT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;g.lbTopErr='';g.lbRankErr='';g.lbRankText='';g.lbFetchT=0;g.lbRankFetchT=0;g.lbBtnX=0;g.lbBtnY=0;g.lbBtnW=0;g.lbBtnH=0;
     p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slFocus=0;p.slT=0;p.slRecallT=0;p.slLinkT=0;p.slRecallPulse=0;p.slCarryVx=0;p.slCarryVy=0;p.slPow=0;p.slWave=0;p.slComboFx=0;p.slHitMask=0;p.slPerfect=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
     p.slRopeRest=0;
     z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;
@@ -1222,30 +1225,33 @@
     }
   }
 
+  // progressive upgrade scaling: upgrades get stronger as kills increase
+  function upScale(){return 1+g.kills/2400;}
+
   const UPS=[
-    {n:'Rapid Fire',d:'shoot faster',f:()=>p.fireRate=Math.max(.15,p.fireRate*.8),req:()=>1},
-    {n:'Big Bites',d:'more damage',f:()=>p.dmg+=8,req:()=>1},
-    {n:'Speed Paws',d:'move faster',f:()=>p.speed+=30,req:()=>1},
-    {n:'Extra Shot',d:'+1 projectile',f:()=>p.shots=Math.min(5,p.shots+1),req:()=>1},
-    {n:'Snack Magnet',d:'pickup range up',f:()=>p.magnet+=40,req:()=>1},
-    {n:'Tough Fur',d:'+max hp +heal',f:()=>{p.maxHp+=32;p.hp=Math.min(p.maxHp,p.hp+32)},req:()=>1},
-    {n:'Quick Heal',d:'heal now',f:()=>p.hp=Math.min(p.maxHp,p.hp+45),req:()=>1},
-    {n:'Zoomies Time',d:'zoomies lasts longer',f:()=>p.zDur=Math.min(2.6,p.zDur+.32),req:()=>1},
-    {n:'Zoomies CD',d:'zoomies cooldown down',f:()=>p.zCool=Math.max(1.4,p.zCool-.85),req:()=>1},
-    {n:'Zoomies Speed',d:'zoomies speed up',f:()=>p.zSpd=Math.min(4,p.zSpd+.45),req:()=>1},
-    {n:'Zoomies Charge',d:'zoomies charge faster',f:()=>p.zLoad=Math.max(.55,p.zLoad-.24),req:()=>1},
-    {n:'Territory CD',d:'territory cooldown down',f:()=>p.mkI=Math.max(3.2,p.mkI-.68),req:()=>p.mkOn},
-    {n:'Territory Radius',d:'territory area bigger',f:()=>p.mkR=Math.min(110,p.mkR+16),req:()=>p.mkOn},
-    {n:'Territory Duration',d:'territory lasts longer',f:()=>p.mkD=Math.min(40,p.mkD+5),req:()=>p.mkOn},
-    {n:'Territory Slow',d:'territory slows more',f:()=>p.mkSl=Math.min(.88,p.mkSl+.12),req:()=>p.mkOn},
-    {n:'Chemical Puddle',d:'chem damage up',f:()=>{p.chDo=Math.min(58,p.chDo+10);p.chBurst=Math.min(42,p.chBurst+8)},req:()=>p.cat},
-    {n:'Chemical Radius',d:'chem area bigger',f:()=>p.mkR=Math.min(120,p.mkR+13),req:()=>p.cat},
-    {n:'Chemical Tempo',d:'chem cooldown down',f:()=>p.mkI=Math.max(2.6,p.mkI-.58),req:()=>p.cat},
-    {n:'Bot Fetch',d:'bot grabs mints farther away',f:()=>p.bFetch=Math.min(220,p.bFetch+34),req:()=>p.bot},
-    {n:'Bot Cargo',d:'bot carries more mints',f:()=>p.bCarryMax=Math.min(5,p.bCarryMax+1),req:()=>p.bot},
-    {n:'Shock Tempo',d:'shock pulse cooldown down',f:()=>p.bRate=Math.max(.62,p.bRate*.82),req:()=>p.bot&&p.bAtk},
-    {n:'Shock Pierce',d:'pulse pierces more + wider',f:()=>{p.bPier=Math.min(8,p.bPier+1);p.bSize=Math.min(18,p.bSize+1.4)},req:()=>p.bot&&p.bAtk},
-    {n:'Shock Power',d:'shock pulse damage up',f:()=>p.bDmg=Math.min(2.8,p.bDmg+.33),req:()=>p.bot&&p.bAtk},
+    {n:'Rapid Fire',d:'shoot faster',f:()=>p.fireRate=Math.max(.12,p.fireRate*(1-.2*Math.min(upScale(),2.5))),req:()=>1},
+    {n:'Big Bites',d:'more damage',f:()=>p.dmg+=8*upScale(),req:()=>1},
+    {n:'Speed Paws',d:'move faster',f:()=>p.speed+=30*upScale(),req:()=>1},
+    {n:'Extra Shot',d:'+1 projectile',f:()=>p.shots=Math.min(8,p.shots+1),req:()=>1},
+    {n:'Snack Magnet',d:'pickup range up',f:()=>p.magnet+=40*upScale(),req:()=>1},
+    {n:'Tough Fur',d:'+max hp +heal',f:()=>{const v=32*upScale();p.maxHp+=v;p.hp=Math.min(p.maxHp,p.hp+v)},req:()=>1},
+    {n:'Quick Heal',d:'heal now',f:()=>p.hp=Math.min(p.maxHp,p.hp+45*upScale()),req:()=>1},
+    {n:'Zoomies Time',d:'zoomies lasts longer',f:()=>p.zDur=Math.min(4.2,p.zDur+.32*upScale()),req:()=>1},
+    {n:'Zoomies CD',d:'zoomies cooldown down',f:()=>p.zCool=Math.max(.8,p.zCool-.85*upScale()),req:()=>1},
+    {n:'Zoomies Speed',d:'zoomies speed up',f:()=>p.zSpd=Math.min(6,p.zSpd+.45*upScale()),req:()=>1},
+    {n:'Zoomies Charge',d:'zoomies charge faster',f:()=>p.zLoad=Math.max(.3,p.zLoad-.24*upScale()),req:()=>1},
+    {n:'Territory CD',d:'territory cooldown down',f:()=>p.mkI=Math.max(1.8,p.mkI-.68*upScale()),req:()=>p.mkOn},
+    {n:'Territory Radius',d:'territory area bigger',f:()=>p.mkR=Math.min(180,p.mkR+16*upScale()),req:()=>p.mkOn},
+    {n:'Territory Duration',d:'territory lasts longer',f:()=>p.mkD=Math.min(60,p.mkD+5*upScale()),req:()=>p.mkOn},
+    {n:'Territory Slow',d:'territory slows more',f:()=>p.mkSl=Math.min(.94,p.mkSl+.12*Math.min(upScale(),2)),req:()=>p.mkOn},
+    {n:'Chemical Puddle',d:'chem damage up',f:()=>{const s=upScale();p.chDo=Math.min(120,p.chDo+10*s);p.chBurst=Math.min(80,p.chBurst+8*s)},req:()=>p.cat},
+    {n:'Chemical Radius',d:'chem area bigger',f:()=>p.mkR=Math.min(190,p.mkR+13*upScale()),req:()=>p.cat},
+    {n:'Chemical Tempo',d:'chem cooldown down',f:()=>p.mkI=Math.max(1.4,p.mkI-.58*upScale()),req:()=>p.cat},
+    {n:'Bot Fetch',d:'bot grabs mints farther away',f:()=>p.bFetch=Math.min(360,p.bFetch+34*upScale()),req:()=>p.bot},
+    {n:'Bot Cargo',d:'bot carries more mints',f:()=>p.bCarryMax=Math.min(8,p.bCarryMax+1),req:()=>p.bot},
+    {n:'Shock Tempo',d:'shock pulse cooldown down',f:()=>p.bRate=Math.max(.32,p.bRate*(1-.18*Math.min(upScale(),2.5))),req:()=>p.bot&&p.bAtk},
+    {n:'Shock Pierce',d:'pulse pierces more + wider',f:()=>{p.bPier=Math.min(14,p.bPier+Math.ceil(upScale()));p.bSize=Math.min(26,p.bSize+1.4*upScale())},req:()=>p.bot&&p.bAtk},
+    {n:'Shock Power',d:'shock pulse damage up',f:()=>p.bDmg=Math.min(5,p.bDmg+.33*upScale()),req:()=>p.bot&&p.bAtk},
   ];
 
   function rollChoices(){
@@ -1324,6 +1330,11 @@
     if(g.dead){
       void fetchLeaderboardPreview(0);
       void fetchOwnRankPreview(0);
+      return;
+    }
+    if(g.won){
+      // victory: keep particles/fx ticking but no combat
+      g.bossDownT=Math.max(g.bossDownT,3);
       return;
     }
     if(zoomiesBusy())g.lvGrace=LEVEL_UI_ZOOMIES_GRACE;
@@ -1882,14 +1893,29 @@
     // endless mode timer
     if(g.bd2)g.endT+=dt;
 
-    // spawn
+    // victory check: kill cap reached + all enemies cleared
+    if(!g.won&&g.kills>=KILL_CAP&&z.length===0){
+      g.won=1;
+      g.msg='CAMPUS SECURED';g.msgT=999;
+      g.bossDownT=4;
+      trauma(.5);hitStop(.12);
+      burst(p.x,p.y,'#ffd56d',50,300);
+      burst(p.x,p.y,'#69f0c9',40,250);
+      burst(p.x,p.y,'#8ec0ff',30,200);
+      beep(523,.2,'triangle',.03);
+      beep(659,.18,'triangle',.025);
+      beep(784,.25,'triangle',.03);
+    }
+
+    // spawn (stop all spawning at kill cap)
+    const canSpawn=g.kills<KILL_CAP&&!g.won;
     g.spawnT-=dt;
     // mini-boss: spawns after NSH done + enough kills
-    if(g.sch.nsh===2&&!g.mb&&!g.mbd&&!g.bs&&!g.bd&&g.kills>=MINI_BOSS_MIN_KILLS)spawnMiniBoss();
+    if(canSpawn&&g.sch.nsh===2&&!g.mb&&!g.mbd&&!g.bs&&!g.bd&&g.kills>=MINI_BOSS_MIN_KILLS)spawnMiniBoss();
     const firstBossReadyByProgress=g.kills>FIRST_BOSS_TRIGGER_KILLS||g.time>FIRST_BOSS_TRIGGER_TIME;
-    if(g.sch.mel===2&&!g.bs&&!g.bd&&!g.bs2&&!g.bd2&&g.kills>=FIRST_BOSS_MIN_KILLS&&firstBossReadyByProgress)spawnBoss();
-    if(g.bd&&!g.bs2&&!g.bd2&&g.t>=g.b2At)spawnApexBoss();
-    if(g.spawnT<=0){
+    if(canSpawn&&g.sch.mel===2&&!g.bs&&!g.bd&&!g.bs2&&!g.bd2&&g.kills>=FIRST_BOSS_MIN_KILLS&&firstBossReadyByProgress)spawnBoss();
+    if(canSpawn&&g.bd&&!g.bs2&&!g.bd2&&g.t>=g.b2At)spawnApexBoss();
+    if(canSpawn&&g.spawnT<=0){
       g.spawnT=g.nextSpawn;
       const baseRate=.78-g.time*.018;
       // endless mode: spawn rate accelerates with waves
@@ -1904,7 +1930,7 @@
       }
     }
     // endless wave escalation
-    if(g.endT>0){
+    if(canSpawn&&g.endT>0){
       g.endSpawnT-=dt;
       if(g.endSpawnT<=0){
         g.endWave++;
@@ -3109,7 +3135,7 @@
       const statRight=abX-8;
       x.font='600 12px Trebuchet MS,sans-serif';
       x.fillStyle='#9ec8ff';x.fillText('Time '+g.time.toFixed(1)+'s',20,statsY);
-      x.fillStyle='#ffd56d';x.fillText('Kills '+g.kills,118,statsY);
+      x.fillStyle='#ffd56d';x.fillText(g.bd2?g.kills+'/'+KILL_CAP:'Kills '+g.kills,118,statsY);
       if(g.endWave>0){x.fillStyle='#ff9a7a';x.fillText('W'+g.endWave,210,statsY);}
       x.textAlign='right';
       x.fillStyle='#dce8ff';x.fillText('Best '+g.best,statRight,statsY);
@@ -3118,7 +3144,7 @@
     }else{
       x.font='600 14px Trebuchet MS,sans-serif';
       x.fillStyle='#9ec8ff';x.fillText('Time '+g.time.toFixed(1)+'s',20,54);
-      x.fillStyle='#ffd56d';x.fillText('Kills '+g.kills,150,54);
+      x.fillStyle='#ffd56d';x.fillText(g.bd2?g.kills+'/'+KILL_CAP:'Kills '+g.kills,150,54);
       if(g.endWave>0){x.fillStyle='#ff9a7a';x.fillText('Wave '+g.endWave,280,54);}
       x.textAlign='right';
       x.fillStyle='#dce8ff';x.fillText('Best '+g.best,W-24,54);
@@ -3358,11 +3384,11 @@
       x.textAlign='center';
       x.fillStyle='rgba(255,227,143,'+(0.44+0.4*q)+')';
       x.font=(W<520?'700 30px':'700 40px')+' Trebuchet MS,sans-serif';
-      const bdt=g.bd&&!g.bd2?'THE DEAN IS DOWN':g.mbd&&!g.bd?'THE PROVOST IS DOWN':g.bd2?'APEX DOWN \u2014 ENDLESS MODE':'BOSS DOWN';
+      const bdt=g.won?'CAMPUS SECURED':g.bd&&!g.bd2?'THE DEAN IS DOWN':g.mbd&&!g.bd?'THE PROVOST IS DOWN':g.bd2?'APEX DOWN \u2014 ENDLESS MODE':'BOSS DOWN';
       x.fillText(bdt,cx,cy-8);
       x.fillStyle='rgba(209,231,255,'+(0.58+0.32*q)+')';
       x.font=(W<520?'600 13px':'600 15px')+' Trebuchet MS,sans-serif';
-      const bds=g.bd2?'how long can you survive?':g.bd?'something big is approaching...':'keep going...';
+      const bds=g.won?g.kills+' kills \u2014 '+g.time.toFixed(1)+'s \u2014 scotty saved campus!':(g.bd2?'how long can you survive?':g.bd?'something big is approaching...':'keep going...');
       x.fillText(bds,cx,cy+20);
       x.restore();
       x.textAlign='left';
