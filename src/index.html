@@ -2038,7 +2038,7 @@ canvas{display:block;width:100%;height:100%}
     if(p.zt>0){
       p.zt=Math.max(0,p.zt-dt);
       if(hasInput){
-        const s=Math.min(1,dt*(bots.length>=3?20:5));
+        const s=Math.min(1,dt*(bots.length>=3?20:16));
         p.zx+=(mx-p.zx)*s;
         p.zy+=(my-p.zy)*s;
         const n=Math.hypot(p.zx,p.zy)||1;
