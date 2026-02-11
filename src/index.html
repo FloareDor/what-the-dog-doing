@@ -132,6 +132,8 @@ canvas{display:block;width:100%;height:100%}
   const APEX_STORM_ZOOMIES_RESIST=.28;
   const APEX_STORM_TICK_DMG=3.6;
   const APEX_STORM_TICK_CD=.34;
+  const ZOOMIES_SHIELD_DURATION=3;
+  const ZOOMIES_SHIELD_REDUCTION=.8;
 
   const imgs={};
   function load(n){const i=new Image();i.src='black_scottish_terrier_dog_with_red_scarf/rotations/'+n+'.png';return i}
@@ -307,7 +309,7 @@ canvas{display:block;width:100%;height:100%}
     }catch{}
   }
 
-  const p={x:260,y:MAP_H*.5,vx:0,vy:0,r:15,hp:100,maxHp:100,speed:185,fireCd:0,fireRate:.46,dmg:12,range:400,shots:1,magnet:88,face:1,rx:0,ry:0,flash:0,gx:1,gy:0,zc:0,zr:0,zt:0,zx:1,zy:0,zcd:0,zDur:1,zSpd:2.1,zLoad:1.5,zCool:5.5,zDmg:24,zDr:.55,zb:0,zp:0,mkOn:0,mkT:0,mkI:8.8,mkS:0,mkD:14,mkR:54,mkSl:.54,chDo:14,chBurst:10,chHeal:8,chHealCd:0,chHealI:.85,cat:0,catM:0,catType:0,fb:0,fbT:0,fbI:8.6,fbR:210,fbFear:2.3,fbKn:320,fbFx:0,fbTier:0,fbMode:1,fbAiT:0,bot:0,botCount:0,botSlots:0,bType:0,bAtk:1,bAuraR:0,bAuraSl:0,bHealCd:0,bHealI:10,bHealAmt:10,bHealFx:0,triA:0,triFx:0,slCharge:0,slFocus:0,slT:0,slRecallT:0,slLinkT:0,slRecallPulse:0,slCarryVx:0,slCarryVy:0,slPow:0,slWave:0,slComboFx:0,slHitMask:0,slPerfect:0,slDx:1,slDy:0,bx:0,by:0,ba:0,bcd:0,bRate:1.9,bDmg:1.15,bRange:480,bFetch:95,bPull:195,bCarry:0,bCarryMax:2,bGrabCd:0,bGrabI:.38,bPier:4,bSize:6};
+  const p={x:260,y:MAP_H*.5,vx:0,vy:0,r:15,hp:100,maxHp:100,speed:185,fireCd:0,fireRate:.46,dmg:12,range:400,shots:1,magnet:88,face:1,rx:0,ry:0,flash:0,gx:1,gy:0,zc:0,zr:0,zt:0,zx:1,zy:0,zcd:0,zDur:1,zSpd:2.1,zLoad:1.5,zCool:5.5,zDmg:24,zDr:.55,zb:0,zp:0,mkOn:0,mkT:0,mkI:8.8,mkS:0,mkD:14,mkR:54,mkSl:.54,chDo:14,chBurst:10,chHeal:8,chHealCd:0,chHealI:.85,cat:0,catM:0,catType:0,fb:0,fbT:0,fbI:8.6,fbR:210,fbFear:2.3,fbKn:320,fbFx:0,fbTier:0,fbMode:1,fbAiT:0,bot:0,botCount:0,botSlots:0,bType:0,bAtk:1,bAuraR:0,bAuraSl:0,bHealCd:0,bHealI:10,bHealAmt:10,bHealFx:0,triA:0,triFx:0,slCharge:0,slFocus:0,slT:0,slRecallT:0,slLinkT:0,slRecallPulse:0,slCarryVx:0,slCarryVy:0,slPow:0,slWave:0,slComboFx:0,slHitMask:0,slPerfect:0,slDx:1,slDy:0,zoomShield:0,bx:0,by:0,ba:0,bcd:0,bRate:1.9,bDmg:1.15,bRange:480,bFetch:95,bPull:195,bCarry:0,bCarryMax:2,bGrabCd:0,bGrabI:.38,bPier:4,bSize:6};
   const keys={l:0,r:0,u:0,d:0,gr:0};
   let touchId=-1,touchMove=0;
   const joy={x:78,y:0,r:42,kr:16,tx:0,ty:0,ax:0,ay:0,ttx:0,tty:0,tax:0,tay:0,show:0,act:0};
@@ -1863,7 +1865,11 @@ canvas{display:block;width:100%;height:100%}
       p.flash=Math.max(p.flash,.03);
       return;
     }
-    p.hp-=d;
+    const shieldRatio=clamp(p.zoomShield/ZOOMIES_SHIELD_DURATION,0,1);
+    const shieldAmount=shieldRatio*ZOOMIES_SHIELD_REDUCTION;
+    const dmg=Math.max(0,d*(1-shieldAmount));
+    if(dmg<=0)return;
+    p.hp-=dmg;
     trauma(.03);
     if(p.hp<=0){
       p.hp=0;g.dead=1;g.start=1;
@@ -1905,6 +1911,7 @@ canvas{display:block;width:100%;height:100%}
     if(p.slWave>0)p.slWave=Math.max(0,p.slWave-rdt*2.6);
     if(p.slComboFx>0)p.slComboFx=Math.max(0,p.slComboFx-rdt*2.1);
     if(p.slLinkT>0)p.slLinkT=Math.max(0,p.slLinkT-rdt);
+    if(p.zoomShield>0)p.zoomShield=Math.max(0,p.zoomShield-rdt);
     for(let i=pudd.length-1;i>=0;i--){const pd=pudd[i];pd.t-=dt;if(pd.t<=0)pudd.splice(i,1);}
     for(let i=react.length-1;i>=0;i--){const rc=react[i];rc.t-=dt;if(rc.pcd>0)rc.pcd=Math.max(0,rc.pcd-dt);if(rc.t<=0)react.splice(i,1);}
     for(let i=psyFx.length-1;i>=0;i--){const q=psyFx[i];q.t-=dt;if(q.t<=0)psyFx.splice(i,1);}
@@ -2024,6 +2031,7 @@ canvas{display:block;width:100%;height:100%}
       }
     }
 
+    const wasZooming = p.zt > 0;
     if(p.zt>0){
       p.zt=Math.max(0,p.zt-dt);
       if(hasInput){
@@ -2105,6 +2113,7 @@ canvas{display:block;width:100%;height:100%}
         if(Math.random()<.7)pushFx({x:p.x+rnd(-5,5),y:p.y+10+rnd(-3,3),vx:rnd(-14,14),vy:rnd(6,30),t:rnd(.12,.26),c:'#ffd56d'});
       }
     }
+    if(wasZooming && p.zt <= 0) p.zoomShield = ZOOMIES_SHIELD_DURATION;
 
     p.x=clamp(p.x+p.vx*dt,12,MAP_W-12);
     p.y=clamp(p.y+p.vy*dt,12,MAP_H-12);
