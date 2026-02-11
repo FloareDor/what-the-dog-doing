@@ -1813,7 +1813,6 @@ canvas{display:block;width:100%;height:100%}
     {n:'Territory Radius',d:'territory area bigger',f:()=>p.mkR=Math.min(260,p.mkR+18*upScale()),req:()=>p.mkOn},
     {n:'Territory Duration',d:'territory lasts longer',f:()=>p.mkD=Math.min(90,p.mkD+6*upScale()),req:()=>p.mkOn},
     {n:'Territory Slow',d:'territory slows more',f:()=>p.mkSl=Math.min(.96,p.mkSl+.14*Math.min(upScale(),3)),req:()=>p.mkOn},
-    {n:'Territory Burst',d:'mark drops extra puddle',f:()=>{p.mkBurst=1;p.mkR=Math.min(260,p.mkR+8)},req:()=>p.mkOn&&!p.mkBurst},
     // --- CHEMICAL / CATALYST ---
     {n:'Chemical Puddle',d:'chem damage up',f:()=>{const s=upScale();p.chDo=Math.min(200,p.chDo+12*s);p.chBurst=Math.min(120,p.chBurst+10*s)},req:()=>p.cat},
     {n:'Chemical Radius',d:'chem area bigger',f:()=>p.mkR=Math.min(280,p.mkR+15*upScale()),req:()=>p.cat},
