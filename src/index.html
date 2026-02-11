@@ -1538,7 +1538,7 @@ canvas{display:block;width:100%;height:100%}
 
   function reset(full){
     g.dead=0;g.lvup=0;g.t=0;g.time=0;g.spawnT=0;g.nextSpawn=.8;g.kills=0;g.msg='';g.msgT=0;g.level=1;g.xp=0;g.nextXp=24;g.stop=0;g.shake=0;g.xpPulse=0;g.cardT=0;g.choices=[];g.homeGot=0;g.sch.nsh=0;g.sch.mel=0;g.sch.bak=0;g.pz=0;g.uq.length=0;g.inB='';g.mb=0;g.mbd=0;g.bs=0;g.bd=0;g.bs2=0;g.bd2=0;g.b2At=0;g.pred=0;g.predDead=0;g.moth=0;g.mothDead=0;g.bossDownT=0;g.won=0;g.endWave=0;g.endT=0;g.endSpawnT=0;g.apWarn1=0;g.apWarn2=0;g.apStormHitCd=0;g.botMask=0;g.chemMask=0;g.psyMask=0;g.labStep=0;g.labBank=0;g.labFlip=0;g.labNsh=0;g.labMel=0;g.labBak=0;g.labNshRuns=0;g.labMelRuns=0;g.stormCd=0;g.labCd=0;g.safeCampT=0;g.safeBreachCd=0;g.safeThreat=0;g.lvPend=0;g.lvGrace=0;g.lbSent=0;g.lbTopErr='';g.lbRankErr='';g.lbRankText='';g.lbFetchT=0;g.lbRankFetchT=0;g.lbBtnX=0;g.lbBtnY=0;g.lbBtnW=0;g.lbBtnH=0;
-    p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.fb=0;p.fbT=0;p.fbI=8.6;p.fbR=210;p.fbFear=2.3;p.fbKn=320;p.fbFx=0;p.fbTier=0;p.fbMode=1;p.fbAiT=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slFocus=0;p.slT=0;p.slRecallT=0;p.slLinkT=0;p.slRecallPulse=0;p.slCarryVx=0;p.slCarryVy=0;p.slPow=0;p.slWave=0;p.slComboFx=0;p.slHitMask=0;p.slPerfect=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
+    p.x=260;p.y=MAP_H*.5;p.vx=0;p.vy=0;p.hp=100;p.maxHp=100;p.speed=185;p.fireCd=0;p.fireRate=.46;p.dmg=12;p.range=400;p.shots=1;p.magnet=88;p.face=1;p.rx=0;p.ry=0;p.flash=0;p.gx=1;p.gy=0;p.zc=0;p.zr=0;p.zt=0;p.zx=1;p.zy=0;p.zcd=0;p.zDur=1;p.zSpd=2.1;p.zLoad=1.5;p.zCool=5.5;p.zDmg=24;p.zDr=.55;p.zb=0;p.zp=0;p.zDriftVx=0;p.zDriftVy=0;p.mkOn=0;p.mkT=0;p.mkI=8.8;p.mkS=0;p.mkD=14;p.mkR=54;p.mkSl=.54;p.mkBurst=0;p.mkBurstT=0;p.mkBurstQ=[];p.chDo=14;p.chBurst=10;p.chHeal=8;p.chHealCd=0;p.chHealI=.85;p.cat=0;p.catM=0;p.catType=0;p.fb=0;p.fbT=0;p.fbI=8.6;p.fbR=210;p.fbFear=2.3;p.fbKn=320;p.fbFx=0;p.fbTier=0;p.fbMode=1;p.fbAiT=0;p.bot=0;p.botCount=0;p.botSlots=0;p.bType=0;p.bAtk=1;p.bAuraR=0;p.bAuraSl=0;p.bHealCd=0;p.bHealI=10;p.bHealAmt=10;p.bHealFx=0;p.triA=0;p.triFx=0;p.slCharge=0;p.slFocus=0;p.slT=0;p.slRecallT=0;p.slLinkT=0;p.slRecallPulse=0;p.slCarryVx=0;p.slCarryVy=0;p.slPow=0;p.slWave=0;p.slComboFx=0;p.slHitMask=0;p.slPerfect=0;p.slDx=1;p.slDy=0;p.bx=p.x+20;p.by=p.y+4;p.ba=0;p.bcd=.45;p.bRate=1.9;p.bDmg=1.15;p.bRange=480;p.bFetch=95;p.bPull=195;p.bCarry=0;p.bCarryMax=2;p.bGrabCd=0;p.bGrabI=.38;p.bPier=4;p.bSize=6;
     p.slRopeRest=0;
     z.length=0;b.length=0;food.length=0;pudd.length=0;fx.length=0;bots.length=0;react.length=0;psyFx.length=0;
     decoy.on=0;decoy.t=0;decoy.pop=0;
@@ -1810,6 +1810,7 @@ canvas{display:block;width:100%;height:100%}
     {n:'Zoomies Speed',d:'zoomies speed up',f:()=>p.zSpd=Math.min(8,p.zSpd+.5*upScale()),req:()=>1},
     {n:'Zoomies Charge',d:'zoomies charge faster',f:()=>p.zLoad=Math.max(.2,p.zLoad-.26*upScale()),req:()=>1},
     {n:'Zoomies Damage',d:'zoomies hit harder',f:()=>p.zDmg+=6*upScale(),req:()=>1},
+    {n:'Zoomies Drift',d:'longer momentum after dash',f:()=>p.zDr=Math.min(1.6,p.zDr+.22*upScale()),req:()=>1},
     // --- TERRITORY / PUDDLES ---
     {n:'Territory CD',d:'territory cooldown down',f:()=>p.mkI=Math.max(1.2,p.mkI-.75*upScale()),req:()=>p.mkOn},
     {n:'Territory Radius',d:'territory area bigger',f:()=>p.mkR=Math.min(260,p.mkR+18*upScale()),req:()=>p.mkOn},
@@ -2023,8 +2024,10 @@ canvas{display:block;width:100%;height:100%}
           trauma(.28);
           p.flash=.09;
           p.gx=p.zx;p.gy=p.zy;
-          burst(p.x,p.y,'#9dffea',18,120);
+          burst(p.x,p.y,'#9dffea',22,140);
+          burst(p.x,p.y,'#ffffff',6,60);
           beep(980,.06,'square',.028);
+          beep(1320,.04,'triangle',.015);
         }else{
           p.zc=0;
         }
@@ -2035,18 +2038,24 @@ canvas{display:block;width:100%;height:100%}
     if(p.zt>0){
       p.zt=Math.max(0,p.zt-dt);
       if(hasInput){
-        p.zx=p.zx*.85+mx*.15;
-        p.zy=p.zy*.85+my*.15;
+        const s=Math.min(1,dt*(bots.length>=3?20:5));
+        p.zx+=(mx-p.zx)*s;
+        p.zy+=(my-p.zy)*s;
         const n=Math.hypot(p.zx,p.zy)||1;
         p.zx/=n;p.zy/=n;
       }
       const zb=p.zb>0?1.35:1;
-      p.vx=p.zx*p.speed*p.zSpd*zb+p.slCarryVx;
-      p.vy=p.zy*p.speed*p.zSpd*zb+p.slCarryVy;
+      const prog=1-p.zt/p.zDur;
+      const ease=prog<.15?prog/.15:p.zt/p.zDur<.2?p.zt/(.2*p.zDur):1;
+      const zs=(.4+.6*ease)*p.speed*p.zSpd*zb;
+      p.vx=p.zx*zs+p.slCarryVx;
+      p.vy=p.zy*zs+p.slCarryVy;
       p.face=p.vx>=0?1:-1;
       p.rx-=p.zx*8*dt*60;
       p.ry-=p.zy*6*dt*60;
-      if(Math.random()<.65)pushFx({x:p.x-rnd(-6,6),y:p.y-rnd(-6,6),vx:-p.vx*.12+rnd(-35,35),vy:-p.vy*.12+rnd(-35,35),t:rnd(.1,.25),c:'#8fffe5'});
+      if(Math.random()<.8)pushFx({x:p.x+rnd(-8,8),y:p.y+rnd(-8,8),vx:-p.vx*.12+rnd(-40,40),vy:-p.vy*.12+rnd(-40,40),t:rnd(.1,.25),c:'#8fffe5'});
+      if(Math.random()<.3)pushFx({x:p.x+rnd(-3,3),y:p.y+rnd(-3,3),vx:-p.vx*.06+rnd(-12,12),vy:-p.vy*.06+rnd(-12,12),t:rnd(.3,.6),c:'#d4fffa'});
+      if(Math.random()<.18)beep(180+Math.random()*60,.08,'sawtooth',.008);
       if(p.zt<=0){
         if(p.bot&&bots.length>=3&&p.slCharge>=SLINGSHOT_CHARGE_TRIGGER){
           const perfect=p.slPerfect&&p.slFocus>=.98?1:0;
@@ -2089,6 +2098,8 @@ canvas{display:block;width:100%;height:100%}
           p.slPerfect=0;
           p.slFocus=0;
         }else{
+          p.zDriftVx=p.vx*.6;
+          p.zDriftVy=p.vy*.6;
           p.slCharge=0;
           p.slFocus=0;
           p.slPerfect=0;
@@ -2102,11 +2113,16 @@ canvas{display:block;width:100%;height:100%}
           g.msg='zoomies cd';
           g.msgT=.65;
           beep(420,.04,'triangle',.016);
+          beep(280,.1,'sawtooth',.01);
         }
         p.zcd=p.zCool;
       }
     }else{
-      p.vx=mx*p.speed+p.slCarryVx;p.vy=my*p.speed+p.slCarryVy;
+      const dr=Math.max(0,1-dt/p.zDr);
+      p.zDriftVx*=dr;p.zDriftVy*=dr;
+      if(Math.abs(p.zDriftVx)+Math.abs(p.zDriftVy)<1){p.zDriftVx=0;p.zDriftVy=0;}
+      p.vx=mx*p.speed+p.slCarryVx+p.zDriftVx;p.vy=my*p.speed+p.slCarryVy+p.zDriftVy;
+      if(p.zDriftVx*p.zDriftVx+p.zDriftVy*p.zDriftVy>400&&Math.random()<.25)pushFx({x:p.x+rnd(-4,4),y:p.y+rnd(-4,4),vx:-p.zDriftVx*.06+rnd(-15,15),vy:-p.zDriftVy*.06+rnd(-15,15),t:rnd(.08,.2),c:'#b8ffe8'});
       if(Math.abs(p.vx)>.5)p.face=p.vx>0?1:-1;
       if(p.mkS>0){
         p.rx+=Math.sin(g.t*45)*.5;
@@ -4114,6 +4130,17 @@ canvas{display:block;width:100%;height:100%}
       x.beginPath();x.arc(psx,psy,20+Math.sin(g.t*30)*2+q*4,0,Math.PI*2);x.stroke();
       x.fillStyle='rgba(143,255,229,.16)';
       x.beginPath();x.ellipse(psx-dx*10,psy-dy*7,20,10,Math.atan2(dy,dx),0,Math.PI*2);x.fill();
+      if(p.zt>0){
+        const spd=Math.hypot(p.vx,p.vy),lLen=clamp(spd*.04,6,22);
+        const nx=-dy,ny=dx;
+        x.strokeStyle='rgba(200,255,240,.45)';
+        x.lineWidth=1.5;
+        for(let li=0;li<4;li++){
+          const off=(li-1.5)*9,ox=nx*off,oy=ny*off;
+          const sx=psx-dx*18+ox,sy=psy-dy*14+oy;
+          x.beginPath();x.moveTo(sx,sy);x.lineTo(sx-dx*lLen,sy-dy*lLen);x.stroke();
+        }
+      }
     }
     if(p.slWave>0){
       const q=p.slWave,rr=30+(1-q)*88;
