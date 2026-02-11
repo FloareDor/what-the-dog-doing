@@ -2006,7 +2006,7 @@
         const nsh = school('nsh'), mel = school('mel'), bak = school('bak');
         if (p.mkOn && g.sch.nsh === 0 && Math.hypot(p.x - nsh.x, p.y - nsh.y) < nsh.r) beginSchool('nsh');
         if (g.sch.nsh === 2 && g.sch.mel === 0 && Math.hypot(p.x - mel.x, p.y - mel.y) < mel.r) beginSchool('mel');
-        if (g.sch.mel === 2 && g.sch.bak === 0 && Math.hypot(p.x - bak.x, p.y - bak.y) < bak.r) beginSchool('bak');
+        if (g.sch.mel === 2 && g.mbd && g.sch.bak === 0 && Math.hypot(p.x - bak.x, p.y - bak.y) < bak.r) beginSchool('bak');
         if (g.sch.nsh === 2 && g.sch.bak === 2 && g.labNsh > 0 && Math.hypot(p.x - nsh.x, p.y - nsh.y) < nsh.r) claimLabVisit('nsh');
         if (g.sch.mel === 2 && g.sch.bak === 2 && g.labMel > 0 && Math.hypot(p.x - mel.x, p.y - mel.y) < mel.r) claimLabVisit('mel');
         if (g.sch.bak === 2 && g.labBak > 0 && Math.hypot(p.x - bak.x, p.y - bak.y) < bak.r) claimLabVisit('bak');
