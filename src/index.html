@@ -182,6 +182,9 @@
         beep(392, .07, 'square', .02);
         beep(523, .08, 'triangle', .014);
       }
+      let bgMusic = new Audio('sound/music.mp3');
+      bgMusic.loop = true;
+      bgMusic.volume = 0.02;
 
       const g = {
         start: 0, dead: 0, lvup: 0, t: 0, time: 0, kills: 0,
@@ -192,6 +195,7 @@
         best: +localStorage.ss_best || 0,
         choices: [],
         homeNeed: 3, homeGot: 0,
+        musicStarted: 0,
         sch: { nsh: 0, mel: 0, bak: 0 }, // 0 not started, 1 active, 2 done
         pz: 0,
         uq: [],
@@ -591,8 +595,8 @@
       }
       let dogAudio = new Audio('sound/whatthedogdoing.mp3');
       function beginSchool(id) {
-        if (Math.random() < 0.33) {
-          dogAudio.volume = 0.5;
+        if (Math.random() < 0.55) {
+          dogAudio.volume = 0.05;
           dogAudio.play().catch(() => { });
         }
         if (id === 'nsh' && g.sch.nsh === 0) {
@@ -921,7 +925,10 @@
         if (g.sch.nsh === 1) return 'complete nsh puzzle to unlock first buddy';
         if (g.sch.mel === 0) return 'reach mellon institute and request catalyst support';
         if (g.sch.mel === 1) return 'complete mellon puzzle to unlock first catalyst';
-        if (g.sch.bak === 0) return 'reach baker hall and request psychology support';
+        if (g.sch.bak === 0) {
+          if (!g.mbd) return 'keep evac routes clear - eliminate threats';
+          return 'reach baker hall and request psychology support';
+        }
         if (g.sch.bak === 1) return 'baker: stabilize panic waves';
         if (g.bd2) {
           if (g.kills >= MOTHER_TRIGGER - 200) return 'WAVE ' + g.endWave + ' - ' + g.kills + '/' + MOTHER_TRIGGER + ' - something stirs...';
@@ -2204,6 +2211,13 @@
         g.time += dt;
         const bid = pSafeNow ? pSafeNow.id : '';
         g.inB = bid;
+        if (!g.musicStarted) {
+          const dist = Math.hypot(p.x - HOME.x, p.y - HOME.y);
+          if (dist > 460) {
+            g.musicStarted = 1;
+            bgMusic.play().catch(() => { });
+          }
+        }
         applyShelterPressure(pSafeNow, dt);
         queueBakerPsychUnlocks();
         if (!pSafeNow || g.safeThreat >= SHELTER_MIN_THREAT) autoFocusBark(dt);
