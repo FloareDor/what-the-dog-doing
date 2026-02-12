@@ -1424,6 +1424,7 @@
           beep(330, .12, 'triangle', .025);
         }
         g.kills++;
+        g.spawnT = Math.min((g.spawnT || 0) + 0.08, 2.0); // spawn fatigue
         queueLabMilestoneRewards();
         if (!light) {
           hitStop(.03);
@@ -1592,7 +1593,8 @@
       }
 
       function spawnZombie() {
-        if (z.length >= MAX_Z) return;
+        const currentCap = Math.min(MAX_Z, 100 + g.kills * 0.12 + (g.time || 0) * 0.5);
+        if (z.length >= currentCap) return;
         const a = Math.random() * Math.PI * 2;
         const d = rnd(360, 560);
         const base = 1 + g.time * .045;
