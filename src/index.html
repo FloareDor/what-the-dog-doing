@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport"
     content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <title>Scotty Survival</title>
+  <title>Project: Zoomies</title>
   <style>
     :root {
       --bg: #0a0d12;
@@ -589,7 +589,12 @@
           g.msg = 'retry'; g.msgT = .55;
         }
       }
+      let dogAudio = new Audio('sound/whatthedogdoing.mp3');
       function beginSchool(id) {
+        if (Math.random() < 0.33) {
+          dogAudio.volume = 0.5;
+          dogAudio.play().catch(() => { });
+        }
         if (id === 'nsh' && g.sch.nsh === 0) {
           g.sch.nsh = 1; playMeme(); startPuzzle('nsh');
           g.msg = 'help'; g.msgT = 1.4; beep(640, .05, 'triangle', .02);
