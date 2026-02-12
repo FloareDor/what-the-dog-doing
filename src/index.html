@@ -98,7 +98,7 @@
       const JOY_SMOOTH = 22;
       const JOY_VIS_SMOOTH = 16;
       const LEVEL_UI_ZOOMIES_GRACE = 1;
-      const MAX_Z = 180, MAX_FOOD = 260, MAX_FX = 420, MAX_PUDD = 18, MAX_B = 260, MAX_REACT = 14;
+      const MAX_Z = 160, MAX_FOOD = 260, MAX_FX = 420, MAX_PUDD = 18, MAX_B = 260, MAX_REACT = 14;
       const FIRST_BOSS_MIN_KILLS = 600;
       const FIRST_BOSS_TRIGGER_KILLS = 800;
       const FIRST_BOSS_TRIGGER_TIME = 999;
@@ -148,6 +148,11 @@
       const SLINGSHOT_ROPE_START = 176;
       const SLINGSHOT_ROPE_DEFAULT = 44;
       const SLINGSHOT_ROPE_SHRINK = 142;
+      const SL_DUO_SCALE = .62;
+      const BOT_MELEE_DMG = 8;
+      const BOT_MELEE_CD = .3;
+      const BOT_MELEE_RANGE = 22;
+      const BOT_MELEE_KB = 140;
       const KILL_CAP = 9999;
       const PREDATOR_TRIGGER = 1500;
       const MOTHER_TRIGGER = 9000;
@@ -345,7 +350,7 @@
         } catch { }
       }
 
-      const p = { x: 260, y: MAP_H * .5, vx: 0, vy: 0, r: 15, hp: 100, maxHp: 100, speed: 185, fireCd: 0, fireRate: .46, dmg: 12, range: 400, shots: 1, magnet: 88, face: 1, rx: 0, ry: 0, flash: 0, gx: 1, gy: 0, zc: 0, zr: 0, zt: 0, zx: 1, zy: 0, zcd: 0, zDur: 1, zSpd: 2.1, zLoad: 1.5, zCool: 5.5, zDmg: 24, zDr: .55, zb: 0, zp: 0, mkOn: 0, mkT: 0, mkI: 8.8, mkS: 0, mkD: 14, mkR: 54, mkSl: .54, chDo: 14, chBurst: 10, chHeal: 8, chHealCd: 0, chHealI: .85, cat: 0, catM: 0, catType: 0, fb: 0, fbT: 0, fbI: 8.6, fbR: 210, fbFear: 2.3, fbKn: 320, fbFx: 0, fbTier: 0, fbMode: 1, fbAiT: 0, bot: 0, botCount: 0, botSlots: 0, bType: 0, bAtk: 1, bAuraR: 0, bAuraSl: 0, bHealCd: 0, bHealI: 10, bHealAmt: 10, bHealFx: 0, triA: 0, triFx: 0, slCharge: 0, slFocus: 0, slT: 0, slRecallT: 0, slLinkT: 0, slRecallPulse: 0, slCarryVx: 0, slCarryVy: 0, slPow: 0, slWave: 0, slComboFx: 0, slHitMask: 0, slPerfect: 0, slDx: 1, slDy: 0, zoomShield: 0, bx: 0, by: 0, ba: 0, bcd: 0, bRate: 1.9, bDmg: 1.15, bRange: 480, bFetch: 95, bPull: 195, bCarry: 0, bCarryMax: 2, bGrabCd: 0, bGrabI: .38, bPier: 4, bSize: 6 };
+      const p = { x: 260, y: MAP_H * .5, vx: 0, vy: 0, r: 15, hp: 100, maxHp: 100, speed: 185, fireCd: 0, fireRate: .46, dmg: 12, range: 400, shots: 1, magnet: 88, face: 1, rx: 0, ry: 0, flash: 0, gx: 1, gy: 0, zc: 0, zr: 0, zt: 0, zx: 1, zy: 0, zcd: 0, zDur: 1, zSpd: 2.1, zLoad: 1.5, zCool: 5.5, zDmg: 24, zDr: .55, zb: 0, zp: 0, mkOn: 0, mkT: 0, mkI: 8.8, mkS: 0, mkD: 14, mkR: 54, mkSl: .54, chDo: 14, chBurst: 10, chHeal: 8, chHealCd: 0, chHealI: .85, cat: 0, catM: 0, catType: 0, fb: 0, fbT: 0, fbI: 8.6, fbR: 210, fbFear: 2.3, fbKn: 320, fbFx: 0, fbTier: 0, fbMode: 1, fbAiT: 0, bot: 0, botCount: 0, botSlots: 0, bType: 0, bAtk: 1, bAuraR: 0, bAuraSl: 0, bHealCd: 0, bHealI: 10, bHealAmt: 10, bHealFx: 0, triA: 0, triFx: 0, slCharge: 0, slFocus: 0, slT: 0, slRecallT: 0, slLinkT: 0, slRecallPulse: 0, slCarryVx: 0, slCarryVy: 0, slPow: 0, slWave: 0, slComboFx: 0, slHitMask: 0, slPerfect: 0, slScale: 1, slDx: 1, slDy: 0, zoomShield: 0, bx: 0, by: 0, ba: 0, bcd: 0, bRate: 1.9, bDmg: 1.15, bRange: 480, bFetch: 95, bPull: 195, bCarry: 0, bCarryMax: 2, bGrabCd: 0, bGrabI: .38, bPier: 4, bSize: 6 };
       const keys = { l: 0, r: 0, u: 0, d: 0, gr: 0 };
       let touchId = -1, touchMove = 0;
       const joy = { x: 78, y: 0, r: 42, kr: 16, tx: 0, ty: 0, ax: 0, ay: 0, ttx: 0, tty: 0, tax: 0, tay: 0, show: 0, act: 0 };
@@ -1145,7 +1150,7 @@
         const want = p.bot ? Math.max(1, Math.min(p.botCount | 0, types.length || 1)) : 0;
         while (bots.length < want) {
           const t = types[Math.min(types.length - 1, bots.length)] || 1;
-          bots.push({ x: p.x, y: p.y, t, cd: rnd(.05, .3), grabCd: rnd(.03, .22), slx: 0, sly: 0, vx: 0, vy: 0 });
+          bots.push({ x: p.x, y: p.y, t, cd: rnd(.05, .3), grabCd: rnd(.03, .22), mcd: 0, slx: 0, sly: 0, vx: 0, vy: 0 });
         }
         while (bots.length > want) bots.pop();
         for (let i = 0; i < bots.length; i++)bots[i].t = types[Math.min(types.length - 1, i)] || bots[i].t || 1;
@@ -2087,6 +2092,7 @@
               p.slCharge = 0;
               p.slFocus = 0;
               p.slPow = 0;
+              p.slScale = 1;
               p.slLinkT = 0;
               p.slHitMask = 0;
               p.slPerfect = 0;
@@ -2109,7 +2115,7 @@
         if (p.zt > 0) {
           p.zt = Math.max(0, p.zt - dt);
           if (hasInput) {
-            const s = Math.min(1, dt * (bots.length >= 3 ? 20 : 5));
+            const s = Math.min(1, dt * (bots.length >= 3 ? 20 : bots.length >= 2 ? 12 : 5));
             p.zx += (mx - p.zx) * s;
             p.zy += (my - p.zy) * s;
             const n = Math.hypot(p.zx, p.zy) || 1;
@@ -2132,26 +2138,28 @@
             beep(notes[noteIdx], .08, 'sawtooth', .008);
           }
           if (p.zt <= 0) {
-            if (p.bot && bots.length >= 3 && p.slCharge >= SLINGSHOT_CHARGE_TRIGGER) {
+            if (p.bot && bots.length >= 2 && p.slCharge >= SLINGSHOT_CHARGE_TRIGGER) {
+              const slSc = bots.length >= 3 ? 1 : SL_DUO_SCALE;
+              p.slScale = slSc;
               const perfect = p.slPerfect && p.slFocus >= .98 ? 1 : 0;
               const q = Math.min(1, p.slCharge * (perfect ? 1.15 : 1));
-              p.slT = SLINGSHOT_DASH_MIN + (SLINGSHOT_DASH_MAX - SLINGSHOT_DASH_MIN) * q;
+              p.slT = (SLINGSHOT_DASH_MIN + (SLINGSHOT_DASH_MAX - SLINGSHOT_DASH_MIN) * q) * slSc;
               p.slRecallT = 0;
               p.slRecallPulse = 0;
               p.slCarryVx = 0;
               p.slCarryVy = 0;
-              p.slPow = .68 + .48 * q + .34 * perfect;
-              p.slLinkT = SLINGSHOT_LINK_HOLD * (.82 + .34 * q + .2 * perfect);
+              p.slPow = (.68 + .48 * q + .34 * perfect) * slSc;
+              p.slLinkT = SLINGSHOT_LINK_HOLD * (.82 + .34 * q + .2 * perfect) * slSc;
               p.slDx = p.zx;
               p.slDy = p.zy;
               p.slWave = 1;
               p.triFx = 1;
               p.slHitMask = 0;
-              p.slRopeRest = SLINGSHOT_ROPE_START + 72 * q + 36 * perfect;
-              p.slComboFx = Math.max(p.slComboFx, perfect ? .95 : 0);
+              p.slRopeRest = (SLINGSHOT_ROPE_START + 72 * q + 36 * perfect) * slSc;
+              p.slComboFx = Math.max(p.slComboFx, perfect ? .95 * slSc : 0);
               const carry = Math.max(0, p.vx * p.zx + p.vy * p.zy);
-              const baseSp = SLINGSHOT_DASH_SPEED * (1.02 + .82 * q + .46 * perfect) + carry * .6;
-              for (let bi = 0; bi < 3 && bi < bots.length; bi++) {
+              const baseSp = (SLINGSHOT_DASH_SPEED * (1.02 + .82 * q + .46 * perfect) + carry * .6) * slSc;
+              for (let bi = 0; bi < Math.min(3, bots.length); bi++) {
                 const bt = bots[bi];
                 const spread = (bi - 1) * .26;
                 const cs = Math.cos(spread), sn = Math.sin(spread);
@@ -2163,10 +2171,10 @@
                 bt.vy = bt.sly;
                 burst(bt.x, bt.y, '#b6f6ff', 6, 50 + q * 44);
               }
-              hitStop(.05 + .025 * q);
-              trauma(.2 + .14 * q);
-              burst(p.x, p.y, '#8eefff', 14, 92 + q * 58);
-              g.msg = perfect ? 'perfect slingshot' : 'slingshot pack';
+              hitStop((.05 + .025 * q) * slSc);
+              trauma((.2 + .14 * q) * slSc);
+              burst(p.x, p.y, '#8eefff', 14, (92 + q * 58) * slSc);
+              g.msg = perfect ? 'perfect slingshot' : (slSc < 1 ? 'duo slingshot' : 'slingshot pack');
               g.msgT = .82;
               beep(perfect ? 1020 : 940, .05, 'square', .026);
               beep(perfect ? 1350 : 1220, .04, 'triangle', .018);
@@ -2178,6 +2186,7 @@
               p.slCharge = 0;
               p.slFocus = 0;
               p.slPerfect = 0;
+              p.slScale = 1;
               p.slRecallT = 0;
               p.slLinkT = 0;
               p.slRecallPulse = 0;
@@ -2303,7 +2312,7 @@
         let triMode = 0;
         if (p.bot && p.botCount > 0) {
           syncBots();
-          triMode = p.zt > 0 && bots.length >= 3;
+          triMode = p.zt > 0 && bots.length >= 2;
           if (triMode) {
             const aimDot = hasInput ? Math.max(0, mx * p.zx + my * p.zy) : 0;
             const pullGain = .6 + aimDot * .95;
@@ -2333,7 +2342,7 @@
           if (p.slT > 0) {
             p.slT = Math.max(0, p.slT - dt);
             if (p.slT <= 0) {
-              if (bots.length >= 3 && p.slPow > .08) {
+              if (bots.length >= 2 && p.slPow > .08) {
                 p.slRecallT = SLINGSHOT_RECALL_TIME * (.86 + .28 * Math.min(1, p.slPow));
                 p.slRecallPulse = 0;
                 g.msg = 'recall strike';
@@ -2353,7 +2362,7 @@
           }
           p.ba += dt * ((triMode || p.slT > 0 || p.slRecallT > 0 || p.slLinkT > 0) ? 4.9 : 2.3);
           p.triA += dt * ((triMode || p.slLinkT > 0) ? 9.2 : 4.2);
-          const linkMode = bots.length >= 3 && p.slLinkT > 0;
+          const linkMode = bots.length >= 2 && p.slLinkT > 0;
           if ((p.slT > 0 || p.slRecallT > 0 || linkMode) && hasInput) {
             const tln = Math.hypot(mx, my) || 1;
             const tx = mx / tln, ty = my / tln;
@@ -2365,7 +2374,7 @@
             p.slDx /= sn;
             p.slDy /= sn;
           }
-          if (bots.length >= 3 && (p.slT > 0 || p.slRecallT > 0 || linkMode)) {
+          if (bots.length >= 2 && (p.slT > 0 || p.slRecallT > 0 || linkMode)) {
             if ((p.slRopeRest || 0) <= 0) p.slRopeRest = SLINGSHOT_ROPE_START;
             const ropeShrink = SLINGSHOT_ROPE_SHRINK * (.7 + .45 * Math.min(1, p.slPow) + (p.slT > 0 ? .24 : 0));
             p.slRopeRest = Math.max(SLINGSHOT_ROPE_DEFAULT, p.slRopeRest - dt * ropeShrink);
@@ -2374,10 +2383,10 @@
           }
           let carryMode = 0, carryFx = 0, carryFy = 0, carryN = 0, carryGain = .18;
           let tetherCarryFx = 0, tetherCarryFy = 0, tetherCarryN = 0;
-          if (bots.length >= 3) {
-            if (p.slT > 0) { carryMode = 2; carryGain = .46; }
-            else if (p.slRecallT > 0) { carryMode = 3; carryGain = .33; }
-            else if (linkMode) { carryMode = 4; carryGain = .29; }
+          if (bots.length >= 2) {
+            if (p.slT > 0) { carryMode = 2; carryGain = .46 * p.slScale; }
+            else if (p.slRecallT > 0) { carryMode = 3; carryGain = .33 * p.slScale; }
+            else if (linkMode) { carryMode = 4; carryGain = .29 * p.slScale; }
             else if (triMode) { carryMode = 1; carryGain = .18; }
           }
           for (let bi = 0; bi < bots.length; bi++) {
@@ -2492,6 +2501,7 @@
               carryN++;
             }
             if (bt.grabCd > 0) bt.grabCd = Math.max(0, bt.grabCd - dt);
+            if (bt.mcd > 0) bt.mcd = Math.max(0, bt.mcd - dt);
           }
           if (tetherCarryN > 0) {
             carryFx += tetherCarryFx;
@@ -2581,6 +2591,7 @@
           p.slPow = 0;
           p.slHitMask = 0;
           p.slPerfect = 0;
+          p.slScale = 1;
           p.slComboFx = 0;
           p.slRopeRest = 0;
         }
@@ -3232,13 +3243,23 @@
               const bt = bots[bi], bx = m.x - bt.x, by = m.y - bt.y, d2 = bx * bx + by * by, bs = botStats(bt.t | 0 || 1);
               if (d2 < 20 * 20) sf = Math.min(sf, .65);
               if (bs.auraR > 0 && d2 < bs.auraR * bs.auraR) sf = Math.min(sf, 1 - bs.auraSl);
+              if (bots.length >= 3 && d2 < BOT_MELEE_RANGE * BOT_MELEE_RANGE && bt.mcd <= 0) {
+                const md = Math.sqrt(d2) || 1;
+                m.hp -= BOT_MELEE_DMG * bs.dmg;
+                m.ht = Math.max(m.ht, .1);
+                m.vx += bx / md * BOT_MELEE_KB;
+                m.vy += by / md * BOT_MELEE_KB;
+                bt.mcd = BOT_MELEE_CD;
+                burst(bt.x, bt.y, bs.col, 4, 28);
+                if (m.hp <= 0) { killZombie(i, bs.col, 7, 52); break; }
+              }
             }
           }
-          const bladeRopeMode = (triMode || p.slRecallT > 0 || p.slLinkT > 0) && bots.length >= 3;
+          const bladeRopeMode = (triMode || p.slRecallT > 0 || p.slLinkT > 0) && bots.length >= 2;
           if (bladeRopeMode) {
             sf = Math.min(sf, triMode ? .58 : .66);
             let tetherHit = 0;
-            for (let bi = 0; bi < 3; bi++) {
+            for (let bi = 0; bi < Math.min(3, bots.length); bi++) {
               const bt = bots[bi], hitR = m.r + 14;
               if (segDist2(m.x, m.y, p.x, p.y, bt.x, bt.y) < hitR * hitR) {
                 tetherHit = 1;
@@ -3247,7 +3268,7 @@
             }
             if (tetherHit && ((m.tc || 0) <= 0)) {
               const ropePow = triMode ? Math.max(.1, p.slCharge) : Math.max(.32, p.slPow);
-              const lashMul = triMode ? (.24 + .38 * ropePow) : (.34 + .92 * ropePow);
+              const lashMul = (triMode ? (.24 + .38 * ropePow) : (.34 + .92 * ropePow)) * p.slScale;
               const lash = p.zDmg * lashMul * (m.k >= 3 ? .82 : 1);
               m.hp -= lash;
               m.ht = Math.max(m.ht, triMode ? .12 : .16);
@@ -3266,13 +3287,13 @@
               }
             }
           }
-          if ((p.slT > 0 || p.slRecallT > 0) && bots.length >= 3) {
+          if ((p.slT > 0 || p.slRecallT > 0) && bots.length >= 2) {
             const recallOnly = p.slT <= 0 && p.slRecallT > 0;
             let slammed = 0;
-            for (let bi = 0; bi < 3; bi++) {
+            for (let bi = 0; bi < Math.min(3, bots.length); bi++) {
               const bt = bots[bi], bx = m.x - bt.x, by = m.y - bt.y, hitR = m.r + (recallOnly ? 20 : 22);
               if (bx * bx + by * by < hitR * hitR && ((m.tc || 0) <= 0)) {
-                const slamMul = (recallOnly ? 1.05 : 1.45) + (recallOnly ? 1.05 : 1.75) * p.slPow;
+                const slamMul = ((recallOnly ? 1.05 : 1.45) + (recallOnly ? 1.05 : 1.75) * p.slPow) * p.slScale;
                 const slam = p.zDmg * slamMul * (m.k >= 3 ? .82 : (recallOnly ? 1 : 1.05));
                 m.hp -= slam;
                 m.ht = .18;
@@ -3290,13 +3311,14 @@
                 if (!recallOnly) {
                   const bit = 1 << bi;
                   if (!(p.slHitMask & bit)) p.slHitMask |= bit;
-                  if (!slBurst && p.slHitMask === 7) {
+                  const fullMask = (1 << Math.min(bots.length, 3)) - 1;
+                  if (!slBurst && p.slHitMask === fullMask) {
                     slBurst = 1;
                     slBurstPow = Math.max(slBurstPow, p.slPow);
-                    p.slLinkT = Math.max(p.slLinkT, SLINGSHOT_LINK_MIN + .55 * SLINGSHOT_LINK_HOLD);
-                    p.slWave = Math.max(p.slWave, .95);
-                    p.slComboFx = Math.max(p.slComboFx, 1.2);
-                    g.msg = 'triple crack';
+                    p.slLinkT = Math.max(p.slLinkT, (SLINGSHOT_LINK_MIN + .55 * SLINGSHOT_LINK_HOLD) * p.slScale);
+                    p.slWave = Math.max(p.slWave, .95 * p.slScale);
+                    p.slComboFx = Math.max(p.slComboFx, 1.2 * p.slScale);
+                    g.msg = bots.length >= 3 ? 'triple crack' : 'duo crack';
                     g.msgT = .7;
                     beep(1240, .04, 'square', .024);
                     beep(820, .05, 'triangle', .017);
@@ -3382,9 +3404,9 @@
         }
         if (p.slRecallPulse) {
           p.slRecallPulse = 0;
-          const rr = SLINGSHOT_RECALL_BURST_RADIUS * (.88 + .24 * Math.min(1, p.slPow));
+          const rr = SLINGSHOT_RECALL_BURST_RADIUS * (.88 + .24 * Math.min(1, p.slPow)) * p.slScale;
           const rr2 = rr * rr;
-          const dmgBase = p.zDmg * (.48 + .62 * Math.min(1, p.slPow));
+          const dmgBase = p.zDmg * (.48 + .62 * Math.min(1, p.slPow)) * p.slScale;
           let recallHits = 0;
           for (let i = z.length - 1; i >= 0; i--) {
             const m = z[i], dx = m.x - p.x, dy = m.y - p.y, d2 = dx * dx + dy * dy;
@@ -3415,9 +3437,9 @@
           }
         }
         if (slBurst) {
-          const rr = SLINGSHOT_TRIPLE_BURST_RADIUS * (.9 + .35 * slBurstPow);
+          const rr = SLINGSHOT_TRIPLE_BURST_RADIUS * (.9 + .35 * slBurstPow) * p.slScale;
           const rr2 = rr * rr;
-          const dmgBase = p.zDmg * (.7 + 1.1 * slBurstPow);
+          const dmgBase = p.zDmg * (.7 + 1.1 * slBurstPow) * p.slScale;
           for (let i = z.length - 1; i >= 0; i--) {
             const m = z[i], dx = m.x - p.x, dy = m.y - p.y, d2 = dx * dx + dy * dy;
             if (d2 > rr2) continue;
@@ -4123,14 +4145,14 @@
               x.beginPath(); x.arc(bx, by, bs.auraR * (.84 + .08 * Math.sin(g.t * 4 + bi * .7)), 0, Math.PI * 2); x.stroke();
             }
           }
-          if ((p.zt > 0 || p.slT > 0 || p.slRecallT > 0 || p.slLinkT > 0) && bots.length >= 3) {
+          if ((p.zt > 0 || p.slT > 0 || p.slRecallT > 0 || p.slLinkT > 0) && bots.length >= 2) {
             const linkQ = clamp(p.slLinkT / SLINGSHOT_LINK_HOLD, 0, 1);
             const q = Math.max(p.triFx, p.slCharge, p.slFocus, p.slPow * ((p.slT > 0 || p.slRecallT > 0 || p.slLinkT > 0) ? 1 : .35), linkQ * .85, p.slComboFx * .55);
             const ropeRest = Math.max(SLINGSHOT_ROPE_DEFAULT, (p.slRopeRest || SLINGSHOT_LINK_REST));
             const ropeTight = 1 - clamp((ropeRest - SLINGSHOT_ROPE_DEFAULT) / (SLINGSHOT_ROPE_START - SLINGSHOT_ROPE_DEFAULT), 0, 1);
             const dx = p.zt > 0 ? p.zx : (p.slT > 0 || p.slRecallT > 0 ? p.slDx : p.gx), dy = p.zt > 0 ? p.zy : (p.slT > 0 || p.slRecallT > 0 ? p.slDy : p.gy);
             const ph = g.t * 4.6;
-            for (let bi = 0; bi < 3; bi++) {
+            for (let bi = 0; bi < Math.min(3, bots.length); bi++) {
               const bt = bots[bi], bx = bt.x - cm.x, by = bt.y - cm.y;
               const bend = (bi - 1) * (12 + (9 + 6 * (1 - ropeTight)) * q);
               const cx = (psx + bx) * .5 + (-dy) * bend;
@@ -4499,12 +4521,13 @@
           }
         }
 
-        if (p.bot && bots.length >= 3) {
+        if (p.bot && bots.length >= 2) {
           const slY = objectiveY + 30;
           const bw2 = W - 44;
           const triReady = p.zt > 0 && p.slT <= 0 && p.slRecallT <= 0;
           const prog = triReady ? clamp(p.slCharge, 0, 1) : (p.slT > 0 ? clamp(p.slT / SLINGSHOT_DASH_MAX, 0, 1) : (p.slRecallT > 0 ? clamp(p.slRecallT / SLINGSHOT_RECALL_TIME, 0, 1) : (p.slLinkT > 0 ? clamp(p.slLinkT / SLINGSHOT_LINK_HOLD, 0, 1) : 0)));
-          const label = triReady ? 'triple buddy: rope windup' : (p.slT > 0 ? 'triple buddy: blade throw' : (p.slRecallT > 0 ? 'triple buddy: blade recall' : (p.slLinkT > 0 ? 'triple buddy: ropes tightening' : 'triple buddy: zoomies to arm')));
+          const slTag = bots.length >= 3 ? 'triple' : 'duo';
+          const label = triReady ? slTag + ' buddy: rope windup' : (p.slT > 0 ? slTag + ' buddy: blade throw' : (p.slRecallT > 0 ? slTag + ' buddy: blade recall' : (p.slLinkT > 0 ? slTag + ' buddy: ropes tightening' : slTag + ' buddy: zoomies to arm')));
           x.fillStyle = 'rgba(8,12,19,.64)';
           x.fillRect(14, slY, W - 28, 22);
           x.fillStyle = 'rgba(48,72,98,.9)';
