@@ -102,11 +102,11 @@
       const FIRST_BOSS_MIN_KILLS = 600;
       const FIRST_BOSS_TRIGGER_KILLS = 800;
       const FIRST_BOSS_TRIGGER_TIME = 999;
-      const LAB_REFRESH_KILLS = 110;
+      const LAB_REFRESH_KILLS = 160;
       const NSH_SECOND_BOT_INTEL_COST = 2;
-      const NSH_THIRD_BOT_INTEL_COST = 4;
+      const NSH_THIRD_BOT_INTEL_COST = 3;
       const MEL_SECOND_PUDDLE_INTEL_COST = 2;
-      const MEL_THIRD_PUDDLE_INTEL_COST = 3;
+      const MEL_THIRD_PUDDLE_INTEL_COST = 2;
       const BAK_SECOND_BARK_KILLS = 320;
       const BAK_THIRD_BARK_KILLS = 760;
       const PSY_AUTO_INTERVAL = .32;
@@ -154,7 +154,7 @@
       const BOT_MELEE_RANGE = 22;
       const BOT_MELEE_KB = 140;
       const KILL_CAP = 9999;
-      const PREDATOR_TRIGGER = 1500;
+      const PREDATOR_TRIGGER = 2400;
       const MOTHER_TRIGGER = 9000;
       const MINI_BOSS_MIN_KILLS = 200;
       const EXPLODER_INTRO_KILLS = 100;
@@ -1368,6 +1368,7 @@
         if (m.k === 9) {
           g.pred = 0; g.predDead = 1;
           g.msg = 'predator down!'; g.msgT = 2.2;
+          g.b2At = g.t + 60;
           g.bossDownT = 2.0;
           hitStop(.1);
           trauma(.45);
@@ -2641,7 +2642,7 @@
         if (canSpawn && g.sch.nsh === 2 && !g.mb && !g.mbd && !g.bs && !g.bd && g.kills >= MINI_BOSS_MIN_KILLS) spawnMiniBoss();
         const firstBossReadyByProgress = g.kills > FIRST_BOSS_TRIGGER_KILLS || g.time > FIRST_BOSS_TRIGGER_TIME;
         if (canSpawn && g.sch.bak === 2 && !g.bs && !g.bd && !g.bs2 && !g.bd2 && g.kills >= FIRST_BOSS_MIN_KILLS && firstBossReadyByProgress) spawnBoss();
-        if (canSpawn && g.bd && !g.pred && !g.bs2 && !g.bd2 && (g.t >= g.b2At || g.kills >= 2500)) spawnApexBoss();
+        if (canSpawn && g.bd && !g.pred && !g.bs2 && !g.bd2 && g.predDead && g.t >= g.b2At) spawnApexBoss();
         if (canSpawn && g.spawnT <= 0) {
           g.spawnT = g.nextSpawn;
           const baseRate = .8 - g.time * .0056;
@@ -4311,7 +4312,7 @@
         const hudBottom = 10 + hudH;
         x.fillStyle = 'rgba(7,10,16,.76)'; x.fillRect(10, 10, W - 20, hudH);
         x.fillStyle = '#eef4ff'; x.font = '700 17px Trebuchet MS,sans-serif'; x.fillText('SCOTTY', 20, 32);
-        
+
         // pause button (top-right corner)
         if (g.start && !g.dead) {
           const pbW = 28, pbH = 28, pbX = W - pbW - 14, pbY = 14;
@@ -4333,7 +4334,7 @@
             x.fillRect(pbX + pbW * .55, pbY + pbH * .25, pbW * .15, pbH * .5);
           }
         }
-        
+
         if (hudCompact) {
           const statsY = 52;
           const statRight = abX - 8;
@@ -4849,7 +4850,7 @@
           x.fillText('open leaderboard', btnX + btnW * .5, btnY + 22);
           x.textAlign = 'left';
         }
-        
+
         // pause overlay
         if (g.paused && g.start && !g.dead) {
           x.fillStyle = 'rgba(5,8,13,.75)'; x.fillRect(0, 0, W, H);
