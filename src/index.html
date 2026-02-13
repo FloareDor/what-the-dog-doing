@@ -154,8 +154,8 @@
       const BOT_MELEE_RANGE = 22;
       const BOT_MELEE_KB = 140;
       const KILL_CAP = 9999;
-      const PREDATOR_TRIGGER = 2400;
-      const MOTHER_TRIGGER = 9000;
+      const PREDATOR_TRIGGER = 1690;
+      const MOTHER_TRIGGER = 3000;
       const MINI_BOSS_MIN_KILLS = 200;
       const EXPLODER_INTRO_KILLS = 100;
       const SHIELDED_INTRO_KILLS = 400;
@@ -2206,6 +2206,30 @@
               g.msgT = .82;
               beep(perfect ? 1020 : 940, .05, 'square', .026);
               beep(perfect ? 1350 : 1220, .04, 'triangle', .018);
+              if (perfect) {
+                // PAYOFF: Sonic Boom
+                burst(p.x, p.y, '#ff4444', 40, 320); // Big explosion visual
+                burst(p.x, p.y, '#ffffff', 20, 160);
+                trauma(.45);
+                // Damage + Knockback nearby enemies
+                for (let k = 0; k < z.length; k++) {
+                  const m = z[k], dx = m.x - p.x, dy = m.y - p.y, d2 = dx * dx + dy * dy;
+                  if (d2 < 340 * 340) {
+                    const d = Math.sqrt(d2) || 1;
+                    m.vx += dx / d * 1800; // Massive knockback
+                    m.vy += dy / d * 1800;
+                    m.hp -= 25 + g.kills * .05; // Significant flat damage
+                    m.ht = .2;
+                    burst(m.x, m.y, '#ff4444', 8, 60);
+                  }
+                }
+                // PAYOFF: Vacuum
+                for (let k = 0; k < food.length; k++) {
+                  const f = food[k];
+                  f.vx = (p.x - f.x) * 4; // Pull towards player
+                  f.vy = (p.y - f.y) * 4;
+                }
+              }
               p.slPerfect = 0;
               p.slFocus = 0;
             } else {
