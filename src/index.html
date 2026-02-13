@@ -105,10 +105,10 @@
       const LAB_REFRESH_KILLS = 160;
       const NSH_SECOND_BOT_INTEL_COST = 2;
       const NSH_THIRD_BOT_INTEL_COST = 3;
-      const MEL_SECOND_PUDDLE_INTEL_COST = 2;
+      const MEL_SECOND_PUDDLE_INTEL_COST = 1;
       const MEL_THIRD_PUDDLE_INTEL_COST = 2;
       const BAK_SECOND_BARK_KILLS = 320;
-      const BAK_THIRD_BARK_KILLS = 760;
+      const BAK_THIRD_BARK_KILLS = 1000;
       const PSY_AUTO_INTERVAL = .32;
       const PSY_MARK_TIME = 1.55;
       const PSY_COMBO_CD = .9;
@@ -355,7 +355,7 @@
         } catch { }
       }
 
-      const p = { x: 260, y: MAP_H * .5, vx: 0, vy: 0, r: 15, hp: 100, maxHp: 100, speed: 185, fireCd: 0, fireRate: .46, dmg: 12, range: 400, shots: 1, magnet: 88, face: 1, rx: 0, ry: 0, flash: 0, gx: 1, gy: 0, zc: 0, zr: 0, zt: 0, zx: 1, zy: 0, zcd: 0, zDur: 1, zSpd: 2.1, zLoad: 1.5, zCool: 5.5, zDmg: 24, zDr: .55, zb: 0, zp: 0, mkOn: 0, mkT: 0, mkI: 8.8, mkS: 0, mkD: 14, mkR: 54, mkSl: .54, chDo: 14, chBurst: 10, chHeal: 8, chHealCd: 0, chHealI: .85, cat: 0, catM: 0, catType: 0, fb: 0, fbT: 0, fbI: 8.6, fbR: 210, fbFear: 2.3, fbKn: 320, fbFx: 0, fbTier: 0, fbMode: 1, fbAiT: 0, bot: 0, botCount: 0, botSlots: 0, bType: 0, bAtk: 1, bAuraR: 0, bAuraSl: 0, bHealCd: 0, bHealI: 10, bHealAmt: 10, bHealFx: 0, triA: 0, triFx: 0, slCharge: 0, slFocus: 0, slT: 0, slRecallT: 0, slLinkT: 0, slRecallPulse: 0, slCarryVx: 0, slCarryVy: 0, slPow: 0, slWave: 0, slComboFx: 0, slHitMask: 0, slPerfect: 0, slScale: 1, slDx: 1, slDy: 0, zoomShield: 0, bx: 0, by: 0, ba: 0, bcd: 0, bRate: 1.9, bDmg: 1.15, bRange: 480, bFetch: 95, bPull: 195, bCarry: 0, bCarryMax: 2, bGrabCd: 0, bGrabI: .38, bPier: 4, bSize: 6 };
+      const p = { x: 260, y: MAP_H * .5, vx: 0, vy: 0, r: 15, hp: 100, maxHp: 100, speed: 192, fireCd: 0, fireRate: .46, dmg: 12, range: 400, shots: 1, magnet: 88, face: 1, rx: 0, ry: 0, flash: 0, gx: 1, gy: 0, zc: 0, zr: 0, zt: 0, zx: 1, zy: 0, zcd: 0, zDur: 1, zSpd: 2.1, zLoad: 1.5, zCool: 5.5, zDmg: 24, zDr: .55, zb: 0, zp: 0, mkOn: 0, mkT: 0, mkI: 8.8, mkS: 0, mkD: 14, mkR: 54, mkSl: .54, chDo: 14, chBurst: 10, chHeal: 8, chHealCd: 0, chHealI: .85, cat: 0, catM: 0, catType: 0, fb: 0, fbT: 0, fbI: 8.6, fbR: 210, fbFear: 2.3, fbKn: 320, fbFx: 0, fbTier: 0, fbMode: 1, fbAiT: 0, bot: 0, botCount: 0, botSlots: 0, bType: 0, bAtk: 1, bAuraR: 0, bAuraSl: 0, bHealCd: 0, bHealI: 10, bHealAmt: 10, bHealFx: 0, triA: 0, triFx: 0, slCharge: 0, slFocus: 0, slT: 0, slRecallT: 0, slLinkT: 0, slRecallPulse: 0, slCarryVx: 0, slCarryVy: 0, slPow: 0, slWave: 0, slComboFx: 0, slHitMask: 0, slPerfect: 0, slScale: 1, slDx: 1, slDy: 0, zoomShield: 0, bx: 0, by: 0, ba: 0, bcd: 0, bRate: 1.9, bDmg: 1.15, bRange: 480, bFetch: 95, bPull: 195, bCarry: 0, bCarryMax: 2, bGrabCd: 0, bGrabI: .38, bPier: 4, bSize: 6 };
       const keys = { l: 0, r: 0, u: 0, d: 0, gr: 0 };
       let touchId = -1, touchMove = 0;
       const joy = { x: 78, y: 0, r: 42, kr: 16, tx: 0, ty: 0, ax: 0, ay: 0, ttx: 0, tty: 0, tax: 0, tay: 0, show: 0, act: 0 };
@@ -2582,7 +2582,7 @@
               if (t) {
                 const ln2 = Math.hypot(t.x - bt.x, t.y - bt.y) || 1;
                 const pulse = !!bs.pulse, col = bs.col, pier = bs.pier;
-                pushBullet({ x: bt.x, y: bt.y, vx: (t.x - bt.x) / ln2 * 420, vy: (t.y - bt.y) / ln2 * 420, d: p.dmg * bs.dmg, life: 1.35, pier, c: col, r: bs.size, pulse });
+                pushBullet({ x: bt.x, y: bt.y, vx: (t.x - bt.x) / ln2 * 420, vy: (t.y - bt.y) / ln2 * 420, d: p.dmg * bs.dmg, life: 1.35, pier, c: col, r: bs.size, pulse, bounces: (bt.t | 0) === 1 ? 3 : 0 });
                 bt.cd = bs.rate;
                 burst(bt.x, bt.y, col, 4, 36);
               } else bt.cd = .35;
@@ -2699,7 +2699,30 @@
               if (q.pulse) burst(m.x, m.y, '#9de6ff', 3, 28);
               q.pier--;
               if (m.hp <= 0) killZombie(j, q.pulse ? '#9de6ff' : '#ff9675', q.pulse ? 7 : 9, q.pulse ? 58 : 70, q.pulse ? 1 : 0);
-              if (q.pier < 0) { b.splice(i, 1); break }
+              if (q.pier < 0) {
+                // chain bounce for Volt Buddy pulse bullets
+                if (q.pulse && (q.bounces || 0) > 0) {
+                  let best = 0, bd2 = 220 * 220;
+                  for (let bj = 0; bj < z.length; bj++) {
+                    if (bj === j) continue;
+                    const bm = z[bj], bdx = bm.x - q.x, bdy = bm.y - q.y, dd = bdx * bdx + bdy * bdy;
+                    if (dd < bd2) { bd2 = dd; best = bm; }
+                  }
+                  if (best) {
+                    const bdx = best.x - q.x, bdy = best.y - q.y, bln = Math.hypot(bdx, bdy) || 1;
+                    q.vx = bdx / bln * 420;
+                    q.vy = bdy / bln * 420;
+                    q.pier = 0;
+                    q.bounces--;
+                    q.d *= .8;
+                    q.life = Math.max(q.life, .6);
+                    burst(q.x, q.y, '#6ecfff', 4, 32);
+                    beep(680 + (3 - q.bounces) * 80, .02, 'triangle', .01);
+                    break;
+                  }
+                }
+                b.splice(i, 1); break;
+              }
             }
           }
         }
