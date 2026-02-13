@@ -1051,7 +1051,7 @@
       const BOT_BASE = {
         1: { rate: 1.15, dmg: 1.6, range: 620, fetch: 72, pull: 150, carry: 1, grab: .42, pier: 5, size: 7.2, auraR: 0, auraSl: 0, healI: 0, healAmt: 0, pulse: 1, col: '#9de6ff', body: '#93d8ff', ring: '#d0efff' },
         2: { rate: 1.72, dmg: .95, range: 520, fetch: 118, pull: 198, carry: 2, grab: .34, pier: 0, size: 3.8, auraR: 0, auraSl: 0, healI: 8, healAmt: 18, pulse: 0, col: '#7ae8a3', body: '#74de95', ring: '#d9ffe5' },
-        3: { rate: 2.45, dmg: .95, range: 390, fetch: 110, pull: 205, carry: 2, grab: .34, pier: 2, size: 8.5, auraR: 124, auraSl: .46, healI: 0, healAmt: 0, pulse: 1, col: '#ffd48c', body: '#ffd48c', ring: '#fff0c7' }
+        3: { rate: 2.85, dmg: .82, range: 390, fetch: 110, pull: 205, carry: 2, grab: .34, pier: 2, size: 8.5, auraR: 124, auraSl: .46, healI: 0, healAmt: 0, pulse: 1, kb: .35, col: '#ffd48c', body: '#ffd48c', ring: '#fff0c7' }
       };
       function botStats(t) {
         const b = BOT_BASE[t] || BOT_BASE[1];
@@ -1071,6 +1071,7 @@
           healI: b.healI > 0 ? Math.max(1.9, b.healI * (p.bHealI / BOT_REF.healI)) : 0,
           healAmt: b.healAmt > 0 ? b.healAmt * (p.bHealAmt / BOT_REF.healAmt) : 0,
           pulse: b.pulse,
+          kb: b.kb || 0,
           col: b.col,
           body: b.body,
           ring: b.ring
@@ -2596,7 +2597,7 @@
               if (t) {
                 const ln2 = Math.hypot(t.x - bt.x, t.y - bt.y) || 1;
                 const pulse = !!bs.pulse, col = bs.col, pier = bs.pier;
-                pushBullet({ x: bt.x, y: bt.y, vx: (t.x - bt.x) / ln2 * 420, vy: (t.y - bt.y) / ln2 * 420, d: p.dmg * bs.dmg, life: 1.35, pier, c: col, r: bs.size, pulse, bounces: (bt.t | 0) === 1 ? 3 : 0 });
+                pushBullet({ x: bt.x, y: bt.y, vx: (t.x - bt.x) / ln2 * 420, vy: (t.y - bt.y) / ln2 * 420, d: p.dmg * bs.dmg, life: 1.35, pier, c: col, r: bs.size, pulse, kb: bs.kb, bounces: (bt.t | 0) === 1 ? 3 : 0 });
                 bt.cd = bs.rate;
                 burst(bt.x, bt.y, col, 4, 36);
               } else bt.cd = .35;
@@ -2708,8 +2709,9 @@
               }
               m.hp -= q.d * dmgMul;
               m.ht = q.pulse ? .12 : .09;
-              m.vx += q.vx * (q.pulse ? .11 : .07);
-              m.vy += q.vy * (q.pulse ? .11 : .07);
+              const kbval = q.kb || (q.pulse ? .11 : .07);
+              m.vx += q.vx * kbval;
+              m.vy += q.vy * kbval;
               if (q.pulse) burst(m.x, m.y, '#9de6ff', 3, 28);
               q.pier--;
               if (m.hp <= 0) killZombie(j, q.pulse ? '#9de6ff' : '#ff9675', q.pulse ? 7 : 9, q.pulse ? 58 : 70, q.pulse ? 1 : 0);
