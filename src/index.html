@@ -691,7 +691,7 @@
         return k === 3 || k === 4 || k === 5 || k === 9 || k === 11;
       }
       function psychName(t) {
-        return t === 3 ? 'cognitive freeze' : t === 2 ? 'mirror scotty' : 'command bark';
+        return t === 3 ? 'cognitive freeze' : t === 2 ? 'decoy scotty' : 'command bark';
       }
       function psychHudTag(t) {
         return t === 3 ? 'freeze' : t === 2 ? 'mirror' : 'bark';
@@ -1085,7 +1085,7 @@
       }
       function psychChoiceCard(t) {
         if (t === 1) return { n: 'Command Bark', d: 'push + close stun, applies jolt mark', f: () => setPsychVariant(1), bg: 'rgba(34,67,94,.96)', st: 'rgba(158,214,255,.88)', tx: '#eef8ff', sub: '#c7def2' };
-        if (t === 2) return { n: 'Mirror Scotty', d: 'spawns decoy taunt, applies fixate mark', f: () => setPsychVariant(2), bg: 'rgba(33,71,86,.96)', st: 'rgba(143,234,255,.88)', tx: '#ecfcff', sub: '#c0e8f2' };
+        if (t === 2) return { n: 'decoy scotty', d: 'spawns decoy taunt, applies fixate mark', f: () => setPsychVariant(2), bg: 'rgba(33,71,86,.96)', st: 'rgba(143,234,255,.88)', tx: '#ecfcff', sub: '#c0e8f2' };
         return { n: 'Cognitive Freeze', d: 'mind-wave slow lock, applies daze mark', f: () => setPsychVariant(3), bg: 'rgba(56,63,102,.96)', st: 'rgba(185,191,255,.88)', tx: '#f0f2ff', sub: '#ccd0f1' };
       }
       function queueLabMilestoneRewards() {
