@@ -245,7 +245,7 @@
       const LB_ENTRY_KEY = 'zoomies_last_entry';
       const LB_NAME_KEY = 'zoomies_lb_name';
       const LB_OPTIN_KEY = 'zoomies_lb_optin';
-      const LB_PREVIEW_LIMIT = 3;
+      const LB_PREVIEW_LIMIT = 5;
       function lsGet(k) { try { return localStorage.getItem(k) || '' } catch { return '' } }
       function lsSet(k, v) { try { localStorage.setItem(k, v) } catch { } }
       function lsGetJson(k) { try { const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : 0 } catch { return 0 } }
@@ -281,7 +281,8 @@
         g.lbFetchT = now;
         g.lbTopErr = '';
         try {
-          const q = '?select=name,kills,time_seconds&order=kills.desc,time_seconds.asc,id.asc&limit=' + LB_PREVIEW_LIMIT;
+          // Fetch more rows to allow for deduplication
+          const q = '?select=name,kills,time_seconds&order=kills.desc,time_seconds.asc,id.asc&limit=100';
           const res = await fetch(LB_URL + '/rest/v1/' + encodeURIComponent(LB_TABLE) + q, {
             headers: {
               apikey: LB_KEY,
@@ -290,7 +291,20 @@
           });
           if (!res.ok) { g.lbTopErr = 'leaderboard unavailable'; return; }
           const rows = await res.json();
-          g.lbTop = Array.isArray(rows) ? rows : [];
+
+          // Deduplicate by name
+          const seen = new Set();
+          const unique = [];
+          if (Array.isArray(rows)) {
+            for (const row of rows) {
+              const key = row.name.trim().toLowerCase();
+              if (seen.has(key)) continue;
+              seen.add(key);
+              unique.push(row);
+              if (unique.length >= LB_PREVIEW_LIMIT) break;
+            }
+          }
+          g.lbTop = unique;
         } catch {
           g.lbTopErr = 'leaderboard unavailable';
         }
