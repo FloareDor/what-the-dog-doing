@@ -1,168 +1,213 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Project: Zoomies Leaderboard</title>
-<style>
-:root{
-  --bg:#0c1118;
-  --card:#131e2a;
-  --line:#28415d;
-  --text:#ecf3ff;
-  --muted:#9cb6d4;
-  --accent:#ffd56d;
-  --accent2:#69f0c9;
-}
-*{box-sizing:border-box}
-body{
-  margin:0;
-  min-height:100vh;
-  padding:24px 14px 40px;
-  color:var(--text);
-  background:
-    radial-gradient(1200px 600px at 110% -15%,rgba(105,240,201,.14),transparent 55%),
-    radial-gradient(1100px 680px at -20% 110%,rgba(255,213,109,.12),transparent 55%),
-    var(--bg);
-  font-family:Trebuchet MS,Segoe UI,sans-serif;
-}
-.wrap{max-width:760px;margin:0 auto}
-h1{margin:0 0 6px;font-size:30px}
-p{margin:0;color:var(--muted)}
-.card{
-  margin-top:16px;
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:14px;
-}
-button{
-  width:100%;
-  min-height:42px;
-  border-radius:10px;
-  border:1px solid var(--line);
-  font:inherit;
-}
-button{
-  border:none;
-  background:linear-gradient(135deg,var(--accent),#f09f4f);
-  color:#1a170f;
-  font-weight:700;
-  cursor:pointer;
-}
-button:hover{filter:brightness(1.06)}
-button:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-}
-th,td{
-  text-align:left;
-  padding:9px 8px;
-  border-bottom:1px solid var(--line);
-}
-th{color:var(--muted);font-weight:600}
-td:nth-child(1),td:nth-child(3),td:nth-child(4){font-variant-numeric:tabular-nums}
-.meta{
-  margin-top:8px;
-  color:var(--muted);
-  display:flex;
-  gap:12px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-.refresh{
-  border:1px solid var(--line);
-  background:#102030;
-  color:var(--accent2);
-  min-height:34px;
-  width:auto;
-  padding:0 12px;
-}
-.rank{
-  margin:0;
-  color:var(--muted);
-}
-a{color:var(--accent2)}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Project: Zoomies Leaderboard</title>
+  <style>
+    :root {
+      --bg: #0c1118;
+      --card: #131e2a;
+      --line: #28415d;
+      --text: #ecf3ff;
+      --muted: #9cb6d4;
+      --accent: #ffd56d;
+      --accent2: #69f0c9;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px 14px 40px;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 110% -15%, rgba(105, 240, 201, .14), transparent 55%),
+        radial-gradient(1100px 680px at -20% 110%, rgba(255, 213, 109, .12), transparent 55%),
+        var(--bg);
+      font-family: Trebuchet MS, Segoe UI, sans-serif;
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 30px
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted)
+    }
+
+    .card {
+      margin-top: 16px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    button {
+      width: 100%;
+      min-height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      font: inherit;
+    }
+
+    button {
+      border: none;
+      background: linear-gradient(135deg, var(--accent), #f09f4f);
+      color: #1a170f;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(1.06)
+    }
+
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 9px 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600
+    }
+
+    td:nth-child(1),
+    td:nth-child(3),
+    td:nth-child(4) {
+      font-variant-numeric: tabular-nums
+    }
+
+    .meta {
+      margin-top: 8px;
+      color: var(--muted);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .refresh {
+      border: 1px solid var(--line);
+      background: #102030;
+      color: var(--accent2);
+      min-height: 34px;
+      width: auto;
+      padding: 0 12px;
+    }
+
+    .rank {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    a {
+      color: var(--accent2)
+    }
+  </style>
 </head>
+
 <body>
-<main class="wrap">
-  <h1>Leaderboard</h1>
-  <p>Showing global top 10, sorted by kills then time.</p>
+  <main class="wrap">
+    <h1>Leaderboard</h1>
+    <p>Showing global top 10, sorted by kills then time.</p>
 
-  <section class="card">
-    <p>This page is read-only. Scores are submitted from in-game runs.</p>
-    <div class="meta">
-      <span id="status">Ready.</span>
-      <button id="refreshBtn" class="refresh" type="button">Refresh</button>
-      <a href="./index.html">Back to game</a>
-    </div>
-  </section>
+    <section class="card">
+      <p>This page is read-only. Scores are submitted from in-game runs.</p>
+      <div class="meta">
+        <span id="status">Ready.</span>
+        <button id="refreshBtn" class="refresh" type="button">Refresh</button>
+        <a href="./index.html">Back to game</a>
+      </div>
+    </section>
 
-  <section class="card">
-    <p id="rankText" class="rank">Finish a run in-game to see your latest rank.</p>
-  </section>
+    <section class="card">
+      <p id="rankText" class="rank">Finish a run in-game to see your latest rank.</p>
+    </section>
 
-  <section class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Name</th>
-          <th>Kills</th>
-          <th>Time (s)</th>
-        </tr>
-      </thead>
-      <tbody id="leaderRows">
-        <tr><td colspan="4">Loading...</td></tr>
-      </tbody>
-    </table>
-  </section>
-</main>
+    <section class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Kills</th>
+            <th>Time (s)</th>
+          </tr>
+        </thead>
+        <tbody id="leaderRows">
+          <tr>
+            <td colspan="4">Loading...</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
 
-<script src="./leaderboard-config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const statusEl = document.getElementById("status");
-const rowsEl = document.getElementById("leaderRows");
-const refreshBtn = document.getElementById("refreshBtn");
-const rankTextEl = document.getElementById("rankText");
+  <script src="./leaderboard-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const statusEl = document.getElementById("status");
+    const rowsEl = document.getElementById("leaderRows");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const rankTextEl = document.getElementById("rankText");
 
-const config = window.LEADERBOARD_CONFIG || {};
-const tableName = config.table || "leaderboard_entries";
-const supabaseUrl = config.supabaseUrl || "";
-const supabaseAnonKey = config.supabaseAnonKey || "";
-const TOP_LIMIT = 10;
-const LAST_ENTRY_STORAGE_KEY = "zoomies_last_entry";
+    const config = window.LEADERBOARD_CONFIG || {};
+    const tableName = config.table || "leaderboard_entries";
+    const supabaseUrl = config.supabaseUrl || "";
+    const supabaseAnonKey = config.supabaseAnonKey || "";
+    const TOP_LIMIT = 10;
+    const LAST_ENTRY_STORAGE_KEY = "zoomies_last_entry";
 
-let supabaseClient = null;
+    let supabaseClient = null;
 
-function setStatus(text, isError) {
-  statusEl.textContent = text;
-  statusEl.style.color = isError ? "#ff9fa2" : "";
-}
+    function setStatus(text, isError) {
+      statusEl.textContent = text;
+      statusEl.style.color = isError ? "#ff9fa2" : "";
+    }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
 
-function renderRows(entries) {
-  if (!entries.length) {
-    rowsEl.innerHTML = '<tr><td colspan="4">No scores yet.</td></tr>';
-    return;
-  }
+    function renderRows(entries) {
+      if (!entries.length) {
+        rowsEl.innerHTML = '<tr><td colspan="4">No scores yet.</td></tr>';
+        return;
+      }
 
-  rowsEl.innerHTML = entries.map((entry, index) => `
+      rowsEl.innerHTML = entries.map((entry, index) => `
     <tr>
       <td>${index + 1}</td>
       <td>${escapeHtml(entry.name)}</td>
@@ -170,124 +215,137 @@ function renderRows(entries) {
       <td>${Number(entry.time_seconds).toFixed(1)}</td>
     </tr>
   `).join("");
-}
-
-function setRankText(text, isError) {
-  rankTextEl.textContent = text;
-  rankTextEl.style.color = isError ? "#ff9fa2" : "";
-}
-
-function getLastEntry() {
-  try {
-    const raw = localStorage.getItem(LAST_ENTRY_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function parseCount(result) {
-  return Number((result && result.count) || 0);
-}
-
-async function loadTopLeaderboard() {
-  try {
-    const { data, error } = await supabaseClient
-      .from(tableName)
-      .select("id,name,kills,time_seconds,created_at")
-      .order("kills", { ascending: false })
-      .order("time_seconds", { ascending: true })
-      .order("id", { ascending: true })
-      .limit(TOP_LIMIT);
-
-    if (error) throw error;
-    renderRows(data || []);
-  } catch (error) {
-    throw new Error(error.message || "Failed to load leaderboard.");
-  }
-}
-
-async function loadUserRank() {
-  const lastEntry = getLastEntry();
-  if (!lastEntry || !lastEntry.id) {
-    setRankText("Finish a run in-game to see your latest rank.");
-    return;
-  }
-
-  try {
-    const { data: ownRows, error: ownError } = await supabaseClient
-      .from(tableName)
-      .select("id,name,kills,time_seconds")
-      .eq("id", lastEntry.id)
-      .limit(1);
-
-    if (ownError) throw ownError;
-    if (!ownRows || !ownRows.length) {
-      setRankText("Your previous score was not found. Finish another run to update rank tracking.");
-      return;
     }
 
-    const own = ownRows[0];
-    const higherKills = await supabaseClient
-      .from(tableName)
-      .select("id", { head: true, count: "exact" })
-      .gt("kills", own.kills);
+    function setRankText(text, isError) {
+      rankTextEl.textContent = text;
+      rankTextEl.style.color = isError ? "#ff9fa2" : "";
+    }
 
-    if (higherKills.error) throw higherKills.error;
+    function getLastEntry() {
+      try {
+        const raw = localStorage.getItem(LAST_ENTRY_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
 
-    const sameKillsLowerTime = await supabaseClient
-      .from(tableName)
-      .select("id", { head: true, count: "exact" })
-      .eq("kills", own.kills)
-      .lt("time_seconds", own.time_seconds);
+    function parseCount(result) {
+      return Number((result && result.count) || 0);
+    }
 
-    if (sameKillsLowerTime.error) throw sameKillsLowerTime.error;
+    async function loadTopLeaderboard() {
+      try {
+        // Fetch all entries so we can deduplicate by name and then pick the true top 10
+        const { data, error } = await supabaseClient
+          .from(tableName)
+          .select("id,name,kills,time_seconds,created_at")
+          .order("kills", { ascending: false })
+          .order("time_seconds", { ascending: true })
+          .order("id", { ascending: true });
 
-    const sameKillsSameTimeLowerId = await supabaseClient
-      .from(tableName)
-      .select("id", { head: true, count: "exact" })
-      .eq("kills", own.kills)
-      .eq("time_seconds", own.time_seconds)
-      .lt("id", own.id);
+        if (error) throw error;
 
-    if (sameKillsSameTimeLowerId.error) throw sameKillsSameTimeLowerId.error;
+        // Keep only the best entry per unique name (case-insensitive)
+        const seen = new Set();
+        const unique = [];
+        for (const entry of (data || [])) {
+          const key = entry.name.trim().toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          unique.push(entry);
+          if (unique.length >= TOP_LIMIT) break;
+        }
 
-    const rank =
-      parseCount(higherKills) +
-      parseCount(sameKillsLowerTime) +
-      parseCount(sameKillsSameTimeLowerId) +
-      1;
-    setRankText(`Your latest entry: ${own.name} is #${rank} (${own.kills} kills, ${Number(own.time_seconds).toFixed(1)}s).`);
-  } catch (error) {
-    setRankText(error.message || "Failed to compute your rank.", true);
-  }
-}
+        renderRows(unique);
+      } catch (error) {
+        throw new Error(error.message || "Failed to load leaderboard.");
+      }
+    }
 
-async function refreshLeaderboardView() {
-  if (!supabaseClient) return;
-  try {
-    await loadTopLeaderboard();
-    await loadUserRank();
-    setStatus("Leaderboard updated.");
-  } catch (error) {
-    setStatus(error.message || "Failed to load leaderboard.", true);
-  }
-}
+    async function loadUserRank() {
+      const lastEntry = getLastEntry();
+      if (!lastEntry || !lastEntry.id) {
+        setRankText("Finish a run in-game to see your latest rank.");
+        return;
+      }
 
-refreshBtn.addEventListener("click", () => {
-  setStatus("Refreshing...");
-  refreshLeaderboardView();
-});
+      try {
+        const { data: ownRows, error: ownError } = await supabaseClient
+          .from(tableName)
+          .select("id,name,kills,time_seconds")
+          .eq("id", lastEntry.id)
+          .limit(1);
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  refreshBtn.disabled = true;
-  setStatus("Missing Supabase config. Set values in src/leaderboard-config.js.", true);
-  renderRows([]);
-  setRankText("Rank tracking unavailable until Supabase config is set.", true);
-} else {
-  supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-  refreshLeaderboardView();
-}
-</script>
+        if (ownError) throw ownError;
+        if (!ownRows || !ownRows.length) {
+          setRankText("Your previous score was not found. Finish another run to update rank tracking.");
+          return;
+        }
+
+        const own = ownRows[0];
+        const higherKills = await supabaseClient
+          .from(tableName)
+          .select("id", { head: true, count: "exact" })
+          .gt("kills", own.kills);
+
+        if (higherKills.error) throw higherKills.error;
+
+        const sameKillsLowerTime = await supabaseClient
+          .from(tableName)
+          .select("id", { head: true, count: "exact" })
+          .eq("kills", own.kills)
+          .lt("time_seconds", own.time_seconds);
+
+        if (sameKillsLowerTime.error) throw sameKillsLowerTime.error;
+
+        const sameKillsSameTimeLowerId = await supabaseClient
+          .from(tableName)
+          .select("id", { head: true, count: "exact" })
+          .eq("kills", own.kills)
+          .eq("time_seconds", own.time_seconds)
+          .lt("id", own.id);
+
+        if (sameKillsSameTimeLowerId.error) throw sameKillsSameTimeLowerId.error;
+
+        const rank =
+          parseCount(higherKills) +
+          parseCount(sameKillsLowerTime) +
+          parseCount(sameKillsSameTimeLowerId) +
+          1;
+        setRankText(`Your latest entry: ${own.name} is #${rank} (${own.kills} kills, ${Number(own.time_seconds).toFixed(1)}s).`);
+      } catch (error) {
+        setRankText(error.message || "Failed to compute your rank.", true);
+      }
+    }
+
+    async function refreshLeaderboardView() {
+      if (!supabaseClient) return;
+      try {
+        await loadTopLeaderboard();
+        await loadUserRank();
+        setStatus("Leaderboard updated.");
+      } catch (error) {
+        setStatus(error.message || "Failed to load leaderboard.", true);
+      }
+    }
+
+    refreshBtn.addEventListener("click", () => {
+      setStatus("Refreshing...");
+      refreshLeaderboardView();
+    });
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      refreshBtn.disabled = true;
+      setStatus("Missing Supabase config. Set values in src/leaderboard-config.js.", true);
+      renderRows([]);
+      setRankText("Rank tracking unavailable until Supabase config is set.", true);
+    } else {
+      supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+      refreshLeaderboardView();
+    }
+  </script>
 </body>
+
 </html>
