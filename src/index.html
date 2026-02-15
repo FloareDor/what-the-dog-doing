@@ -1992,10 +1992,10 @@
         let safetyRed = 0;
         for (let i = 0; i < SAFE_BUILDINGS.length; i++) {
           const b = SAFE_BUILDINGS[i], dst = Math.hypot(p.x - b.x, p.y - b.y);
-          if (dst < b.r) { safetyRed = 1; break; }
+          if (dst < b.r) { safetyRed = Math.max(safetyRed, .8); }
           else if (dst < b.r + RW) {
             const q = (dst - b.r) / RW;
-            const r = 1 - q * .8;
+            const r = .6 + .2 * (1 - q);
             if (r > safetyRed) safetyRed = r;
           }
         }
