@@ -235,6 +235,22 @@
       return Number((result && result.count) || 0);
     }
 
+    function compareLeaderboardRows(a, b) {
+      const ak = Number(a.kills) || 0;
+      const bk = Number(b.kills) || 0;
+      if (bk !== ak) return bk - ak;
+
+      const at = Number(a.time_seconds);
+      const bt = Number(b.time_seconds);
+      if (at !== bt) return at - bt;
+
+      const ac = Date.parse(a.created_at || "") || 0;
+      const bc = Date.parse(b.created_at || "") || 0;
+      if (bc !== ac) return bc - ac;
+
+      return (Number(b.id) || 0) - (Number(a.id) || 0);
+    }
+
     async function loadTopLeaderboard() {
       try {
         // Fetch all entries so we can deduplicate by name and then pick the true top 10
@@ -243,22 +259,13 @@
           .select("id,name,kills,time_seconds,created_at")
           .order("kills", { ascending: false })
           .order("time_seconds", { ascending: true })
-          .order("id", { ascending: true });
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false });
 
         if (error) throw error;
+        const sorted = (data || []).slice().sort(compareLeaderboardRows);
 
-        // Keep only the best entry per unique name (case-insensitive)
-        const seen = new Set();
-        const unique = [];
-        for (const entry of (data || [])) {
-          const key = entry.name.trim().toLowerCase();
-          if (seen.has(key)) continue;
-          seen.add(key);
-          unique.push(entry);
-          if (unique.length >= TOP_LIMIT) break;
-        }
-
-        renderRows(unique);
+        renderRows(sorted.slice(0, TOP_LIMIT));
       } catch (error) {
         throw new Error(error.message || "Failed to load leaderboard.");
       }
@@ -325,7 +332,7 @@
       try {
         await loadTopLeaderboard();
         await loadUserRank();
-        setStatus("Leaderboard updated.");
+        setStatus(`Leaderboard updated at ${new Date().toLocaleTimeString()}.`);
       } catch (error) {
         setStatus(error.message || "Failed to load leaderboard.", true);
       }

@@ -171,6 +171,8 @@
       const APEX_STORM_TICK_CD = .34;
       const ZOOMIES_SHIELD_DURATION = 3;
       const ZOOMIES_SHIELD_REDUCTION = .8;
+      const SAFE_ZONE_EDGE_BUFFER = 25;
+      const SAFE_ZONE_DAMAGE_REDUCTION = .93;
 
       const imgs = {};
       function load(n) { const i = new Image(); i.src = 'black_scottish_terrier_dog_with_red_scarf/rotations/' + n + '.png'; return i }
@@ -257,6 +259,21 @@
       function validLbName(v) { return typeof v === 'string' && v.length > 0 && v.length <= 24 && /^[A-Za-z0-9 _.-]+$/.test(v) }
       function openLeaderboardPage() { location.href = 'leaderboard.html' }
       function parseCount(h) { const m = String(h || '').match(/\/(\d+)$/); return m ? +m[1] : 0 }
+      function compareLeaderboardRows(a, b) {
+        const ak = Number(a.kills) || 0;
+        const bk = Number(b.kills) || 0;
+        if (bk !== ak) return bk - ak;
+
+        const at = Number(a.time_seconds);
+        const bt = Number(b.time_seconds);
+        if (at !== bt) return at - bt;
+
+        const ac = Date.parse(a.created_at || '') || 0;
+        const bc = Date.parse(b.created_at || '') || 0;
+        if (bc !== ac) return bc - ac;
+
+        return (Number(b.id) || 0) - (Number(a.id) || 0);
+      }
       function normalizeScore(v) {
         if (!v || typeof v !== 'object') return 0;
         const kills = Number(v.kills) | 0;
@@ -326,7 +343,7 @@
         g.lbTopErr = '';
         try {
           // Fetch more rows to allow for deduplication
-          const q = '?select=name,kills,time_seconds&order=kills.desc,time_seconds.asc,id.asc&limit=100';
+          const q = '?select=id,name,kills,time_seconds,created_at&order=kills.desc,time_seconds.asc,created_at.desc,id.desc&limit=100';
           const res = await fetch(LB_URL + '/rest/v1/' + encodeURIComponent(LB_TABLE) + q, {
             headers: {
               apikey: LB_KEY,
@@ -336,19 +353,8 @@
           if (!res.ok) { g.lbTopErr = 'leaderboard unavailable'; return; }
           const rows = await res.json();
 
-          // Deduplicate by name
-          const seen = new Set();
-          const unique = [];
-          if (Array.isArray(rows)) {
-            for (const row of rows) {
-              const key = row.name.trim().toLowerCase();
-              if (seen.has(key)) continue;
-              seen.add(key);
-              unique.push(row);
-              if (unique.length >= LB_PREVIEW_LIMIT) break;
-            }
-          }
-          g.lbTop = unique;
+          const sorted = Array.isArray(rows) ? rows.slice().sort(compareLeaderboardRows) : [];
+          g.lbTop = sorted.slice(0, LB_PREVIEW_LIMIT);
         } catch {
           g.lbTopErr = 'leaderboard unavailable';
         }
@@ -2064,16 +2070,10 @@
           p.flash = Math.max(p.flash, .03);
           return;
         }
-        const RW = 25;
         let safetyRed = 0;
         for (let i = 0; i < SAFE_BUILDINGS.length; i++) {
           const b = SAFE_BUILDINGS[i], dst = Math.hypot(p.x - b.x, p.y - b.y);
-          if (dst < b.r) { safetyRed = Math.max(safetyRed, .8); }
-          else if (dst < b.r + RW) {
-            const q = (dst - b.r) / RW;
-            const r = .6 + .2 * (1 - q);
-            if (r > safetyRed) safetyRed = r;
-          }
+          if (dst < b.r + SAFE_ZONE_EDGE_BUFFER) safetyRed = Math.max(safetyRed, SAFE_ZONE_DAMAGE_REDUCTION);
         }
         d *= (1 - safetyRed);
 
