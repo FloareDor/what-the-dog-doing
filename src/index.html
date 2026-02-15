@@ -227,6 +227,7 @@
         lbRankText: '',
         lbRankErr: '',
         lbRankFetchT: 0,
+        lbRetryAt: 0,
         lbBtnX: 0,
         lbBtnY: 0,
         lbBtnW: 0,
@@ -245,34 +246,77 @@
       const LB_ENTRY_KEY = 'zoomies_last_entry';
       const LB_NAME_KEY = 'zoomies_lb_name';
       const LB_OPTIN_KEY = 'zoomies_lb_optin';
+      const LB_GUEST_ID_KEY = 'zoomies_lb_guest_id';
       const LB_PREVIEW_LIMIT = 5;
+      const LB_BEST_SCORE_KEY = 'zoomies_lb_best_score';
+      const LB_PENDING_ENTRY_KEY = 'zoomies_lb_pending_entry';
+      const LB_LAST_SYNCED_SCORE_KEY = 'zoomies_lb_last_synced_score';
       function lsGet(k) { try { return localStorage.getItem(k) || '' } catch { return '' } }
       function lsSet(k, v) { try { localStorage.setItem(k, v) } catch { } }
       function lsGetJson(k) { try { const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : 0 } catch { return 0 } }
       function validLbName(v) { return typeof v === 'string' && v.length > 0 && v.length <= 24 && /^[A-Za-z0-9 _.-]+$/.test(v) }
       function openLeaderboardPage() { location.href = 'leaderboard.html' }
       function parseCount(h) { const m = String(h || '').match(/\/(\d+)$/); return m ? +m[1] : 0 }
+      function normalizeScore(v) {
+        if (!v || typeof v !== 'object') return 0;
+        const kills = Number(v.kills) | 0;
+        const timeSeconds = +Number(v.time_seconds).toFixed(1);
+        if (kills < 0 || !Number.isFinite(timeSeconds) || timeSeconds < 0) return 0;
+        return { kills, time_seconds: timeSeconds };
+      }
+      function isBetterScore(a, b) {
+        if (!a) return 0;
+        if (!b) return 1;
+        if (a.kills !== b.kills) return a.kills > b.kills;
+        return a.time_seconds < b.time_seconds;
+      }
+      function sameScore(a, b) {
+        return !!(a && b && a.kills === b.kills && a.time_seconds === b.time_seconds);
+      }
+      function getSavedScore(k) {
+        const v = lsGetJson(k);
+        return normalizeScore(v);
+      }
+      function setSavedScore(k, v) {
+        if (!v) return;
+        lsSet(k, JSON.stringify(v));
+      }
+      function clearSavedScore(k) { try { localStorage.removeItem(k) } catch { } }
+      function makeGuestName() {
+        let id = lsGet(LB_GUEST_ID_KEY).trim().toLowerCase();
+        if (!/^[a-z0-9]{4,12}$/.test(id)) {
+          id = Math.random().toString(36).slice(2, 8);
+          lsSet(LB_GUEST_ID_KEY, id);
+        }
+        return 'player-' + id;
+      }
+      function recordBestLocalScore() {
+        const run = normalizeScore({ kills: g.kills | 0, time_seconds: +g.time.toFixed(1) });
+        if (!run) return 0;
+        const saved = getSavedScore(LB_BEST_SCORE_KEY);
+        if (!saved || isBetterScore(run, saved)) setSavedScore(LB_BEST_SCORE_KEY, run);
+        return run;
+      }
       function getLbName() {
         let n = lsGet(LB_NAME_KEY).trim();
         if (validLbName(n)) return n;
         const raw = prompt('Enter a name for global leaderboard (1-24 chars).');
-        if (raw == null) return '';
-        n = raw.trim();
-        if (!validLbName(n)) {
-          alert('Name must be 1-24 chars and only letters, numbers, spaces, _, ., or -.');
-          return '';
+        if (raw != null) {
+          n = raw.trim();
+          if (validLbName(n)) {
+            lsSet(LB_NAME_KEY, n);
+            return n;
+          }
+          alert('Name must be 1-24 chars and only letters, numbers, spaces, _, ., or -. Using a guest name for now.');
         }
+        n = makeGuestName();
         lsSet(LB_NAME_KEY, n);
         return n;
       }
       function wantsLb() {
         if (!LB_URL || !LB_KEY || !LB_TABLE) return 0;
-        const pref = lsGet(LB_OPTIN_KEY);
-        if (pref === 'yes') return 1;
-        if (pref === 'no') return 0;
-        const ok = confirm('Join the global leaderboard? Your name, kills, and time will be submitted when a run ends.');
-        lsSet(LB_OPTIN_KEY, ok ? 'yes' : 'no');
-        return ok ? 1 : 0;
+        if (lsGet(LB_OPTIN_KEY) !== 'yes') lsSet(LB_OPTIN_KEY, 'yes');
+        return 1;
       }
       async function fetchLeaderboardPreview(force) {
         if (!LB_URL || !LB_KEY || !LB_TABLE) return;
@@ -344,11 +388,21 @@
       }
       async function submitLeaderboardScore() {
         if (g.lbSent) return;
+        const now = Date.now();
+        if (now < g.lbRetryAt) return;
         if (!wantsLb()) return;
         const name = getLbName();
         if (!name) return;
-        const kills = g.kills | 0, timeSeconds = +g.time.toFixed(1);
-        if (kills < 0 || !Number.isFinite(timeSeconds) || timeSeconds < 0) return;
+        const run = recordBestLocalScore() || normalizeScore({ kills: g.kills | 0, time_seconds: +g.time.toFixed(1) });
+        if (!run) return;
+        const savedBest = getSavedScore(LB_BEST_SCORE_KEY);
+        const pending = getSavedScore(LB_PENDING_ENTRY_KEY);
+        let best = savedBest && isBetterScore(savedBest, run) ? savedBest : run;
+        if (pending && isBetterScore(pending, best)) best = pending;
+        const lastSynced = getSavedScore(LB_LAST_SYNCED_SCORE_KEY);
+        if (!pending && sameScore(lastSynced, best)) return;
+        setSavedScore(LB_PENDING_ENTRY_KEY, best);
+        const payload = { name, kills: best.kills, time_seconds: best.time_seconds };
         g.lbSent = 1;
         try {
           let res = await fetch(LB_URL + '/rest/v1/' + encodeURIComponent(LB_TABLE), {
@@ -359,11 +413,14 @@
               Authorization: 'Bearer ' + LB_KEY,
               Prefer: 'return=representation'
             },
-            body: JSON.stringify([{ name, kills, time_seconds: timeSeconds }])
+            body: JSON.stringify([payload])
           });
           if (res.ok) {
             const rows = await res.json(), row = Array.isArray(rows) ? rows[0] : 0;
             if (row && row.id) lsSet(LB_ENTRY_KEY, JSON.stringify({ id: row.id, name: row.name, kills: row.kills, time_seconds: row.time_seconds }));
+            setSavedScore(LB_LAST_SYNCED_SCORE_KEY, best);
+            clearSavedScore(LB_PENDING_ENTRY_KEY);
+            g.lbRetryAt = 0;
             void fetchLeaderboardPreview(1);
             void fetchOwnRankPreview(1);
             return;
@@ -379,16 +436,35 @@
               Authorization: 'Bearer ' + LB_KEY,
               Prefer: 'return=minimal'
             },
-            body: JSON.stringify([{ name, kills, time_seconds: timeSeconds }])
+            body: JSON.stringify([payload])
           });
           if (!res.ok) {
             g.lbSent = 0;
+            g.lbRetryAt = Date.now() + 5000;
             return;
           }
+          try {
+            const q = '?select=id,name,kills,time_seconds&name=eq.' + encodeURIComponent(name)
+              + '&kills=eq.' + best.kills
+              + '&time_seconds=eq.' + best.time_seconds
+              + '&order=id.desc&limit=1';
+            const rowRes = await fetch(LB_URL + '/rest/v1/' + encodeURIComponent(LB_TABLE) + q, {
+              headers: { apikey: LB_KEY, Authorization: 'Bearer ' + LB_KEY }
+            });
+            if (rowRes.ok) {
+              const rows = await rowRes.json(), row = Array.isArray(rows) ? rows[0] : 0;
+              if (row && row.id) lsSet(LB_ENTRY_KEY, JSON.stringify({ id: row.id, name: row.name, kills: row.kills, time_seconds: row.time_seconds }));
+            }
+          } catch { }
+          setSavedScore(LB_LAST_SYNCED_SCORE_KEY, best);
+          clearSavedScore(LB_PENDING_ENTRY_KEY);
+          g.lbRetryAt = 0;
           g.lbRankText = 'score submitted; rank syncing...';
           void fetchLeaderboardPreview(1);
+          void fetchOwnRankPreview(1);
         } catch {
           g.lbSent = 0;
+          g.lbRetryAt = Date.now() + 5000;
         }
       }
 
@@ -1646,7 +1722,7 @@
       }
 
       function reset(full) {
-        g.dead = 0; g.lvup = 0; g.t = 0; g.time = 0; g.spawnT = 0; g.nextSpawn = .8; g.kills = 0; g.msg = ''; g.msgT = 0; g.level = 1; g.xp = 0; g.nextXp = 24; g.stop = 0; g.shake = 0; g.xpPulse = 0; g.cardT = 0; g.choices = []; g.homeGot = 0; g.sch.nsh = 0; g.sch.mel = 0; g.sch.bak = 0; g.pz = 0; g.uq.length = 0; g.inB = ''; g.mb = 0; g.mbd = 0; g.bs = 0; g.bd = 0; g.bs2 = 0; g.bd2 = 0; g.b2At = 0; g.pred = 0; g.predDead = 0; g.moth = 0; g.mothDead = 0; g.bossDownT = 0; g.won = 0; g.endWave = 0; g.endT = 0; g.endSpawnT = 0; g.apWarn1 = 0; g.apWarn2 = 0; g.apStormHitCd = 0; g.botMask = 0; g.chemMask = 0; g.psyMask = 0; g.labStep = 0; g.labBank = 0; g.labFlip = 0; g.labNsh = 0; g.labMel = 0; g.labBak = 0; g.labNshRuns = 0; g.labMelRuns = 0; g.stormCd = 0; g.labCd = 0; g.safeCampT = 0; g.safeBreachCd = 0; g.safeThreat = 0; g.lvPend = 0; g.lvGrace = 0; g.lbSent = 0; g.lbTopErr = ''; g.lbRankErr = ''; g.lbRankText = ''; g.lbFetchT = 0; g.lbRankFetchT = 0; g.lbBtnX = 0; g.lbBtnY = 0; g.lbBtnW = 0; g.lbBtnH = 0; g.paused = 0; g.pauseBtnX = 0; g.pauseBtnY = 0; g.pauseBtnW = 0; g.pauseBtnH = 0;
+        g.dead = 0; g.lvup = 0; g.t = 0; g.time = 0; g.spawnT = 0; g.nextSpawn = .8; g.kills = 0; g.msg = ''; g.msgT = 0; g.level = 1; g.xp = 0; g.nextXp = 24; g.stop = 0; g.shake = 0; g.xpPulse = 0; g.cardT = 0; g.choices = []; g.homeGot = 0; g.sch.nsh = 0; g.sch.mel = 0; g.sch.bak = 0; g.pz = 0; g.uq.length = 0; g.inB = ''; g.mb = 0; g.mbd = 0; g.bs = 0; g.bd = 0; g.bs2 = 0; g.bd2 = 0; g.b2At = 0; g.pred = 0; g.predDead = 0; g.moth = 0; g.mothDead = 0; g.bossDownT = 0; g.won = 0; g.endWave = 0; g.endT = 0; g.endSpawnT = 0; g.apWarn1 = 0; g.apWarn2 = 0; g.apStormHitCd = 0; g.botMask = 0; g.chemMask = 0; g.psyMask = 0; g.labStep = 0; g.labBank = 0; g.labFlip = 0; g.labNsh = 0; g.labMel = 0; g.labBak = 0; g.labNshRuns = 0; g.labMelRuns = 0; g.stormCd = 0; g.labCd = 0; g.safeCampT = 0; g.safeBreachCd = 0; g.safeThreat = 0; g.lvPend = 0; g.lvGrace = 0; g.lbSent = 0; g.lbTopErr = ''; g.lbRankErr = ''; g.lbRankText = ''; g.lbFetchT = 0; g.lbRankFetchT = 0; g.lbRetryAt = 0; g.lbBtnX = 0; g.lbBtnY = 0; g.lbBtnW = 0; g.lbBtnH = 0; g.paused = 0; g.pauseBtnX = 0; g.pauseBtnY = 0; g.pauseBtnW = 0; g.pauseBtnH = 0;
         p.x = 260; p.y = MAP_H * .5; p.vx = 0; p.vy = 0; p.hp = 100; p.maxHp = 100; p.speed = 185; p.fireCd = 0; p.fireRate = .46; p.dmg = 12; p.range = 400; p.shots = 1; p.magnet = 88; p.face = 1; p.rx = 0; p.ry = 0; p.flash = 0; p.gx = 1; p.gy = 0; p.zc = 0; p.zr = 0; p.zt = 0; p.zx = 1; p.zy = 0; p.zcd = 0; p.zDur = 1; p.zSpd = 2.1; p.zLoad = 1.5; p.zCool = 5.5; p.zDmg = 24; p.zDr = .55; p.zb = 0; p.zp = 0; p.zDriftVx = 0; p.zDriftVy = 0; p.mkOn = 0; p.mkT = 0; p.mkI = 8.8; p.mkS = 0; p.mkD = 14; p.mkR = 54; p.mkSl = .54; p.mkBurst = 0; p.mkBurstT = 0; p.mkBurstQ = []; p.chDo = 14; p.chBurst = 10; p.chHeal = 8; p.chHealCd = 0; p.chHealI = .85; p.cat = 0; p.catM = 0; p.catType = 0; p.fb = 0; p.fbT = 0; p.fbI = 8.6; p.fbR = 210; p.fbFear = 2.3; p.fbKn = 320; p.fbFx = 0; p.fbTier = 0; p.fbMode = 1; p.fbAiT = 0; p.bot = 0; p.botCount = 0; p.botSlots = 0; p.bType = 0; p.bAtk = 1; p.bAuraR = 0; p.bAuraSl = 0; p.bHealCd = 0; p.bHealI = 10; p.bHealAmt = 10; p.bHealFx = 0; p.triA = 0; p.triFx = 0; p.slCharge = 0; p.slFocus = 0; p.slT = 0; p.slRecallT = 0; p.slLinkT = 0; p.slRecallPulse = 0; p.slCarryVx = 0; p.slCarryVy = 0; p.slPow = 0; p.slWave = 0; p.slComboFx = 0; p.slHitMask = 0; p.slPerfect = 0; p.slDx = 1; p.slDy = 0; p.bx = p.x + 20; p.by = p.y + 4; p.ba = 0; p.bcd = .45; p.bRate = 1.9; p.bDmg = 1.15; p.bRange = 480; p.bFetch = 95; p.bPull = 195; p.bCarry = 0; p.bCarryMax = 2; p.bGrabCd = 0; p.bGrabI = .38; p.bPier = 4; p.bSize = 6;
         p.slRopeRest = 0;
         z.length = 0; b.length = 0; food.length = 0; pudd.length = 0; fx.length = 0; bots.length = 0; react.length = 0; psyFx.length = 0;
@@ -2058,6 +2134,7 @@
         if (g.dead) {
           void fetchLeaderboardPreview(0);
           void fetchOwnRankPreview(0);
+          void submitLeaderboardScore();
           return;
         }
         tickPsychDecoy(dt);
