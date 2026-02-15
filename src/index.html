@@ -1988,6 +1988,18 @@
           p.flash = Math.max(p.flash, .03);
           return;
         }
+        const RW = 25;
+        let safetyRed = 0;
+        for (let i = 0; i < SAFE_BUILDINGS.length; i++) {
+          const b = SAFE_BUILDINGS[i], dst = Math.hypot(p.x - b.x, p.y - b.y);
+          if (dst < b.r) { safetyRed = Math.max(safetyRed, .8); }
+          else if (dst < b.r + RW) {
+            const q = (dst - b.r) / RW;
+            const r = .6 + .2 * (1 - q);
+            if (r > safetyRed) safetyRed = r;
+          }
+        }
+        d *= (1 - safetyRed);
 
         const shieldRatio = clamp(p.zoomShield / ZOOMIES_SHIELD_DURATION, 0, 1);
         const shieldAmount = shieldRatio * ZOOMIES_SHIELD_REDUCTION;
