@@ -1708,7 +1708,14 @@
             const rr = Math.min(122, (pa.r + pb.r) * .44 + 18);
             const dur = k === 1 ? 5.4 : k === 2 ? 6.1 : 5.8;
             addReaction(k, px, py, rr, dur);
-            consumePuddles(ia, ib);
+            // Keep acid pressure active in acid pair reactions: consume only the non-acid source.
+            if (pa.m === 1 && pb.m !== 1) {
+              if (pudd[ib]) pudd[ib].t = Math.min(pudd[ib].t, .05);
+            } else if (pb.m === 1 && pa.m !== 1) {
+              if (pudd[ia]) pudd[ia].t = Math.min(pudd[ia].t, .05);
+            } else {
+              consumePuddles(ia, ib);
+            }
             used[ia] = 1; used[ib] = 1;
             break;
           }
@@ -1900,8 +1907,8 @@
       function spawnApexBoss() {
         if (g.bs2 || g.bd2 || z.length >= MAX_Z) return;
         const a = Math.random() * Math.PI * 2, d = 560;
-        const hp = 3200 + g.time * 42;
-        const m = { x: clamp(p.x + Math.cos(a) * d, 44, MAP_W - 44), y: clamp(p.y + Math.sin(a) * d, 44, MAP_H - 44), r: 46, hp, s: 68, dmg: 52, vx: 0, vy: 0, ht: 0, sl: 0, ce: 0, bm: 0, bt: 0, bi: '', k: 4, apMax: hp, apBaseS: 68, apCd: rnd(1.1, 1.8), apTele: 0, apTeleD: 0, apAimX: 0, apAimY: 0, apBurstLeft: 0, apBurstSpd: 920, apPhase: 1, apStormCd: rnd(2.8, 4.2), apSummonCd: rnd(2.6, 3.8), apEvadeCd: 0, apImpactCd: 0, apSlamCd: 0, apRegenCd: 0, apShieldT: 0 };
+        const hp = 2600 + g.time * 32;
+        const m = { x: clamp(p.x + Math.cos(a) * d, 44, MAP_W - 44), y: clamp(p.y + Math.sin(a) * d, 44, MAP_H - 44), r: 46, hp, s: 68, dmg: 52, vx: 0, vy: 0, ht: 0, sl: 0, ce: 0, bm: 0, bt: 0, bi: '', k: 4, apMax: hp, apBaseS: 68, apCd: rnd(1.4, 2.2), apTele: 0, apTeleD: 0, apAimX: 0, apAimY: 0, apBurstLeft: 0, apBurstSpd: 920, apPhase: 1, apStormCd: rnd(3.6, 5.2), apSummonCd: rnd(2.6, 3.8), apEvadeCd: 0, apImpactCd: 0, apSlamCd: 0, apRegenCd: 0, apShieldT: 0 };
         pushOutsideSafe(m, 36); z.push(m); g.bs2 = 1; g.msg = 'APEX DEAN APPROACHES'; g.msgT = 2.0; beep(120, .2, 'sawtooth', .04); beep(60, .3, 'sawtooth', .03); trauma(.38);
       }
       function nearestZombie() {
@@ -3130,8 +3137,8 @@
           if (m.k === 4) {
             if (!m.apMax) m.apMax = m.hp;
             if (!m.apBaseS) m.apBaseS = m.s;
-            if (!m.apCd) m.apCd = rnd(1.1, 1.8);
-            if (!m.apStormCd) m.apStormCd = rnd(2.8, 4.2);
+            if (!m.apCd) m.apCd = rnd(1.4, 2.2);
+            if (!m.apStormCd) m.apStormCd = rnd(3.6, 5.2);
             if (!m.apSummonCd) m.apSummonCd = rnd(2.6, 3.8);
             if (!m.apBurstSpd) m.apBurstSpd = 920;
             if (!m.apTele) m.apTele = 0;
@@ -3259,7 +3266,7 @@
                   m.apAimX = clamp(p.x + p.vx * (pred * .7) + rnd(-36, 36), 20, MAP_W - 20);
                   m.apAimY = clamp(p.y + p.vy * (pred * .7) + rnd(-36, 36), 20, MAP_H - 20);
                 } else {
-                  m.apCd = rnd(Math.max(.36, 1.0 - rage * .28), Math.max(.65, 1.6 - rage * .34));
+                  m.apCd = rnd(Math.max(.5, 1.35 - rage * .2), Math.max(.9, 2.1 - rage * .24));
                 }
                 beep(140 - rage * 10, .07, 'sawtooth', .035);
               }
@@ -3291,15 +3298,15 @@
             // storms: more frequent, bigger, double-storm in omega
             if (m.apStormCd <= 0 && !pSafeNow) {
               addApexStorm(clamp(p.x + p.vx * .36 + rnd(-40, 40), 24, MAP_W - 24), clamp(p.y + p.vy * .36 + rnd(-40, 40), 24, MAP_H - 24), 68 + phase * 14, 2.2 + phase * .55);
-              if (phase >= 2 && Math.random() < .35 + rage * .15) {
+              if (phase >= 2 && Math.random() < .2 + rage * .1) {
                 addApexStorm(clamp(m.x + rnd(-140, 140), 24, MAP_W - 24), clamp(m.y + rnd(-140, 140), 24, MAP_H - 24), 60 + phase * 12, 2.0 + phase * .45);
               }
-              if (phase >= 3 && Math.random() < .28) {
+              if (phase >= 3 && Math.random() < .16) {
                 // triple storm in omega
                 const sa = Math.random() * Math.PI * 2;
                 addApexStorm(clamp(p.x + Math.cos(sa) * 130 + rnd(-30, 30), 24, MAP_W - 24), clamp(p.y + Math.sin(sa) * 130 + rnd(-30, 30), 24, MAP_H - 24), 56 + rage * 10, 1.8 + rage * .4);
               }
-              m.apStormCd = rnd(Math.max(2.0, 3.8 - rage * .55), Math.max(2.8, 5.0 - rage * .55));
+              m.apStormCd = rnd(Math.max(2.8, 4.9 - rage * .45), Math.max(3.8, 6.4 - rage * .45));
             }
             // gravity pull: stronger, wider
             if (!pSafeNow) {
